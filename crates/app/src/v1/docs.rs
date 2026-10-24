@@ -196,7 +196,7 @@ meaningful to it (see <a href="#applies">which filters apply where</a> below):</
 <table>
   <tr><th>Param</th><th>Meaning</th></tr>
   <tr><td class="ep">source</td><td>Source key, e.g. <code>ted</code>.</td></tr>
-  <tr><td class="ep">country</td><td>A <strong>NUTS place-code prefix</strong> matched against the tender's places. At the country level NUTS is ISO-3166 <strong>alpha-2</strong>, so Germany is <code>DE</code> (not <code>DEU</code>); a longer prefix narrows to a region, e.g. <code>DE1</code> (Baden-Württemberg) or <code>DEB35</code> (a specific place). <strong>NUTS is not ISO everywhere</strong>: Greece is <code>EL</code> and the United Kingdom is <code>UK</code> &mdash; <code>GB</code> is not a NUTS code at all and matches nothing, and <code>GR</code> is Greece's pre-2013 NUTS spelling, which the corpus still holds on notices published under it. A tender whose notices give the place of performance only as a country (eForms BT-5141; D&Ouml;E's realized-location country), and whose version carries no NUTS place code, is served that country's <strong>NUTS level-0 code</strong>, so <code>LT</code> finds it and <code>LT0</code> does not (Greece <code>EL</code>, the United Kingdom <code>UK</code>). Only the EU-27, the United Kingdom, Iceland, Liechtenstein, Norway, Switzerland, Albania, Montenegro, North Macedonia, Serbia and T&uuml;rkiye are served this way: a place in any other country, e.g. Egypt or the USA, carries none, and so does a place given as an overseas region's own ISO code (e.g. R&eacute;union, &Aring;land). The places are the <strong>place of performance</strong> only, in every era (issue 546): a legacy TED (r2.0.8, r2.0.9) notice's buyer and winner address regions are not a tender's places, and <code>?country=</code> does not match them. They stay on the notice layer, in <code>notice_classifications</code> under field ids <code>TED-CA_CE_NUTS</code> (buyer) and <code>TED-TENDERER_NUTS</code> (winner), and as <code>TED-NUTS</code> in the notice's address sections, readable through <code>/v1/sql</code>. A legacy tender none of whose notices publishes a place of performance (e.g. an F12/F13 design contest) serves none: no fallback to an address. A later notice that publishes only addresses (e.g. an F14 corrigendum) keeps the place an earlier one published. Until the issue-546 refold has run, a legacy tender folded before this change may still serve its buyer's or winner's region, and <code>?country=</code> may still find it by one.</td></tr>
+  <tr><td class="ep">country</td><td>A <strong>NUTS place-code prefix</strong> matched against the tender's places. At the country level NUTS is ISO-3166 <strong>alpha-2</strong>, so Germany is <code>DE</code> (not <code>DEU</code>); a longer prefix narrows to a region, e.g. <code>DE1</code> (Baden-Württemberg) or <code>DEB35</code> (a specific place). <strong>NUTS is not ISO everywhere</strong>: Greece is <code>EL</code> and the United Kingdom is <code>UK</code> &mdash; <code>GB</code> is not a NUTS code at all and matches nothing, and <code>GR</code> is Greece's pre-2013 NUTS spelling, which the corpus still holds on notices published under it. A tender whose notices give the place of performance only as a country (eForms BT-5141; D&Ouml;E's realized-location country), and whose version carries no NUTS place code, is served that country's <strong>NUTS level-0 code</strong>, so <code>LT</code> finds it and <code>LT0</code> does not (Greece <code>EL</code>, the United Kingdom <code>UK</code>). Only the EU-27, the United Kingdom, Iceland, Liechtenstein, Norway, Switzerland, Albania, Montenegro, North Macedonia, Serbia and T&uuml;rkiye are served this way: a place in any other country, e.g. Egypt or the USA, carries none, and so does a place given as an overseas region's own ISO code (e.g. R&eacute;union, &Aring;land). The places are the <strong>place of performance</strong> only, in every era (issue 546): a legacy TED (r2.0.8, r2.0.9) notice's buyer and winner address regions are not a tender's places, and <code>?country=</code> does not match them. They stay on the notice layer, in <code>notice_classifications</code> under field ids <code>TED-CA_CE_NUTS</code> (buyer) and <code>TED-TENDERER_NUTS</code> (winner), and as <code>TED-NUTS</code> in the notice's address sections, readable through <code>/v1/sql</code>. A legacy tender none of whose notices publishes a place of performance (e.g. an F12/F13 design contest) serves none: no fallback to an address. A later notice that publishes only addresses (e.g. an F14 corrigendum) keeps the place an earlier one published. The stored r2.0.9 tenders were refolded under this rule on 2026-10-24 (jobs 2764 and 2765).</td></tr>
   <tr><td class="ep">cpv</td><td>CPV code prefix, e.g. <code>45</code> (construction).</td></tr>
   <tr><td class="ep">buyer</td><td>Organization id that is the buyer.</td></tr>
   <tr><td class="ep">winner</td><td>Organization id that won at least one Lot &mdash; excluding awards where the winner is the tender's own buyer (<code>is_buyer</code>, see the <a href="#tender-detail-buyer">tender detail</a>).</td></tr>
@@ -628,9 +628,9 @@ subscription (subscribe to <code>/v1/notices</code> without
 bound spelled as the literal <code>now</code> (pass an absolute timestamp; see resuming,
 below). The protocol:</p>
 <ol>
-  <li><strong>Snapshot</strong> — one <code>added</code> event per row currently matching your filter, read page by page with no transaction held across the pages, so it is not a point-in-time view. Under concurrent writes it is <strong>at-least-once</strong>: an entity written during the snapshot can arrive as <code>added</code> and again as a <code>change</code> after <code>live</code>, and one that left your filter before its page was read is not sent, while its <code>removed</code> is. Apply <code>added</code> as an upsert by id and <code>removed</code> as an idempotent delete — a <code>removed</code> can name an entity you never received; the diff stream then makes your final state exact, with known exceptions: on <code>/v1/lots</code>, a filter that reads the lot's Tender (<code>country</code>, <code>cpv</code>, <code>buyer</code>, <code>winner</code>, <code>bidder</code>, <code>procedure_type</code>, <code>currency</code>, <code>status</code>) is checked again only when a change row is written for the lot itself, so a version that moves only such a Tender fact (a second award notice naming a winner, the lot's own facts unchanged) can leave you holding a lot the filter now excludes, or not send you one it now admits (issue 565); and under <code>min_value</code>/<code>max_value</code>, a version since superseded is read as a superset on both sides, whether a later version was written in the same fold or the stream resumes, or lags, past it, so a <code>changed</code> or an <code>added</code> can name an entity outside the bound, on a live stream as well as a resumed one, until a later change probes the current version (issue 561).</li>
+  <li><strong>Snapshot</strong> — one <code>added</code> event per row currently matching your filter, read page by page with no transaction held across the pages, so it is not a point-in-time view. Under concurrent writes it is <strong>at-least-once</strong>: an entity written during the snapshot can arrive as <code>added</code> and again as a <code>change</code> after <code>live</code>, and one that left your filter before its page was read is not sent, while its <code>removed</code> is. Apply <code>added</code> as an upsert by id and <code>removed</code> as an idempotent delete — a <code>removed</code> can name an entity you never received; the diff stream then makes your final state exact, with known exceptions: on <code>/v1/lots</code>, a filter that reads the lot's Tender (<code>country</code>, <code>cpv</code>, <code>buyer</code>, <code>winner</code>, <code>bidder</code>, <code>procedure_type</code>, <code>currency</code>, <code>status</code>) is checked again only when a change row is written for the lot itself, so a version that moves only such a Tender fact (a second award notice naming a winner, the lot's own facts unchanged) can leave you holding a lot the filter now excludes, or not send you one it now admits (issue 565); and under <code>min_value</code>/<code>max_value</code>, each version is read at its own value, but on a Tender the fold has not rewritten since that was introduced, or that awaits its refold after a rate re-derivation, a merge or a targeted refold, an earlier version is read as a superset (it matches when any amount it published lies inside the bound, or under <code>min_value</code> when its lot amounts, or separately its lot awards, summed reach it): a <code>changed</code> or an <code>added</code> can then name an entity outside the bound, and, rarely, a stream that lags across such a refold keeps one (issue 561).</li>
   <li>A <code>live</code> marker carrying the snapshot's cursor.</li>
-  <li><strong>Diff</strong> — <code>change</code> events forever after, each re-evaluating your filter against the old and new version of the entity: a row moving <em>into</em> your filter is <code>added</code>, out of it <code>removed</code>, changed-within it <code>changed</code>. Apply <code>changed</code> as an upsert by id too (re-read the entity, or subscribe with <code>include_data</code>): under <code>min_value</code>/<code>max_value</code>, <code>source</code> or (on <code>/v1/tenders</code>) <code>kind</code> a <code>changed</code> can name an entity you never received where <code>added</code> was due &mdash; an earlier version's value is not stored and is read as a superset (issue 561), and when the fold re-labels a Tender's <code>source</code> or <code>kind</code> (a DÖE Tender turns <code>ted</code> when its TED twin arrives) both the version's own change and the <code>version: null</code> correction that follows read the Tender's current label on both sides, so a subscriber to the new label hears <code>changed</code> (or <code>added</code>, for an entity the version before did not hold) and one to the old label <code>removed</code> (issue 562). On <code>/v1/lots</code> a lot <code>changed</code> can arrive when only its Tender's value or closure moved: a lot's <code>min_value</code>/<code>max_value</code> bound and its <code>status</code> read its Tender, so a version that moves either is the lot's change too (issues 560 and 533).</li>
+  <li><strong>Diff</strong> — <code>change</code> events forever after, each re-evaluating your filter against the old and new version of the entity: a row moving <em>into</em> your filter is <code>added</code>, out of it <code>removed</code>, changed-within it <code>changed</code>. Apply <code>changed</code> as an upsert by id too (re-read the entity, or subscribe with <code>include_data</code>): under <code>min_value</code>/<code>max_value</code>, <code>source</code> or (on <code>/v1/tenders</code>) <code>kind</code> a <code>changed</code> can name an entity you never received where <code>added</code> was due &mdash; on a Tender whose earlier versions are still read as a superset (above; issue 561), and when the fold re-labels a Tender's <code>source</code> or <code>kind</code> (a DÖE Tender turns <code>ted</code> when its TED twin arrives) both the version's own change and the <code>version: null</code> correction that follows read the Tender's current label on both sides, so a subscriber to the new label hears <code>changed</code> (or <code>added</code>, for an entity the version before did not hold) and one to the old label <code>removed</code> (issue 562). On <code>/v1/lots</code> a lot <code>changed</code> can arrive when only its Tender's value or closure moved: a lot's <code>min_value</code>/<code>max_value</code> bound and its <code>status</code> read its Tender, so a version that moves either is the lot's change too (issues 560 and 533).</li>
 </ol>
 <p>Each event's SSE <code>id</code> is an opaque resume token
 (generation-qualified cursor, e.g. <code>3:193055</code>). On reconnect the
@@ -651,9 +651,13 @@ change that leaves such a Tender closed is not sent; a version that reopens it a
 <code>reset</code> event means your token cannot resume and you must drop local
 state and re-subscribe fresh: <code>{"reason":"cursor_expired"}</code> (the log's
 retained horizon passed your token), <code>{"reason":"cursor_ahead"}</code> (your
-token is past the feed's head, so this feed never issued it) or
+token is past the feed's head, so this feed never issued it),
 <code>{"reason":"feed_rebuilt"}</code> (the dataset was rebuilt — same event a poll
-client detects as a <code>generation</code> change). Add <code>?include_data=true</code> to embed
+client detects as a <code>generation</code> change) or
+<code>{"reason":"value_probe_changed"}</code> (a <code>min_value</code>/<code>max_value</code>
+stream on <code>/v1/tenders</code> or <code>/v1/lots</code> resumed from a token issued before each
+version's own value was read, issue 561: its earlier events were classified under the superset, so
+re-snapshot once). Add <code>?include_data=true</code> to embed
 each entity's current JSON in its event.</p>
 <pre><code># -N disables curl's buffering so events arrive as they happen
 curl -N -H "Accept: text/event-stream" \
@@ -1554,6 +1558,16 @@ mod tests {
             // 2741; 2026-10-23/24), so the stored DÖE notices serve the raised date. The pre-drain caveats on /docs and
             // the three OpenAPI descriptions shared this token.
             ("issue-539 drain re-dates", "the issue-539 drain ran, jobs 2732-2741 (issue 539)"),
+            // Issue 546 unit 4: the refold ran (refold 2764 over ted-export-r209, project 2765, 2026-10-24); the
+            // Verify read done (8432519 serves ['FRK22']; 6440164 no longer matches ?country=DE). The five pre-refold
+            // caveats shared this token; their own wordings follow it (the /docs row and the OpenAPI `country`
+            // parameter, `Tender.country`, `TenderDetail.classifications`, the /v1/sql `field` note).
+            ("issue-546 refold", "the issue-546 refold ran, jobs 2764 and 2765 (issue 546)"),
+            ("may still serve its buyer's or winner's region", "the issue-546 refold ran, jobs 2764 and 2765 (issue 546)"),
+            ("may still find it by one", "the issue-546 refold ran, jobs 2764 and 2765 (issue 546)"),
+            ("folded before the change may still serve one", "the issue-546 refold ran, jobs 2764 and 2765 (issue 546)"),
+            ("folded before the change may still carry one", "the issue-546 refold ran, jobs 2764 and 2765 (issue 546)"),
+            ("folded before it may still carry one", "the issue-546 refold ran, jobs 2764 and 2765 (issue 546)"),
             // Issue 581: served from issue 580 (deployed a63cf23, 2026-10-24) until the successor records:
             // a retired Tender id answered 404. It answers 308 or 410 with `successors` since.
             ("retired Tender id answers <code>404</code>", "a retired Tender id answers 308 or 410 with its successors (issue 581)"),
@@ -2646,9 +2660,9 @@ mod tests {
     /// classifications description, not the whole surface; the sql check reads the whole
     /// served schema notes, as 532's test does. The row and the parameter get one phrase
     /// per clause, read with `<strong>` / `**` stripped so "place of performance" itself is
-    /// pinned. Each surface carries the pre-refold caveat, tagged `issue-546 refold`: once
-    /// unit 4's refold and its Verify (8432519 serves `['FRK22']`) are done, remove all five
-    /// and retire the token through RETIRED.
+    /// pinned. Unit 4's refold ran (refold 2764, project 2765, 2026-10-24) and its Verify read
+    /// done (8432519 serves `['FRK22']`), so the five pre-refold caveats are gone, RETIRED holds
+    /// `"issue-546 refold"` and their wordings, and the row and the parameter say the refold ran.
     #[test]
     fn the_docs_say_country_is_the_place_of_performance_only_in_every_era() {
         let start = PAGE.find("<td class=\"ep\">country</td>").expect("/docs has a country filter row");
@@ -2668,7 +2682,7 @@ mod tests {
                     "notice_classifications under field ids ted-ca_ce_nuts (buyer) and ted-tenderer_nuts (winner)",
                     "serves none: no fallback to an address",
                     "keeps the place an earlier one published",
-                    "until the issue-546 refold has run",
+                    "the stored r2.0.9 tenders were refolded under this rule on 2026-10-24 (jobs 2764 and 2765)",
                 ],
             );
         }
@@ -2685,7 +2699,7 @@ mod tests {
             ("TenderDetail.classifications", classifications),
             ("/v1/sql/schema", schema.as_str()),
         ] {
-            assert_says(surface, text, &["the place of performance only", "ted-ca_ce_nuts", "issue-546 refold"]);
+            assert_says(surface, text, &["the place of performance only", "ted-ca_ce_nuts"]);
         }
     }
 
@@ -3054,7 +3068,10 @@ mod tests {
     /// moved. Issue 562: a label move is announced by the fold's `version: null` correction, so
     /// its exception is gone too; the Diff says why the new label's subscriber hears `changed`
     /// (or `added`, for an entity the version before did not hold) and the old label's
-    /// `removed`.
+    /// `removed`. Issue 561: each version is read at its own stored value; both surfaces name
+    /// the superset only as the fallback (a Tender not yet filled or awaiting its refold), the
+    /// rare lagging-stream residue, and the `value_probe_changed` reset, and no longer say an
+    /// earlier version's value is not stored.
     #[test]
     fn the_docs_say_a_date_bound_implies_a_sort_on_pages_only() {
         const PAGES_ONLY: &str = "(pages only; a stream snapshots in id order)";
@@ -3093,9 +3110,13 @@ mod tests {
                     // Issue 560 retired its exception; the Tender-scope lots filters are 565's.
                     "is checked again only when a change row is written for the lot itself",
                     "(issue 565)",
-                    // Issue 560 review: a version superseded within the same fold reads the superset too.
-                    "a version since superseded is read as a superset on both sides, whether a later version was written in the same fold or the stream resumes, or lags, past it",
-                    "so a changed or an added can name an entity outside the bound, on a live stream as well as a resumed one",
+                    // Issue 561: each version is read at its own stored value; the superset is the
+                    // fallback for a Tender not yet filled or awaiting its refold, and a
+                    // value-bounded resume from before the stored values is reset.
+                    "each version is read at its own value",
+                    "an earlier version is read as a superset",
+                    "a stream that lags across such a refold keeps one (issue 561)",
+                    "value_probe_changed",
                     "a lot changed can arrive when only its tender's value or closure moved",
                     // Issue 562: a label move is announced, so it is no exception to the exact
                     // final state; the Diff says why a new-label subscriber hears `changed`.
@@ -3104,6 +3125,9 @@ mod tests {
                 ],
             );
             assert!(!plain(text).contains("re-evaluates no lot"), "{surface} still names issue 560's gap:\n{text}");
+            for gone in ["an earlier version's value is not stored", "a version since superseded is read as a superset on both sides"] {
+                assert!(!plain(text).contains(gone), "{surface} still says issue 561's superset is the rule: {gone:?}\n{text}");
+            }
             assert!(!plain(text).contains("(issue 560)"), "{surface} still lists issue 560 as an exception:\n{text}");
             assert!(
                 !plain(text).contains("reaches a subscriber to the old label as nothing"),

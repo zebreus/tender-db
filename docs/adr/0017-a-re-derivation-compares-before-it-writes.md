@@ -279,6 +279,47 @@ into one fold.
   - The read path gates on the flag.
   - After a rollback below the deploy, clear the flag and re-walk.
 
+### Amendment (issue 561): quiet per-version values
+
+Issue 561 stores each version's elected value on its version row
+(`tender_versions.value_eur_cents`, the head election as of that version's prefix) so the SSE
+transition probe can read an earlier version exactly. That column is derived from the version's
+own amounts and its prefix's scale partners, so it rides the compare, but it must not make every
+Tender the fold touches a correction. Four decisions change:
+
+- **D1.4.** A version row may carry a QUIET column (`canonical::QUIET_VERSION_COLUMN`; today only
+  `tender_versions.value_eur_cents`). It is inserted with its version row but left out of the
+  version-row equality. When only it differs, one single-column `UPDATE` refreshes it in place;
+  the version is not rewritten and keeps its rowid. A version that differs elsewhere is rewritten
+  whole as before, and its INSERT carries the fresh value.
+- **D3.** A quiet refresh is not a difference: it writes no rule T or rule L row. A Tender whose
+  only difference is quiet is verified, and the refreshed versions are counted apart
+  (`values_refreshed` on the compare line), so `verified + corrected == stamped` holds.
+- **D5.** A stored per-version copy of an election that only the SSE transition probe reads is
+  filled and refreshed quietly, by any fold of its Tender, with no change row. A live
+  subscriber's held state is set by the head probe, which was already exact. The reader trusts
+  the column only at `projection_epoch >= VERSION_VALUE_EPOCH` and reads the 547/551 superset
+  below it, so an unfilled Tender, one re-stamped 0 or one a rolled-back binary stamped 4 reads
+  as before. A value-bounded SSE resume from before the column's migration is answered with
+  `reset` `value_probe_changed` (`projection_state.value_probe_cursor`, recorded by the boot
+  that adds the column), which closes the 4→5 straddle for the lazy fill. The horizon token
+  itself is reset too: it was issued for the last row classified under the superset. The
+  price is that a fresh stream's `live` token, until the first change after the deploy, is
+  that same position and re-snapshots on a reconnect.
+- **D6/D7.** Issue 561 bumped the epoch (4→5) without an R4. Completeness is not required,
+  because the reader is epoch-gated: the fill rides every fold of a Tender, and the remainder
+  the next all-profile refold run for another reason. D7's R4 read is then `projection_epoch <>
+  5`. The R2 template's E4 names the column: an in-place walk that moves a version's `eur_cents`
+  must stamp the Tender 0 (and re-queue it), as `rederive-eur` does: only the fold writes the column
+  (`the_version_value_has_one_writer`).
+- **Accepted residual.** A subscriber that lags across a Tender's 0→5 re-stamp (a targeted
+  refold, or a roll-forward after a rollback), reading that Tender's row N before the refill and
+  row N+1 after, can keep it: a ghost, or a lost `removed`. `rederive-eur` and merges are not in
+  this class: their seq-less correction rows come after row N, and the in-place arm delivers
+  `removed`. A roll-forward does not re-record the horizon, so after one the residual goes on the
+  operator notice (docs/operations.md, issue 561's section). The served text (/docs, the openapi EventStream, the
+  CHANGELOG) names the refold after a rate re-derivation and after a merge too: conservative, on purpose.
+
 ## Consequences
 
 - **Fold cost.** A stale refold now costs a per-Tender verify, the stored-row

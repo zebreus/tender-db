@@ -223,6 +223,12 @@ pub(crate) const SCHEMA: &str = "
         -- are stamped by `backfill-original-lang`, not a refold.
         original_lang       TEXT,
         publication_id      TEXT NOT NULL,
+        -- Issue 561: the Tender's elected value at this version, EUR cents: what the head
+        -- column held while this version was the head, a 551 lot sum included. Written by the
+        -- fold (head_value_eur_cents_with over the running ScalePartners); read by the SSE At
+        -- probe only when tenders.projection_epoch >= VERSION_VALUE_EPOCH. NULL = nothing
+        -- elected, or not filled yet. Not indexed.
+        value_eur_cents     INTEGER,
         PRIMARY KEY (tender_id, seq),
         -- One version per Notice: re-projecting a package can never duplicate a
         -- version, which is what makes re-processing a no-op.
@@ -1095,7 +1101,12 @@ pub(crate) const SCHEMA: &str = "
         -- by: Db::open when no notice exists yet, a completed full plan build (its
         -- producer ran on every parsed notice), and a finished wet
         -- `backfill-tender-links`. Never set back to 0.
-        tender_links_complete INTEGER NOT NULL DEFAULT 0
+        tender_links_complete INTEGER NOT NULL DEFAULT 0,
+        -- Issue 561: the change cursor at or below which a min_value/max_value SSE resume is
+        -- answered with `reset` (value_probe_changed), when non-zero: every row up to it was
+        -- classified while earlier versions were read as a superset. Set once, by the boot that adds
+        -- tender_versions.value_eur_cents (lib.rs migrate); 0 on a file created with it.
+        value_probe_cursor INTEGER NOT NULL DEFAULT 0
     ) STRICT;
     INSERT OR IGNORE INTO projection_state(id, rebuild_in_progress) VALUES (0, 0);
 
@@ -1423,8 +1434,8 @@ pub struct LeafTable {
 }
 
 /// Every leaf table, in [`Leaf`] (teardown) order. A column added to a leaf table's
-/// `CREATE TABLE` must be added here and to `MIGRATIONS`; `leaf_tables_match_the_schema_
-/// fresh_and_migrated` fails until all three agree.
+/// `CREATE TABLE` must be added here and to `MIGRATIONS` or an `add_column` in `migrate`;
+/// `leaf_tables_match_the_schema_fresh_and_migrated` fails until all three agree.
 pub const LEAF_TABLES: [&LeafTable; LEAF_COUNT] = [
     &LeafTable { leaf: Leaf::ResultWinners, name: "tender_version_result_winners", cols: &["tender_id", "seq", "lot_result_id", "organization_id", "is_buyer"], lot: LotScope::ViaLotResult("lot_result_id") },
     &LeafTable { leaf: Leaf::ResultStats, name: "tender_version_result_stats", cols: &["tender_id", "seq", "lot_result_id", "kind", "count", "quality"], lot: LotScope::ViaLotResult("lot_result_id") },
@@ -1439,7 +1450,7 @@ pub const LEAF_TABLES: [&LeafTable; LEAF_COUNT] = [
     &LeafTable { leaf: Leaf::Classifications, name: "tender_version_classifications", cols: &["tender_id", "seq", "lot_id", "field", "scheme", "code"], lot: LotScope::Column("lot_id") },
     &LeafTable { leaf: Leaf::LotGroupMembers, name: "tender_version_lot_group_members", cols: &["tender_id", "seq", "group_lot_id", "member_lot_id"], lot: LotScope::Pair("group_lot_id", "member_lot_id") },
     &LeafTable { leaf: Leaf::VersionLots, name: "tender_version_lots", cols: &["tender_id", "seq", "lot_id", "kind", "value_cents", "value_currency", "value_eur_cents"], lot: LotScope::Column("lot_id") },
-    &LeafTable { leaf: Leaf::Versions, name: "tender_versions", cols: &["tender_id", "seq", "caused_by_notice_id", "published_at", "dispatched_at", "notice_subtype", "original_lang", "publication_id"], lot: LotScope::Tender },
+    &LeafTable { leaf: Leaf::Versions, name: "tender_versions", cols: &["tender_id", "seq", "caused_by_notice_id", "published_at", "dispatched_at", "notice_subtype", "original_lang", "publication_id", "value_eur_cents"], lot: LotScope::Tender },
 ];
 const _: () = {
     let mut i = 0;
@@ -1448,6 +1459,14 @@ const _: () = {
         i += 1;
     }
 };
+
+/// Issue 561 (ADR-0017 D1.4 as amended): the one QUIET column of the fold's leaf rows, on
+/// `tender_versions`. It is INSERTed with its version row but left out of the version-row
+/// equality, so a version that differs only there is not rewritten: one UPDATE refreshes it
+/// ([`Rewrite::refresh`]), no rule T/L row is written (D3), and the Tender counts as verified
+/// ([`Applied::values_refreshed`]). A stored copy of the head election that only the SSE
+/// transition probe reads (D5).
+pub const QUIET_VERSION_COLUMN: &str = "value_eur_cents";
 
 /// The order the fold INSERTs leaf rows: parents before children, so a foreign-keys-ON
 /// caller finds each referenced `(tender_id, seq)` present. The currency present-set is
@@ -1679,6 +1698,9 @@ struct CompareTally {
     lots: BTreeSet<i64>,
     /// The new head version's lots: rule L's first set, taken when `head_differs`.
     head_lots: BTreeSet<i64>,
+    /// Issue 561: versions whose quiet column alone differed (refreshed in place by `On`,
+    /// planned by `Shadow`).
+    values_refreshed: u64,
     /// Stored versions past the compared prefix were dropped without a compare (a mid-chain
     /// insert, a replaced tail, a cut): what subscribers hold is not what the fresh chain
     /// diffs against, so rule L takes every surviving lot of the Tender (ADR-0017 D3's
@@ -1714,11 +1736,14 @@ impl CompareTally {
                     self.rewrite(table.leaf, rows);
                 }
             }
-            return Rewrite { tables: [true; LEAF_COUNT], whole: true };
+            return Rewrite { tables: [true; LEAF_COUNT], whole: true, refresh: None };
         };
+        let quiet = Leaf::Versions.table().col(QUIET_VERSION_COLUMN);
         let equal: [bool; LEAF_COUNT] = std::array::from_fn(|i| {
             let (old, new) = (&stored.rows[i], &fresh.rows[i]);
-            old.len() == new.len() && old.iter().zip(new).all(|(a, b)| same_value(a, b))
+            // Issue 561: the quiet column is not part of the version row's equality (D1.4).
+            let (n, skip) = (LEAF_TABLES[i].ncols(), (i == Leaf::Versions as usize).then_some(quiet));
+            old.len() == new.len() && old.iter().zip(new).enumerate().all(|(k, (a, b))| Some(k % n) == skip || same_value(a, b))
         });
         // A differing `tender_versions` row rewrites the whole version (ADR-0017 D1.4): its
         // child rows go with the FK parent.
@@ -1760,7 +1785,12 @@ impl CompareTally {
                 via.lots_of(table, row, &mut self.lots);
             }
         }
-        Rewrite { tables, whole }
+        // Issue 561: the quiet value alone moved. A whole rewrite carries the fresh one in its INSERT.
+        let (old, new) = (&stored.rows[Leaf::Versions as usize], &fresh.rows[Leaf::Versions as usize]);
+        let refresh = (!whole && !new.is_empty() && old.len() == new.len() && !same_value(&old[quiet], &new[quiet]))
+            .then(|| new[quiet].clone());
+        self.values_refreshed += u64::from(refresh.is_some());
+        Rewrite { tables, whole, refresh }
     }
 
     fn rewrite(&mut self, leaf: Leaf, rows: u64) {
@@ -1783,6 +1813,9 @@ struct Rewrite {
     tables: [bool; LEAF_COUNT],
     /// The whole version is rewritten: `delete_version`, then every fresh row.
     whole: bool,
+    /// Issue 561: the fresh quiet value `On` writes into the stored version row with one
+    /// UPDATE; `None` when it is unchanged or the version is rewritten whole.
+    refresh: Option<Value>,
 }
 
 /// The rows of `old` and `new` (row-major, `n` values per row) that the other side does not
@@ -1953,6 +1986,7 @@ pub struct CarrierSweepStop {
 /// | 2 | issue 174 — r208 `RECEIPT_LIMIT_DATE` maps to `submission_deadline`, so the 2011–2016 era re-folds with deadlines |
 /// | 3 | issue 177 — r208 `VALUE_COST` routes by context (CN estimate / award value / CAN final total), so the era re-folds with `estimated_value`/`result_value` |
 /// | 4 | issue 490 — every version's lots carry their elected value (`tender_version_lots.value_*`), every profile |
+/// | 5 | issue 561 — every version stores its elected value (`tender_versions.value_eur_cents`), every profile; filled by any fold of the Tender (no all-profile refold), read behind [`VERSION_VALUE_EPOCH`] |
 ///
 /// **Bump this ONLY for a logic change that crosses profiles** (issue 179). A
 /// profile-scoped mapping fix — the 174/177 class, historically every bump —
@@ -1966,12 +2000,21 @@ pub struct CarrierSweepStop {
 /// Bumped for issue 490 because that change DOES cross every profile: a stored
 /// version written before it has NULL lot values, so its chain stopped being a
 /// state key for the `value_*` columns everywhere at once. The epoch is also its
-/// completeness check -- `projection_epoch <> 4` on a bounded `tenders` window
-/// names the Tenders the backfill (an all-profile refold) has not reached yet.
+/// completeness check -- `projection_epoch <> PROJECTION_EPOCH` (4 then, 5 since issue
+/// 561) on a bounded `tenders` window names the Tenders the backfill (an all-profile
+/// refold) has not reached yet.
 /// The election functions the stored value depends on are fold logic from then
 /// on: a change to [`sentinel_amount`], [`IMPLAUSIBLE_EUR_CENTS`] or
 /// [`ScalePartners`] reaches a stored lot value only through a stamping refold,
 /// exactly like [`head_value_eur_cents`] reaches the head column.
+///
+/// Bumped for issue 561 WITHOUT the all-profile refold 490 needed. The stored value is quiet
+/// ([`QUIET_VERSION_COLUMN`]): an epoch-4 Tender the fold touches is compared, verified, and its
+/// version values are refreshed in place, so the value fill itself writes no change row; a prefix
+/// that drifted for another reason is corrected and announced, as on any stale refold. The
+/// reader trusts the column only at [`VERSION_VALUE_EPOCH`] or above and reads the 547 superset
+/// below, so completeness is not required; the remainder rides the next all-profile refold run
+/// for another reason (docs/operations.md, issue 561's section).
 ///
 /// Since issue 495 unit 4 (ADR-0017) a bump no longer costs a full rewrite and replay.
 /// Every stale Tender is compared with what is stored, and only what differs is
@@ -2024,7 +2067,21 @@ pub struct CarrierSweepStop {
 /// (fresh ingests, re-parses — which is also why the fresh-DB golden legitimately
 /// changed). Collapsing the EXISTING provisional rows is a separate backfill
 /// concern on issue 234, not a fold concern.
-pub const PROJECTION_EPOCH: i64 = 4;
+pub const PROJECTION_EPOCH: i64 = 5;
+
+/// Issue 561: the first epoch whose folds store every version's elected value. The SSE At probe
+/// reads `tender_versions.value_eur_cents` only on a Tender stamped at or above it
+/// (`read::ValueBy::Version`) and falls back to the superset below, so an unfilled Tender, one
+/// re-stamped 0, or one a rolled-back binary stamped 4 reads as before. Its own constant, not
+/// [`PROJECTION_EPOCH`], which will move again.
+pub const VERSION_VALUE_EPOCH: i64 = 5;
+const _: () = assert!(PROJECTION_EPOCH >= VERSION_VALUE_EPOCH, "the fold must fill what the reader trusts");
+
+/// `tender_versions`' primary-key index, `(tender_id, seq)`: its PRIMARY KEY is the table's first
+/// constraint, the UNIQUE `(tender_id, caused_by_notice_id)` its second (`…_2`). Issue 561: the At
+/// probes and the head gate pin `v` to it, because any non-key `v` column moves turso 0.7.2 to `…_2`,
+/// which walks every version of the Tender per probe (561's adversarial check, at561.plan).
+pub const VERSION_PK_INDEX: &str = "sqlite_autoindex_tender_versions_1";
 
 const NODE_WRITE_BATCH: usize = 20_000;
 
@@ -15317,6 +15374,11 @@ pub struct Applied {
     /// a compare, the unchanged-chain early return included: one per Tender. The acting
     /// compare's own set counts under `tenders_corrected`.
     pub label_corrections: u64,
+    /// Issue 561: version rows whose quiet value alone moved, refreshed in place by `On`
+    /// (planned by `Shadow`): not a correction (ADR-0017 D3 as amended), so `verified +
+    /// corrected == stamped` holds. About the versions with a non-NULL elected value (stored
+    /// NULL equals fresh NULL).
+    pub values_refreshed: u64,
 }
 
 impl Applied {
@@ -15342,6 +15404,7 @@ impl Applied {
         self.compare_versions += other.compare_versions;
         self.compare_nanos += other.compare_nanos;
         self.label_corrections += other.label_corrections;
+        self.values_refreshed += other.values_refreshed;
         for i in 0..LEAF_COUNT {
             self.tables_skipped_by_leaf[i] += other.tables_skipped_by_leaf[i];
             self.tables_rewritten_by_leaf[i] += other.tables_rewritten_by_leaf[i];
@@ -15372,11 +15435,12 @@ impl Applied {
             return None;
         }
         Some(format!(
-            "compare (issue 495): {} tenders verified, {} corrected; tables {} skipped / {} \
-             rewritten; rows {} skipped / {} rewritten; {} correction rows; {} stored rows \
-             of {} versions read in {:.1}s: {:.2} us per row, {:.1} us per version",
+            "compare (issue 495): {} tenders verified, {} corrected, {} version values refreshed \
+             quietly (issue 561); tables {} skipped / {} rewritten; rows {} skipped / {} \
+             rewritten; {} correction rows; {} stored rows of {} versions read in {:.1}s: {:.2} us per row, {:.1} us per version",
             self.tenders_verified,
             self.tenders_corrected,
+            self.values_refreshed,
             self.tables_skipped,
             self.tables_rewritten,
             self.rows_skipped,
@@ -18285,6 +18349,10 @@ impl Db {
         // inside the new feed and silently merge two generations (issue 46).
         conn.execute("UPDATE feed_generation SET generation = generation + 1 WHERE id = 0", ())
             .await?;
+        // Issue 561: the new log is classified wholly by this binary (every version's own value),
+        // and its cursors restart at 1, so the old horizon would reset every value-bounded resume
+        // of the new generation until the log passed the old high-water.
+        conn.execute("UPDATE projection_state SET value_probe_cursor = 0 WHERE id = 0", ()).await?;
         // The watch was seeded from the OLD high-water; reset it to the new empty
         // table's max (0) so /health and the coverage refresher see the reset at once.
         self.publish_cursor(&conn).await?;
@@ -24298,11 +24366,15 @@ impl Db {
             let seq = i as i64 + 1;
             partners.add_version_figures(version);
             partners.set_head(version);
-            // Issue 560: elected only where a transition row reads it — this version's own, or
+            // Issue 561: every written or compared version stores the head election as of its own
+            // prefix — what the head column held while it was the head (issue 375's rule: the fold's
+            // own function). The same figure 560's move test reads below.
+            let version_value = head_value_eur_cents_with(version, &partners, &rates).eur_cents;
+            // Issue 560: read only where a transition row reads it — this version's own, or
             // (`On`) the compared prefix's last value, which the first appended version reads.
             let announced = !(acting && i < compared);
             let value_moved = if announced || (i + 1 == compared && compared < p.versions.len()) {
-                let value_now = head_value_eur_cents_with(version, &partners, &rates).eur_cents;
+                let value_now = version_value;
                 let mut moved = prev_value.is_some_and(|before| before != value_now);
                 if i == keep && pure_append {
                     moved |= stored_head_value.is_some_and(|stored| stored != value_now);
@@ -24341,7 +24413,7 @@ impl Db {
             // `pending` in push order, so the batch flushes exactly the same rows. `On` moves
             // only what differs.
             let target: &mut Pending = if shadow { &mut scratch } else { &mut *pending };
-            self.write_version(conn, tender_id, seq, version, &partners, stmts, target, &mut written).await?;
+            self.write_version(conn, tender_id, seq, version, &partners, version_value, stmts, target, &mut written).await?;
             let mut wrote = true;
             if shadow {
                 let started = std::time::Instant::now();
@@ -24421,6 +24493,15 @@ impl Db {
             // Issue 551: the election's EUR figure and, for a derived lot-sum head, its marker:
             // written (or cleared) together with every other head column below.
             let value = head_value_eur_cents_with(head, &partners, &rates);
+            if keep == p.versions.len() {
+                // Issue 561: a chain cut back to its kept prefix wrote no version, so the head is a kept
+                // one whose stored value was elected at its own fold's rates. Restate it as the head's
+                // (the batch's head gate checks the two agree, `assert_heads_match`).
+                stmts
+                    .version_value_update
+                    .execute((opt_int(value.eur_cents), Value::Integer(tender_id), Value::Integer(keep as i64)))
+                    .await?;
+            }
             let (derivation, derived_cents, derived_currency, derivation_detail) = StoredHead::derivation_columns(&value);
             let fresh = StoredHead {
                 seq: Some(p.versions.len() as i64),
@@ -24501,7 +24582,7 @@ impl Db {
                 tally.differs = true;
                 tally.head_differs = true;
             }
-            let differs = tally.differs;
+            let (differs, refreshed) = (tally.differs, tally.values_refreshed > 0);
             let state = stmts.compare.as_ref().expect("compare statements");
             let lots = Self::count_compare(&mut applied, tally, state, &written.lots);
             if acting && differs {
@@ -24515,9 +24596,11 @@ impl Db {
             }
             if acting {
                 // Past-prefix versions, a cut chain or a whole-version rewrite moved what the
-                // head points at; otherwise the head is untouched and needs no re-check.
+                // head points at; otherwise the head is untouched and needs no re-check; a quiet
+                // refresh (issue 561) is returned too, so the head gate checks the refreshed head
+                // value.
                 chain_moved |= tally_moved_chain(compared, stored.len(), p.versions.len());
-                return Ok((applied, chain_moved.then_some(tender_id)));
+                return Ok((applied, (chain_moved || refreshed).then_some(tender_id)));
             }
         }
         // Issue 562: a fold that moved the Tender's `source` or `kind` in place (a DÖE Tender
@@ -24591,6 +24674,10 @@ impl Db {
             scratch.move_into(pending);
             return Ok(true);
         }
+        // Issue 561: the quiet value alone moved — one UPDATE; not a version write (`wrote` stays).
+        if let Some(value) = &plan.refresh {
+            stmts.version_value_update.execute((value.clone(), Value::Integer(tender_id), Value::Integer(seq))).await?;
+        }
         let mut wrote = false;
         for (i, table) in LEAF_TABLES.iter().enumerate() {
             if plan.tables[i] {
@@ -24638,6 +24725,10 @@ impl Db {
     /// the dangerous case is exactly a NULL one: a Tender whose versions were all
     /// removed keeps its old `current_seq` (the head update is skipped when the
     /// new chain is empty), leaving a pointer into versions that no longer exist.
+    ///
+    /// Issue 561: when every pointer holds, a second statement checks that the head version's
+    /// stored value (`tender_versions.value_eur_cents`, which the SSE At probe reads at earlier
+    /// versions) is the head column, `v` pinned to its primary key ([`VERSION_PK_INDEX`]).
     async fn assert_heads_match(conn: &Connection, ids: &[i64]) -> turso::Result<()> {
         if ids.is_empty() {
             return Ok(());
@@ -24653,7 +24744,7 @@ impl Db {
               LIMIT 5"
         );
         let params: Vec<Value> = ids.iter().map(|id| Value::Integer(*id)).collect();
-        let mut rows = conn.query(&sql, params).await?;
+        let mut rows = conn.query(&sql, params.clone()).await?;
         let mut bad = Vec::new();
         while let Some(row) = rows.next().await? {
             bad.push(format!(
@@ -24663,11 +24754,35 @@ impl Db {
                 row.get_value(2).ok(),
             ));
         }
+        drop(rows);
+        if !bad.is_empty() {
+            return Err(turso::Error::Corrupt(format!(
+                "projection would commit a Tender head that is not the last version: {}",
+                bad.join("; ")
+            )));
+        }
+        // Issue 561: the head version's stored value is the head column, for every Tender this batch wrote.
+        let sql = format!(
+            "SELECT t.id, t.current_value_eur_cents, v.value_eur_cents
+               FROM tenders t JOIN tender_versions v INDEXED BY {VERSION_PK_INDEX}
+                 ON v.tender_id = t.id AND v.seq = t.current_seq
+              WHERE t.id IN ({places}) AND v.value_eur_cents IS NOT t.current_value_eur_cents
+              LIMIT 5"
+        );
+        let mut rows = conn.query(&sql, params).await?;
+        while let Some(row) = rows.next().await? {
+            bad.push(format!(
+                "tender {} head value={:?} but version value={:?}",
+                int(&row, 0),
+                row.get_value(1).ok(),
+                row.get_value(2).ok(),
+            ));
+        }
         if bad.is_empty() {
             return Ok(());
         }
         Err(turso::Error::Corrupt(format!(
-            "projection would commit a Tender head that is not the last version: {}",
+            "projection would commit a stored version value that is not its head's (issue 561): {}",
             bad.join("; ")
         )))
     }
@@ -24826,6 +24941,7 @@ impl Db {
         applied.tables_rewritten += tally.tables_rewritten;
         applied.rows_skipped += tally.rows_skipped;
         applied.rows_rewritten += tally.rows_rewritten;
+        applied.values_refreshed += tally.values_refreshed;
         for i in 0..LEAF_COUNT {
             applied.tables_skipped_by_leaf[i] += tally.skipped_by_leaf[i];
             applied.tables_rewritten_by_leaf[i] += tally.rewritten_by_leaf[i];
@@ -42749,6 +42865,7 @@ impl Db {
         seq: i64,
         v: &TenderVersion,
         partners: &ScalePartners<'_>,
+        version_value: Option<i64>,
         stmts: &mut TenderInserts,
         pending: &mut Pending,
         written: &mut WrittenEntities,
@@ -42762,6 +42879,8 @@ impl Db {
             opt_text(v.notice_subtype.as_deref()),
             opt_text(v.original_lang.as_deref()),
             t(&v.publication_id),
+            // Issue 561: the head election as of this version's prefix (`QUIET_VERSION_COLUMN`).
+            opt_int(version_value),
         ]);
         // ADR-0014: one conversion context per version — the rates snapshot plus
         // the version's publication date — so every money row derives its EUR
@@ -44898,6 +45017,8 @@ struct TenderInserts {
     stored_chain: Statement,
     /// The fold's change rows ([`APPEND_CHANGE_SQL`]).
     change: Statement,
+    /// Issue 561: one version's quiet value (`QUIET_VERSION_COLUMN`) refreshed in place.
+    version_value_update: Statement,
     /// The current Tender's entity ids, so a long chain resolves each lot or result
     /// once instead of once per version (and again in its change diff).
     ids: IdentityCache,
@@ -44999,6 +45120,9 @@ impl TenderInserts {
                 .prepare("SELECT caused_by_notice_id FROM tender_versions WHERE tender_id = ? ORDER BY seq")
                 .await?,
             change: conn.prepare(APPEND_CHANGE_SQL).await?,
+            version_value_update: conn
+                .prepare("UPDATE tender_versions SET value_eur_cents = ? WHERE tender_id = ? AND seq = ?")
+                .await?,
             ids: IdentityCache::default(),
             tenders: conn
                 .prepare(
@@ -50745,9 +50869,10 @@ mod tests {
     /// fails, the descriptor changed what the writer runs: the goldens will move too.
     #[test]
     fn leaf_sql_is_the_pre_495_literal_text() {
-        use super::{CONTENT_TABLES, ENTITY_TABLES, LEAF_COUNT, LEAF_FLUSH_ORDER, LEAF_TABLES, Leaf, LotScope};
+        use super::{CONTENT_TABLES, ENTITY_TABLES, LEAF_COUNT, LEAF_FLUSH_ORDER, LEAF_TABLES, Leaf, LotScope, QUIET_VERSION_COLUMN};
         const PREFIXES: [(&str, usize); LEAF_COUNT] = [
-            ("INSERT INTO tender_versions(tender_id, seq, caused_by_notice_id, published_at, dispatched_at, notice_subtype, original_lang, publication_id) VALUES ", 8),
+            // Issue 561: the quiet per-version value, appended (an `add_column` on a migrated file).
+            ("INSERT INTO tender_versions(tender_id, seq, caused_by_notice_id, published_at, dispatched_at, notice_subtype, original_lang, publication_id, value_eur_cents) VALUES ", 9),
             ("INSERT INTO tender_version_lots(tender_id, seq, lot_id, kind, value_cents, value_currency, value_eur_cents) VALUES ", 7),
             ("INSERT INTO tender_version_lot_group_members(tender_id, seq, group_lot_id, member_lot_id) VALUES ", 4),
             ("INSERT INTO tender_version_texts(tender_id, seq, lot_id, field, lang, value) VALUES ", 6),
@@ -50767,6 +50892,7 @@ mod tests {
             assert_eq!(leaf.table().insert_prefix(), prefix, "{leaf:?}'s INSERT prefix");
             assert_eq!(leaf.table().ncols(), ncols, "{leaf:?}'s column count");
         }
+        assert!(Leaf::Versions.table().cols.contains(&QUIET_VERSION_COLUMN), "the quiet column is a version column");
         const TEARDOWN: [&str; LEAF_COUNT] = [
             "tender_version_result_winners",
             "tender_version_result_stats",
@@ -50817,6 +50943,213 @@ mod tests {
         );
         assert_eq!(CONTENT_TABLES[LEAF_COUNT..], ENTITY_TABLES, "then the identity tables");
         assert_eq!(ENTITY_TABLES, ["lot_results", "bids", "contracts", "lots"]);
+    }
+
+    /// Issue 561: every version the fold writes stores the head election as of its own prefix,
+    /// `head_value(&chain[..k])`: what the head column held while version k was the head. The
+    /// chains are every 551 fixture, extended by a trailing version so that the original head
+    /// (for the 16 of `a_refused_total_serves_the_lot_sum_it_vouches_for`, a path-V derived sum;
+    /// 1024214's carries the partner-only BT-709) is stored at a NON-head seq, plus one hand
+    /// chain of sentinels (EUR 0, all nines), a GBP figure restated four days later at another
+    /// rate, a `Part` lot above the procedure total, a currency with no rate and a scale-slip
+    /// shape. The test does not assert what the election makes of any of these, only that the
+    /// stored value is it. Each chain folds whole, then (on fresh keys) as `chain[..2]` and an
+    /// append of the rest (keep = 2).
+    #[tokio::test]
+    async fn the_stored_version_value_is_the_head_value_of_each_prefix() {
+        use super::{TenderProjection, head_value};
+        use turso::Value;
+        let (db, path) = scratch_db("561-version-value").await;
+        db.set_foreign_keys(false).await.expect("fk off");
+        let derived_ids = [
+            251619, 369057, 380921, 392980, 425446, 706887, 1024214, 5779108, 5943121, 6342034, 6921980, 7044132,
+            7427765, 7829010, 8514592, 928196,
+        ];
+        let amt = |field: &str, cents: i64, currency: &str| Fact::Amount {
+            field: field.into(),
+            cents,
+            currency: currency.into(),
+            tax_basis: None,
+            quality: None,
+        };
+        let lot = |key: &str, kind: &str, facts: Vec<Fact>| LotState {
+            key: key.into(),
+            kind: kind.into(),
+            facts: facts.into_iter().collect(),
+            published_lot_no: None,
+        };
+        // (name, chain, rates as (currency, date, units per EUR))
+        let mut cases: Vec<(String, Vec<TenderVersion>, Vec<(String, String, f64)>)> = Vec::new();
+        for fx in super::lot_sum_551_fixtures::FIXTURES {
+            let mut chain = fx.versions();
+            let orig_len = chain.len();
+            if derived_ids.contains(&fx.id) {
+                assert!(head_value(&chain[..orig_len], &fx.rates()).derived.is_some(), "{}: a path-V derived head", fx.id);
+            }
+            let mut trailing = chain.last().expect("a chain").clone();
+            trailing.caused_by_notice_id = orig_len as i64 + 1;
+            trailing.published_at += 86_400;
+            trailing.publication_id = format!("{}-{}", fx.id, orig_len + 1);
+            trailing.facts.clear();
+            chain.push(trailing);
+            let date = crate::rates::civil_date(super::lot_sum_551_fixtures::PUBLISHED_AT);
+            let rates = fx.rates.iter().map(|(c, r)| (c.to_string(), date.clone(), *r)).collect();
+            cases.push((format!("551-{}", fx.id), chain, rates));
+        }
+        // 2026-01-01T12:00:00Z, one version a day; the GBP restatement four days after the first.
+        let day = |n: i64| 1_767_268_800 + n * 86_400;
+        let mut hand = vec![
+            head(vec![amt("estimated_value", 0, "EUR")], vec![amt("estimated_value", 99_999_999_900, "EUR")]),
+            head(vec![amt("estimated_value", 80_000_000, "GBP")], vec![amt("estimated_value", 99_999_999_900, "EUR")]),
+            head(vec![amt("estimated_value", 80_000_000, "GBP")], Vec::new()),
+            head(vec![amt("estimated_value", 80_000_000, "GBP")], Vec::new()),
+            head(vec![amt("estimated_value", 50_000_000, "XYZ")], vec![amt("estimated_value", 40_000_000, "XYZ")]),
+            head(vec![amt("estimated_value", 3_000_000_000_000, "EUR")], Vec::new()),
+        ];
+        hand[3].lots = vec![lot("LOT-0001", "Part", vec![amt("estimated_value", 200_000_000, "EUR")])];
+        hand[5].lots = vec![
+            lot("LOT-0001", "Lot", vec![amt("estimated_value", 150_000_000, "EUR")]),
+            lot("LOT-0002", "Lot", vec![amt("estimated_value", 150_000_000, "EUR")]),
+        ];
+        let days = [0, 1, 5, 6, 7, 8];
+        for (i, v) in hand.iter_mut().enumerate() {
+            v.caused_by_notice_id = i as i64 + 1;
+            v.published_at = day(days[i]);
+            v.publication_id = format!("hand-{}", i + 1);
+        }
+        let gbp = vec![
+            ("GBP".to_owned(), crate::rates::civil_date(day(1)), 0.8),
+            ("GBP".to_owned(), crate::rates::civil_date(day(5)), 0.9),
+        ];
+        cases.push(("hand".to_owned(), hand, gbp));
+
+        async fn stored(db: &Db, key: &str) -> (Vec<(i64, Option<i64>)>, Option<i64>) {
+            let conn = db.reader().await.expect("reader");
+            let mut rows = conn
+                .query(
+                    "SELECT v.seq, v.value_eur_cents FROM tender_versions v JOIN tenders t ON t.id = v.tender_id
+                      WHERE t.procedure_key = ? ORDER BY v.seq",
+                    (Value::Text(key.to_owned()),),
+                )
+                .await
+                .expect("versions");
+            let mut out = Vec::new();
+            while let Some(row) = rows.next().await.expect("row") {
+                out.push((row.get_value(0).unwrap().as_integer().copied().unwrap(), row.get_value(1).unwrap().as_integer().copied()));
+            }
+            let mut rows = conn
+                .query("SELECT current_value_eur_cents FROM tenders WHERE procedure_key = ?", (Value::Text(key.to_owned()),))
+                .await
+                .expect("head");
+            let head = rows.next().await.expect("row").expect("the tender").get_value(0).unwrap().as_integer().copied();
+            (out, head)
+        }
+        let projection = |key: &str, versions: Vec<TenderVersion>| TenderProjection {
+            source: "ted".into(),
+            procedure_key: Some(key.to_owned()),
+            island_notice_id: None,
+            kind: "procedure".into(),
+            versions,
+        };
+        let mut n = 0;
+        let mut derived_at_non_head = 0;
+        for (name, chain, rates) in &cases {
+            let rows: Vec<(String, String, f64, String)> =
+                rates.iter().map(|(c, d, r)| (c.clone(), d.clone(), *r, "ecb".to_owned())).collect();
+            db.upsert_currency_rates(&rows).await.expect("rates");
+            db.reload_rates_lookup().await.expect("reload");
+            let lookup = db.rates_lookup();
+            let want: Vec<(i64, Option<i64>)> =
+                (1..=chain.len()).map(|k| (k as i64, head_value(&chain[..k], &lookup).eur_cents)).collect();
+            if name.starts_with("551-") && head_value(&chain[..chain.len() - 1], &lookup).derived.is_some() {
+                derived_at_non_head += 1;
+            }
+            // Whole, then (fresh keys) the first two versions and an append of the rest.
+            n += 1;
+            let key = format!("pk-561-{n}");
+            db.apply_tenders(&[projection(&key, chain.clone())], 1_800_000_000, false).await.expect("fold");
+            let (got, head) = stored(&db, &key).await;
+            assert_eq!(got, want, "{name}: each version stores the head value of its prefix");
+            assert_eq!(head, want.last().and_then(|(_, v)| *v), "{name}: the head column is the last version's");
+            n += 1;
+            let key = format!("pk-561-{n}");
+            let first = chain[..2.min(chain.len())].to_vec();
+            db.apply_tenders(&[projection(&key, first)], 1_800_000_000, false).await.expect("fold the prefix");
+            db.apply_tenders(&[projection(&key, chain.clone())], 1_800_000_000, false).await.expect("fold the append");
+            let (got, head) = stored(&db, &key).await;
+            assert_eq!(got, want, "{name}: an append (keep = 2) stores the same");
+            assert_eq!(head, want.last().and_then(|(_, v)| *v), "{name}: appended head");
+        }
+        assert!(derived_at_non_head >= derived_ids.len(), "the derived heads sit at a non-head seq: {derived_at_non_head}");
+        drop(db);
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{s}"));
+        }
+    }
+
+    /// Issue 561: the batch's head gate (`assert_heads_match`) also checks that the head
+    /// version's stored value is the head column, so a fold that would commit a version value
+    /// the head does not hold rolls back. NULL on both sides agrees; a NULL against a value
+    /// does not.
+    #[tokio::test]
+    async fn the_head_gate_refuses_a_version_value_that_is_not_the_heads() {
+        use turso::Value;
+        let (db, path) = scratch_db("561-head-gate").await;
+        db.set_foreign_keys(false).await.expect("fk off");
+        let conn = db.conn().await;
+        conn.execute(
+            "INSERT INTO tenders(id, source, kind, created_at, current_seq, current_value_eur_cents)
+             VALUES (1, 'ted', 'procedure', 0, 1, 100)",
+            (),
+        )
+        .await
+        .expect("tender");
+        conn.execute(
+            "INSERT INTO tender_versions(tender_id, seq, caused_by_notice_id, published_at, publication_id, value_eur_cents)
+             VALUES (1, 1, 1, 0, 'p-1', 200)",
+            (),
+        )
+        .await
+        .expect("version");
+        let refused = |r: turso::Result<()>| match r {
+            Err(turso::Error::Corrupt(msg)) => msg.contains("issue 561"),
+            _ => false,
+        };
+        assert!(refused(Db::assert_heads_match(&conn, &[1]).await), "head 100, version 200");
+        // Both rows re-inserted, not updated: the head column's and the version value's one-writer
+        // scans (`head_election_agreement.rs`) find the fold's statements alone.
+        let set = |head: Value, version: Value| {
+            let conn = &conn;
+            async move {
+                conn.execute("DELETE FROM tender_versions WHERE tender_id = 1", ()).await.unwrap();
+                conn.execute("DELETE FROM tenders WHERE id = 1", ()).await.unwrap();
+                conn.execute(
+                    "INSERT INTO tenders(id, source, kind, created_at, current_seq, current_value_eur_cents)
+                     VALUES (1, 'ted', 'procedure', 0, 1, ?)",
+                    (head,),
+                )
+                .await
+                .unwrap();
+                conn.execute(
+                    "INSERT INTO tender_versions(tender_id, seq, caused_by_notice_id, published_at, publication_id, value_eur_cents)
+                     VALUES (1, 1, 1, 0, 'p-1', ?)",
+                    (version,),
+                )
+                .await
+                .unwrap();
+            }
+        };
+        set(Value::Integer(100), Value::Integer(100)).await;
+        assert!(Db::assert_heads_match(&conn, &[1]).await.is_ok(), "both 100");
+        set(Value::Null, Value::Null).await;
+        assert!(Db::assert_heads_match(&conn, &[1]).await.is_ok(), "both NULL");
+        set(Value::Integer(100), Value::Null).await;
+        assert!(refused(Db::assert_heads_match(&conn, &[1]).await), "head 100, version NULL");
+        drop(conn);
+        drop(db);
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{s}"));
+        }
     }
 
     /// Issue 495 unit 2's anchor for the batched leaf write: `flush_rows` splits a buffer into

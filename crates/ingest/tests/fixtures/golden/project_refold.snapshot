@@ -1,6 +1,6 @@
 === A: the late notice's mid-chain repair ===
 --- projection epoch ---
-4
+5
 --- tender_version_amounts (10 rows; tender_id,seq,lot_id,field,cents,currency,tax_basis,eur_cents,quality) ---
 1|2|1|NULL|'estimated_value'|81686300|'EUR'|NULL|81686300|NULL
 2|2|1|3|'estimated_value'|81686300|'EUR'|NULL|81686300|NULL
@@ -358,24 +358,24 @@ NYY-0 1 x 240 mm², ca. 65 lfm NYY-J 5x6 mm², ca. 160 lfm Fernmelde-Außenkabel
 35|6|1|NULL|'title'|'LAV'|'Kodolmedicīnas radiofarmpreparātu, Mo/Tc ģeneratoru un izotopu piegāde scintigrāfijas izmeklējumu un terapijas procedūru veikšanai, preparāta 223-Ra dihlorīds (Xofigo) piegāde'
 36|6|1|6|'description'|'LAV'|'Kodolmedicīnas radiofarmpreparātu, Mo/Tc ģeneratoru un izotopu piegāde scintigrāfijas izmeklējumu un terapijas procedūru veikšanai, preparāta 223-Ra dihlorīds (Xofigo) piegāde'
 37|6|1|6|'title'|'LAV'|'Kodolmedicīnas radiofarmpreparātu, Mo/Tc ģeneratoru un izotopu piegāde scintigrāfijas izmeklējumu un terapijas procedūru veikšanai, preparāta 223-Ra dihlorīds (Xofigo) piegāde'
---- tender_versions (10 rows; tender_id,seq,caused_by_notice_id,published_at,dispatched_at,notice_subtype,original_lang,publication_id) ---
-1|1|1|6|1780272000|1778661993|'16'|'DEU'|'ebb72363-832d-4cea-8db6-04999414ea8c-01'
-2|1|2|7|1780272000|1778661993|'16'|'DEU'|'00373130-2026'
-3|2|1|1|1765756800|1765472418|'16'|'ENG'|'00831374-2025'
-4|2|2|2|1767744000|1767705463|'16'|'ENG'|'00006281-2026'
-10|2|3|10|1768262400|1768045538|'16'|'ENG'|'00018902-2026'
-11|2|4|3|1780444800|1780391852|'29'|'ENG'|'00380868-2026'
-6|3|1|9|1714608000|1714341600|'38'|'DEU'|'799811c4-2454-414e-b3cc-1d5d55c69690-01'
-7|4|1|8|1709164800|1709186986|'16'|'DEU'|'7d69b0f7-2605-448f-9495-676458dcddc2-01'
-8|5|1|4|1784246400|1784199584|'X01'|'DEU'|'00497689-2026'
-9|6|1|5|1784246400|1784211228|'4'|'LAV'|'00496860-2026'
+--- tender_versions (10 rows; tender_id,seq,caused_by_notice_id,published_at,dispatched_at,notice_subtype,original_lang,publication_id,value_eur_cents) ---
+1|1|1|6|1780272000|1778661993|'16'|'DEU'|'ebb72363-832d-4cea-8db6-04999414ea8c-01'|NULL
+2|1|2|7|1780272000|1778661993|'16'|'DEU'|'00373130-2026'|NULL
+3|2|1|1|1765756800|1765472418|'16'|'ENG'|'00831374-2025'|81686300
+4|2|2|2|1767744000|1767705463|'16'|'ENG'|'00006281-2026'|81686300
+10|2|3|10|1768262400|1768045538|'16'|'ENG'|'00018902-2026'|81686300
+11|2|4|3|1780444800|1780391852|'29'|'ENG'|'00380868-2026'|81686300
+6|3|1|9|1714608000|1714341600|'38'|'DEU'|'799811c4-2454-414e-b3cc-1d5d55c69690-01'|607480963
+7|4|1|8|1709164800|1709186986|'16'|'DEU'|'7d69b0f7-2605-448f-9495-676458dcddc2-01'|NULL
+8|5|1|4|1784246400|1784199584|'X01'|'DEU'|'00497689-2026'|NULL
+9|6|1|5|1784246400|1784211228|'4'|'LAV'|'00496860-2026'|NULL
 --- tenders (6 rows; id,source,procedure_key,island_notice_id,kind,created_at,current_seq,current_published_at,current_deadline,current_title,current_value_eur_cents,current_closed_by_notice,current_value_derivation,current_value_cents,current_value_currency,current_value_derivation_detail,projection_epoch) ---
-1|1|'ted'|'1af86e3c-411f-4c2e-aacc-ecac61717472'|NULL|'procedure'|2|1780272000|1783328340|'Grundinstandsetzung Hellinganlage am Bauhof Würzburg'|NULL|NULL|NULL|NULL|NULL|NULL|4
-2|2|'ted'|'32c34097-960e-4d02-b04d-3ceac32cf020'|NULL|'procedure'|4|1780444800|1770280200|'CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion'|81686300|NULL|NULL|NULL|NULL|NULL|4
-3|3|'doe'|'469efb81-40de-4d7e-817f-8dd45659eaee'|NULL|'procedure'|1|1714608000|NULL|'NA 26a+b Dachabdichtungs- und Spenglerarbeiten'|607480963|NULL|NULL|NULL|NULL|NULL|4
-4|4|'doe'|'990acec0-88c0-48e2-86d5-92abb2293542'|NULL|'procedure'|1|1709164800|1712044800|'Erschließung Starkstrom'|NULL|NULL|NULL|NULL|NULL|NULL|4
-5|5|'ted'|NULL|4|'registration'|1|1784246400|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|4
-6|6|'ted'|NULL|5|'procedure'|1|1784246400|NULL|'Kodolmedicīnas radiofarmpreparātu, Mo/Tc ģeneratoru un izotopu piegāde scintigrāfijas izmeklējumu un terapijas procedūru veikšanai, preparāta 223-Ra dihlorīds (Xofigo) piegāde'|NULL|NULL|NULL|NULL|NULL|NULL|4
+1|1|'ted'|'1af86e3c-411f-4c2e-aacc-ecac61717472'|NULL|'procedure'|2|1780272000|1783328340|'Grundinstandsetzung Hellinganlage am Bauhof Würzburg'|NULL|NULL|NULL|NULL|NULL|NULL|5
+2|2|'ted'|'32c34097-960e-4d02-b04d-3ceac32cf020'|NULL|'procedure'|4|1780444800|1770280200|'CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion'|81686300|NULL|NULL|NULL|NULL|NULL|5
+3|3|'doe'|'469efb81-40de-4d7e-817f-8dd45659eaee'|NULL|'procedure'|1|1714608000|NULL|'NA 26a+b Dachabdichtungs- und Spenglerarbeiten'|607480963|NULL|NULL|NULL|NULL|NULL|5
+4|4|'doe'|'990acec0-88c0-48e2-86d5-92abb2293542'|NULL|'procedure'|1|1709164800|1712044800|'Erschließung Starkstrom'|NULL|NULL|NULL|NULL|NULL|NULL|5
+5|5|'ted'|NULL|4|'registration'|1|1784246400|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|5
+6|6|'ted'|NULL|5|'procedure'|1|1784246400|NULL|'Kodolmedicīnas radiofarmpreparātu, Mo/Tc ģeneratoru un izotopu piegāde scintigrāfijas izmeklējumu un terapijas procedūru veikšanai, preparāta 223-Ra dihlorīds (Xofigo) piegāde'|NULL|NULL|NULL|NULL|NULL|NULL|5
 --- lots (6 rows; id,tender_id,lot_key) ---
 1|1|1|'LOT-0001'
 2|2|1|'LOT-0002'
@@ -444,7 +444,7 @@ NYY-0 1 x 240 mm², ca. 65 lfm NYY-J 5x6 mm², ca. 160 lfm Fernmelde-Außenkabel
 47|47|'contract'|1|4|'added'
 === B: the keep = 0 refold of everything ===
 --- projection epoch ---
-4
+5
 --- tender_version_amounts (10 rows; tender_id,seq,lot_id,field,cents,currency,tax_basis,eur_cents,quality) ---
 1|2|1|NULL|'estimated_value'|81686300|'EUR'|NULL|81686300|NULL
 2|2|1|3|'estimated_value'|81686300|'EUR'|NULL|81686300|NULL
@@ -802,24 +802,24 @@ NYY-0 1 x 240 mm², ca. 65 lfm NYY-J 5x6 mm², ca. 160 lfm Fernmelde-Außenkabel
 39|6|1|NULL|'title'|'LAV'|'Kodolmedicīnas radiofarmpreparātu, Mo/Tc ģeneratoru un izotopu piegāde scintigrāfijas izmeklējumu un terapijas procedūru veikšanai, preparāta 223-Ra dihlorīds (Xofigo) piegāde'
 40|6|1|6|'description'|'LAV'|'Kodolmedicīnas radiofarmpreparātu, Mo/Tc ģeneratoru un izotopu piegāde scintigrāfijas izmeklējumu un terapijas procedūru veikšanai, preparāta 223-Ra dihlorīds (Xofigo) piegāde'
 41|6|1|6|'title'|'LAV'|'Kodolmedicīnas radiofarmpreparātu, Mo/Tc ģeneratoru un izotopu piegāde scintigrāfijas izmeklējumu un terapijas procedūru veikšanai, preparāta 223-Ra dihlorīds (Xofigo) piegāde'
---- tender_versions (10 rows; tender_id,seq,caused_by_notice_id,published_at,dispatched_at,notice_subtype,original_lang,publication_id) ---
-1|1|1|6|1780272000|1778661993|'16'|'DEU'|'ebb72363-832d-4cea-8db6-04999414ea8c-01'
-2|1|2|7|1780272000|1778661993|'16'|'DEU'|'00373130-2026'
-3|2|1|1|1765756800|1765472418|'16'|'ENG'|'00831374-2025'
-4|2|2|2|1767744000|1767705463|'16'|'ENG'|'00006281-2026'
-5|2|3|10|1768262400|1768045538|'16'|'ENG'|'00018902-2026'
-6|2|4|3|1780444800|1780391852|'29'|'ENG'|'00380868-2026'
-7|3|1|9|1714608000|1714341600|'38'|'DEU'|'799811c4-2454-414e-b3cc-1d5d55c69690-01'
-8|4|1|8|1709164800|1709186986|'16'|'DEU'|'7d69b0f7-2605-448f-9495-676458dcddc2-01'
-9|5|1|4|1784246400|1784199584|'X01'|'DEU'|'00497689-2026'
-10|6|1|5|1784246400|1784211228|'4'|'LAV'|'00496860-2026'
+--- tender_versions (10 rows; tender_id,seq,caused_by_notice_id,published_at,dispatched_at,notice_subtype,original_lang,publication_id,value_eur_cents) ---
+1|1|1|6|1780272000|1778661993|'16'|'DEU'|'ebb72363-832d-4cea-8db6-04999414ea8c-01'|NULL
+2|1|2|7|1780272000|1778661993|'16'|'DEU'|'00373130-2026'|NULL
+3|2|1|1|1765756800|1765472418|'16'|'ENG'|'00831374-2025'|81686300
+4|2|2|2|1767744000|1767705463|'16'|'ENG'|'00006281-2026'|81686300
+5|2|3|10|1768262400|1768045538|'16'|'ENG'|'00018902-2026'|81686300
+6|2|4|3|1780444800|1780391852|'29'|'ENG'|'00380868-2026'|81686300
+7|3|1|9|1714608000|1714341600|'38'|'DEU'|'799811c4-2454-414e-b3cc-1d5d55c69690-01'|607480963
+8|4|1|8|1709164800|1709186986|'16'|'DEU'|'7d69b0f7-2605-448f-9495-676458dcddc2-01'|NULL
+9|5|1|4|1784246400|1784199584|'X01'|'DEU'|'00497689-2026'|NULL
+10|6|1|5|1784246400|1784211228|'4'|'LAV'|'00496860-2026'|NULL
 --- tenders (6 rows; id,source,procedure_key,island_notice_id,kind,created_at,current_seq,current_published_at,current_deadline,current_title,current_value_eur_cents,current_closed_by_notice,current_value_derivation,current_value_cents,current_value_currency,current_value_derivation_detail,projection_epoch) ---
-1|1|'ted'|'1af86e3c-411f-4c2e-aacc-ecac61717472'|NULL|'procedure'|2|1780272000|1783328340|'Grundinstandsetzung Hellinganlage am Bauhof Würzburg'|NULL|NULL|NULL|NULL|NULL|NULL|4
-2|2|'ted'|'32c34097-960e-4d02-b04d-3ceac32cf020'|NULL|'procedure'|4|1780444800|1770280200|'CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion'|81686300|NULL|NULL|NULL|NULL|NULL|4
-3|3|'doe'|'469efb81-40de-4d7e-817f-8dd45659eaee'|NULL|'procedure'|1|1714608000|NULL|'NA 26a+b Dachabdichtungs- und Spenglerarbeiten'|607480963|NULL|NULL|NULL|NULL|NULL|4
-4|4|'doe'|'990acec0-88c0-48e2-86d5-92abb2293542'|NULL|'procedure'|1|1709164800|1712044800|'Erschließung Starkstrom'|NULL|NULL|NULL|NULL|NULL|NULL|4
-5|5|'ted'|NULL|4|'registration'|1|1784246400|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|4
-6|6|'ted'|NULL|5|'procedure'|1|1784246400|NULL|'Kodolmedicīnas radiofarmpreparātu, Mo/Tc ģeneratoru un izotopu piegāde scintigrāfijas izmeklējumu un terapijas procedūru veikšanai, preparāta 223-Ra dihlorīds (Xofigo) piegāde'|NULL|NULL|NULL|NULL|NULL|NULL|4
+1|1|'ted'|'1af86e3c-411f-4c2e-aacc-ecac61717472'|NULL|'procedure'|2|1780272000|1783328340|'Grundinstandsetzung Hellinganlage am Bauhof Würzburg'|NULL|NULL|NULL|NULL|NULL|NULL|5
+2|2|'ted'|'32c34097-960e-4d02-b04d-3ceac32cf020'|NULL|'procedure'|4|1780444800|1770280200|'CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion'|81686300|NULL|NULL|NULL|NULL|NULL|5
+3|3|'doe'|'469efb81-40de-4d7e-817f-8dd45659eaee'|NULL|'procedure'|1|1714608000|NULL|'NA 26a+b Dachabdichtungs- und Spenglerarbeiten'|607480963|NULL|NULL|NULL|NULL|NULL|5
+4|4|'doe'|'990acec0-88c0-48e2-86d5-92abb2293542'|NULL|'procedure'|1|1709164800|1712044800|'Erschließung Starkstrom'|NULL|NULL|NULL|NULL|NULL|NULL|5
+5|5|'ted'|NULL|4|'registration'|1|1784246400|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|5
+6|6|'ted'|NULL|5|'procedure'|1|1784246400|NULL|'Kodolmedicīnas radiofarmpreparātu, Mo/Tc ģeneratoru un izotopu piegāde scintigrāfijas izmeklējumu un terapijas procedūru veikšanai, preparāta 223-Ra dihlorīds (Xofigo) piegāde'|NULL|NULL|NULL|NULL|NULL|NULL|5
 --- lots (6 rows; id,tender_id,lot_key) ---
 1|1|1|'LOT-0001'
 2|2|1|'LOT-0002'

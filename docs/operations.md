@@ -1866,7 +1866,9 @@ and 70.6 M change rows; its value could have been an in-place backfill (issue 49
     seam as 340's `normalize_lang` is, and a fixture pins fold(new) == fold(old) + backfill.
   - E3: no entity or version is minted or removed.
   - E4: every stored value derived from the moved one is re-derived too, or its Tenders are stamped
-    and requeued (as `rederive-eur` does).
+    and requeued (as `rederive-eur` does) — e.g. `tender_versions.value_eur_cents` (issue 561), derived
+    from the version's amounts at their EUR rates: a walk that moves `eur_cents` stamps 0, as
+    `rederive-eur` does.
   - E5: version N depends only on versions 1..=N.
   - E6: the fold writes the same value from the deploy on.
 
@@ -1900,14 +1902,17 @@ prefix of unchanged causing notices is re-derived and compared table by table wi
 - Versions past the prefix are written and announced as before.
 
 **Reading the compare on the counts line.** The `project` job's counts carry `compare (issue 495): N tenders
-verified, M corrected; tables … skipped / … rewritten; rows …; K correction rows; … us per row` (in shadow, K
-is planned rather than written). The fold's last journal lines print it too, on the full and the incremental path,
+verified, M corrected, R version values refreshed quietly (issue 561); tables … skipped / … rewritten; rows …; K
+correction rows; … us per row` (in shadow, K and R are planned rather than written). The fold's last journal lines print it too, on the full and the incremental path,
 with a per-table `identical/compared` split.
 - `verified`: nothing in the compared prefix moved, so the Tender's epoch was stamped. Versions appended past the
   stored chain, if any, were still written and announced by their transition rows.
 - `corrected`: the Tender got its share of the `K` correction rows. That share is one `tender changed` plus a `lot
   changed` per rule-L lot: every lot of the new head when the head moved, every surviving lot when stored versions
   were dropped uncompared (a mid-chain insert or a cut).
+- `version values refreshed quietly`: versions whose stored elected value (`tender_versions.value_eur_cents`, issue
+  561) alone differed and was refreshed with one `UPDATE`, written as no correction (ADR-0017 D3 as amended). A
+  Tender whose only difference is that counts as `verified`, so `verified + corrected == stamped` holds.
 - A filtered SSE subscriber (`/v1/lots?winner=…`) gets an event for each corrected entity, `removed` for one outside
   its filter (ADR-0017 D4, as for organization merges). A corpus-wide correction is therefore a burst of such
   events: say so before running one.
@@ -2098,14 +2103,16 @@ stamped" is not a pass condition. Instead:
 - For a window that does not answer 0, list its stale ids and refold just those Tenders.
 
 ```sh
-echo "SELECT COUNT(*) FROM tenders WHERE id BETWEEN 1 AND 100000 AND projection_epoch <> 4" | /root/sq.sh
-echo "SELECT id, current_seq FROM tenders WHERE id BETWEEN 1 AND 100000 AND projection_epoch <> 4 LIMIT 20" | /root/sq.sh
+echo "SELECT COUNT(*) FROM tenders WHERE id BETWEEN 1 AND 100000 AND projection_epoch <> 5" | /root/sq.sh
+echo "SELECT id, current_seq FROM tenders WHERE id BETWEEN 1 AND 100000 AND projection_epoch <> 5 LIMIT 20" | /root/sq.sh
 ```
 
 Any job that stamps Tenders epoch-stale (`rederive-eur`, the resolver, `refold-notices`) stamps 0. So
-`<> 4` over-reports and never under-reports. Triage a residue by epoch:
+`<> 5` over-reports and never under-reports. Since issue 561 the epoch is 5. Until an all-profile refold runs, an
+epoch-4 Tender is one no fold has touched since 561's deploy; it reads the superset (issue 561's section). R3's `= 0`
+residue checks are unchanged. Triage a residue by epoch:
 
-- **3** means untouched since deploy A. Refold it.
+- **4** means untouched since 561's deploy, **3** untouched since 490's deploy A. Refold it.
 - **0** is one of two cases:
   - Re-stamped after its 490 write, so its values are present and a requeued notice is in flight.
   - **Stuck**: every causing notice is no longer `parse_state = 'parsed'` (quarantined on a reparse,
@@ -2162,6 +2169,84 @@ reaches stored lot values only through a stamping refold, as it already did for 
   MORE can move.
 - It does not cover a rule that admits more.
 - It does not cover the stored values of older versions, which SSE `Scope::At` serves.
+
+### The per-version elected value and epoch 5 (issue 561)
+
+**What it is.** `tender_versions.value_eur_cents` stores, on every version row, the Tender's elected value as of that
+version's prefix: the figure `tenders.current_value_eur_cents` held while that version was the head, a 551 lot sum
+included. The fold writes it (`head_value_eur_cents_with` over the running scale rule, the issue-375 rule) and nothing
+else does (`the_version_value_has_one_writer`). Only the SSE At probe reads it, at an earlier version of a Tender
+stamped `projection_epoch >= 5` (`VERSION_VALUE_EPOCH`); below 5 it reads the 547/551 superset, which stays as the
+fallback for good. The batch head gate checks that the head version's stored value is the head column (an
+issue-561 `Corrupt` error otherwise).
+
+**How it fills.** No dedicated refold. The column is quiet (ADR-0017 D1.4/D3/D5 as amended): every fold that touches
+an epoch-4 Tender compares it, refreshes the version values in place with one `UPDATE` each and stamps 5, with no
+change row for the fill itself. The compare line's `version values refreshed quietly` counts those versions: about
+the versions with a non-NULL elected value (roughly half), not all of them, because a stored NULL equals a fresh
+NULL. A prefix that drifted for another reason (a logic change whose refold is still pending) is corrected and
+announced in the same fold, as on any stale refold, so the first daily runs after the deploy can show more
+`corrected` than usual; read the tables line to see which tables moved. The remainder fills with the next
+all-profile refold that runs for another reason.
+
+**The resume horizon.** The boot that adds the column records the change log's high-water
+(`projection_state.value_probe_cursor`, from `sqlite_sequence`, in the same transaction as the `ALTER`). A
+`min_value`/`max_value` stream on `/v1/tenders` or `/v1/lots` resumed from a token at or below it (every token
+issued before the deploy, the last row's included) gets `reset` `{"reason":"value_probe_changed"}` and then diffs on
+from the log's head (no replay). Until the first change row after the deploy, a fresh value-bounded stream's `live`
+token is the horizon itself, so it also re-snapshots once per reconnect until that row lands. Polls and webhooks are
+unfiltered and are untouched. `project rebuild=true clear_changes=true` sets the horizon back to 0 with the log. If
+the deploy's horizon check (below) answers no `reset`, stop: the horizon is missing. Record it by hand with the
+service stopped (`UPDATE projection_state SET value_probe_cursor = (SELECT seq FROM sqlite_sequence WHERE name =
+'changes') WHERE id = 0`) and start it again; a rollback alone does not repair it, because a roll-forward skips the
+`ALTER`.
+
+**Do not flip the kill switch while any Tender is at epoch 4.** `TENDER_REFOLD_COMPARE=off` or `shadow`, or the boot
+line `compare refused (issue 495)` when `tender_version_bid_parties_version` is missing, makes every touched epoch-4
+Tender a full rewrite that replays its history on `/v1/changes`. Roll the binary back instead.
+
+**Rollback.** An older binary stamps 4 and writes NULL into the version rows it writes; the reader falls back to the
+superset for every Tender it stamps (over-delivery only, no NULL hazard). It also reads every epoch-5 Tender as stale
+(`5 != 4`): each one it touches gets a full keep=0 compare instead of an append and is re-stamped 4, and a
+roll-forward compares them all again. Correctness holds, but expect slower daily projects on both legs, and a prefix
+that drifted for another reason is corrected (and `corrected` rises) on either leg. A roll-forward does not re-record the
+horizon, so after one put the residual (a value-bounded stream lagging across a Tender's re-stamp can keep an entity
+outside its bound) on the operator notice (banner). If a `project` job fails with the issue-561 `Corrupt` error
+(`projection would commit a stored version value that is not its head's`), roll the binary back (the old binary has
+no value gate) and file the shape; otherwise the daily chain stays wedged on that batch.
+
+**Deploy and canary.**
+1. Before the deploy: the queue idle (`/root/aj.sh /admin/jobs | jq '.current, .queued, .recent[:3]'`), and no
+   `TENDER_REFOLD_COMPARE=` warning and no `compare refused (issue 495)` line in the boot log since the last boot.
+2. Deploy. The boot runs two metadata `ALTER`s (O(1)) and records the horizon.
+3. Horizon check, one SSE request: read the generation from `GET /v1`, then
+   `curl -sN --max-time 5 -H 'Accept: text/event-stream' -H 'Last-Event-ID: <gen>:1'
+   'https://tenders.zebreus.click/v1/tenders?max_value=50000000'`. The first block is `event: reset` with
+   `"reason":"value_probe_changed"`.
+4. Canary, before the next daily project: pick about 1,000 multi-version Tenders (the newest 100k-id window's
+   `seq = 3` rows, plus named 551 path-V/W heads and rate-touched non-EUR Tenders) and post one
+   `{"kind":"refold-notices","notices":[…]}`. It queues its own `project rebuild=false`: read THAT job's counts
+   line (the next job id), and post no second `project`. Pass: `V + C == N` (N the Tenders stamped), `R > 0` (about
+   0.5–0.9 × the canary's versions), and `C == 0`, or every corrected Tender's difference shown by the tables line
+   in a table other than `tender_versions` and explained (another unit of the same deploy). Then a bounded head
+   check on the same window: `SELECT COUNT(*) AS epoch5, SUM(v.value_eur_cents IS NOT t.current_value_eur_cents)
+   AS mismatched, SUM(v.value_eur_cents IS NOT NULL) AS filled FROM tenders t CROSS JOIN tender_versions v INDEXED BY
+   sqlite_autoindex_tender_versions_1 ON v.tender_id = t.id AND v.seq = t.current_seq WHERE t.id BETWEEN <lo> AND
+   <hi> AND t.projection_epoch = 5` must read `mismatched = 0`. Keep the `INDEXED BY`: any non-key `v` column moves
+   turso 0.7.2 to `sqlite_autoindex_tender_versions_2 (tender_id=?)`, which walks every version of each Tender in
+   the window instead of seeking the head row (the code pins the same index, `VERSION_PK_INDEX`). Plan-checked
+   locally on 2026-10-24 (`plan-probe plan`): `SEARCH t USING INTEGER PRIMARY KEY`, then `SEARCH v USING INDEX
+   sqlite_autoindex_tender_versions_1 (tender_id=? AND seq=?)`; without the pin, `…_2 (tender_id=?)`. FAIL: roll the
+   binary back (it stamps 4; readers fall back) and put up the banner.
+5. The first daily project after the deploy: no corrected Tender's difference is `tender_versions`-only, every
+   corrected Tender is explained by the tables line, and `version values refreshed quietly` is about the non-NULL
+   values of the epoch-4 Tenders it touched. The same head check (with its `INDEXED BY`) on the newest window reads
+   `mismatched = 0`.
+
+**After the next all-profile refold (unit 6 of issue 561).** When a corpus-wide refold runs for any reason, read
+`projection_epoch <> 5` over 100k-id windows (above) until every window answers 0. Then remove the residue clause
+("a Tender not yet filled, or awaiting a refold …") from CHANGELOG's 561 and 547 entries and from `/docs` and
+openapi's `EventStream`. Keep the upsert advice (`version: null` rows, 560 and 562 need it); the superset code stays.
 
 ### The Tender-link ledger and `backfill-tender-links` (issue 481)
 

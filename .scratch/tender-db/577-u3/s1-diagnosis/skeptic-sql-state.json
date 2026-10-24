@@ -1,0 +1,15 @@
+{
+ "used": 1,
+ "log": [
+  {
+   "name": "skeptic-r1",
+   "secs": 0.64,
+   "rc": 0,
+   "stdout_bytes": 46144,
+   "stderr_head": "",
+   "at": "2026-10-24T20:21:26Z",
+   "rows": 825,
+   "truncated": false
+  }
+ ]
+}

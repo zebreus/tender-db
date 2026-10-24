@@ -194,8 +194,10 @@ async fn a_projected_notice_can_be_reparsed() {
     };
     assert_eq!(projected, 0, "a re-parsed notice must be re-folded");
 
-    // The mention-anchored canonical rows for THIS notice are gone (the re-fold
-    // rebuilds them from the new parse), and the other notice's are untouched.
+    // The new parse re-creates ORG-1, so its mention stays (issue 248) and so does the
+    // party row anchored to it (issue 591): the re-fold's compare rewrites only what the
+    // new parse changed, instead of restoring a row this clear had deleted. The other
+    // notice's rows are untouched either way.
     let parties = |nid: i64| {
         let conn = &conn;
         async move {
@@ -210,7 +212,11 @@ async fn a_projected_notice_can_be_reparsed() {
             row.get_value(0).unwrap().as_integer().copied().unwrap()
         }
     };
-    assert_eq!(parties(id).await, 0, "the re-parsed notice's party rows are cleared for the re-fold");
+    assert_eq!(
+        parties(id).await,
+        1,
+        "a section the new parse re-creates keeps its party rows for the re-fold's compare (issue 591)"
+    );
     assert_eq!(parties(other_id).await, 1, "another notice's party rows are NOT collateral");
     let mentions: i64 = {
         let mut rows = conn
@@ -224,4 +230,125 @@ async fn a_projected_notice_can_be_reparsed() {
         row.get_value(0).unwrap().as_integer().copied().unwrap()
     };
     assert_eq!(mentions, 1, "and neither are its mentions");
+}
+
+/// Issue 591: the party rows of a section the new parse does NOT re-create still go, child
+/// before parent, so the mention they pin can be deleted without an FK failure; a section
+/// that stays keeps its rows.
+#[tokio::test]
+async fn a_vanishing_sections_party_rows_go_and_a_kept_sections_stay() {
+    let (db, conn) = open("vanishing").await;
+    db.record_fetch(&Fetch {
+        source: "doe".into(),
+        kind: "daily".into(),
+        period: "2026-07-18".into(),
+        url: "https://example.invalid/p.zip".into(),
+        sha256: "deadbeef".into(),
+        bytes: 1,
+        fetched_at: 0,
+        path: "doe/p.zip".into(),
+    })
+    .await
+    .expect("fetch row");
+    let two = |name: &str| Parsed {
+        sections: vec![
+            Section { id: "PROC".into(), kind: "Notice".into(), parent: None },
+            Section { id: "ORG-1".into(), kind: "Organization".into(), parent: Some("PROC".into()) },
+            Section { id: "ORG-2".into(), kind: "Organization".into(), parent: Some("PROC".into()) },
+        ],
+        values: vec![
+            ValueRow {
+                section_id: "ORG-1".into(),
+                field_id: "BT-500-Organization-Company".into(),
+                ordinal: 0,
+                value: NoticeValue::Text { lang: None, value: name.into() },
+            },
+            ValueRow {
+                section_id: "ORG-2".into(),
+                field_id: "BT-500-Organization-Company".into(),
+                ordinal: 0,
+                value: NoticeValue::Text { lang: None, value: "Second Body".into() },
+            },
+        ],
+    };
+    let n = notice_ref();
+    db.record_notice(&n, &Parse::Parsed(two("ACME GmbH"))).await.expect("first parse");
+    let id: i64 = {
+        let mut rows = conn.query("SELECT id FROM notices", ()).await.unwrap();
+        let row = rows.next().await.unwrap().expect("the notice row");
+        row.get_value(0).unwrap().as_integer().copied().unwrap()
+    };
+    conn.execute(
+        "INSERT INTO organizations (country, identifier_kind, identifier, name, name_norm,
+             provisional, created_at) VALUES (NULL, NULL, NULL, 'ACME GmbH', 'acme gmbh', 1, 0)",
+        (),
+    )
+    .await
+    .unwrap();
+    for section in ["ORG-1", "ORG-2"] {
+        conn.execute(
+            "INSERT INTO organization_mentions (notice_id, section_id, organization_id, name)
+             VALUES (?, ?, 1, 'ACME GmbH')",
+            (Value::Integer(id), Value::Text(section.into())),
+        )
+        .await
+        .unwrap();
+    }
+    conn.execute("INSERT INTO tenders (source, procedure_key, kind, created_at) VALUES ('doe', 'proc-1', 'procedure', 0)", ())
+        .await
+        .unwrap();
+    conn.execute(
+        "INSERT INTO tender_versions (tender_id, seq, caused_by_notice_id, published_at,
+             publication_id) VALUES (1, 1, ?, 0, 'pub-1')",
+        (Value::Integer(id),),
+    )
+    .await
+    .unwrap();
+    for (role, section) in [("buyer", "ORG-1"), ("review", "ORG-2")] {
+        conn.execute(
+            "INSERT INTO tender_version_parties (tender_id, seq, role, organization_id,
+                 mention_notice_id, mention_section_id) VALUES (1, 1, ?, 1, ?, ?)",
+            (Value::Text(role.into()), Value::Integer(id), Value::Text(section.into())),
+        )
+        .await
+        .unwrap();
+    }
+
+    // The new parse prints ORG-1 only: ORG-2 vanishes.
+    let reparsed = db.reparse_notice(&n, &parsed("ACME GESELLSCHAFT MBH")).await;
+    assert_eq!(
+        reparsed.expect("a vanishing section's party rows must not block the clear"),
+        store::Reparsed::Replaced
+    );
+
+    let parties: Vec<String> = {
+        let mut out = Vec::new();
+        let mut rows = conn
+            .query(
+                "SELECT mention_section_id FROM tender_version_parties WHERE mention_notice_id = ? ORDER BY 1",
+                (Value::Integer(id),),
+            )
+            .await
+            .unwrap();
+        while let Some(row) = rows.next().await.unwrap() {
+            out.push(row.get_value(0).unwrap().as_text().cloned().unwrap_or_default());
+        }
+        out
+    };
+    assert_eq!(parties, vec!["ORG-1".to_string()], "ORG-2's party row went with its section; ORG-1's stayed");
+    let mentions: Vec<String> = {
+        let mut out = Vec::new();
+        let mut rows = conn
+            .query(
+                "SELECT section_id FROM organization_mentions WHERE notice_id = ? ORDER BY 1",
+                (Value::Integer(id),),
+            )
+            .await
+            .unwrap();
+        while let Some(row) = rows.next().await.unwrap() {
+            out.push(row.get_value(0).unwrap().as_text().cloned().unwrap_or_default());
+        }
+        out
+    };
+    assert_eq!(mentions, vec!["ORG-1".to_string()], "and so did its mention (issue 248)");
 }

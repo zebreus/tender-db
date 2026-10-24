@@ -1047,8 +1047,7 @@ const CLASSIFICATION_SCHEME_NOTE: &str = "One of: cpv (WHAT is bought, the EU Co
     scheme explicitly: scheme <> 'cpv' is NOT the NUTS codes.";
 const CLASSIFICATION_FIELD_NOTE: &str = "main / additional (cpv), place (nuts: the place of performance only, in \
     every era; a legacy TED buyer or winner region is on notice_classifications as TED-CA_CE_NUTS / \
-    TED-TENDERER_NUTS, or as TED-NUTS in an Organization section (notice_sections), issue 546; a \
-    version folded before it may still carry one, issue-546 refold), \
+    TED-TENDERER_NUTS, or as TED-NUTS in an Organization section (notice_sections), issue 546), \
     place_country (nuts: the level-0 code of a place published only as a country, only on a version \
     with no other nuts row; issue 532), \
     nature (nature), procedure (procedure), dps (dps) \u{2014} which published field the code came from.";
@@ -1260,6 +1259,19 @@ const COLUMN_NOTES: &[(&str, &str, &str)] = &[
          the /docs recipe on tender_version_lots (CROSS JOIN tenders, literal \
          `value_eur_cents IS NOT NULL`). Ranked by the PUBLISHED figure: on a two-currency lot \
          this is not necessarily its largest EUR amount.",
+    ),
+    (
+        "tender_versions",
+        "value_eur_cents",
+        "Issue 561: the Tender's elected value at this version, in EUR cents: the figure tenders' \
+         current value held while this version was the head, a derived lot sum included (issue 551; its \
+         marker lives on tenders, head only). Trust it only on a Tender whose tenders.projection_epoch is \
+         5 or more, as the SSE value bounds do. There every version is filled, the one at current_seq is \
+         tenders.current_value_eur_cents, and the bounds read it at earlier versions; NULL = nothing \
+         elected or converted at that version. Below 5 it is not filled yet, or stale (a rate \
+         re-derivation, a merge or a rolled-back binary re-stamped the Tender), and the bounds read a \
+         superset of the version's amounts; the next fold of that Tender fills it. Not indexed: filter \
+         on tender_id.",
     ),
     (
         "*",
@@ -2850,6 +2862,31 @@ mod tests {
         }
         // An explicit note still wins over the derivation.
         assert_ne!(column_note("notices", "parse_state"), Some(EPOCH_NOTE));
+    }
+
+    /// Issue 561 (deploy #4 review d4-contract-2): `tender_versions.value_eur_cents` keeps its own
+    /// note. Without it the column falls back to the `*` note, which describes a lot's published
+    /// figure (a partial index, award results never elected): false here. The note gates the value
+    /// itself on the epoch, not only its NULL.
+    #[test]
+    fn the_version_value_column_states_its_own_note() {
+        let note = column_note("tender_versions", "value_eur_cents").expect("tender_versions.value_eur_cents is described");
+        let generic = COLUMN_NOTES
+            .iter()
+            .find(|(t, c, _)| *t == "*" && *c == "value_eur_cents")
+            .map(|&(_, _, n)| n)
+            .expect("the lot figure's note");
+        assert_ne!(note, generic, "not the lot figure's `*` note");
+        for needle in [
+            "Issue 561",
+            "issue 551",
+            "Trust it only on a Tender whose tenders.projection_epoch is 5 or more",
+            "tenders.current_value_eur_cents",
+            "Not indexed",
+        ] {
+            assert!(note.contains(needle), "{needle:?} is missing: {note}");
+        }
+        assert!(!note.contains("partial index"), "{note}");
     }
 
     /// Issue 239 (continued): the views' own descriptions carry the not-filterable

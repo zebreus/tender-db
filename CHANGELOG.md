@@ -4,6 +4,40 @@ Behavior changes a client could observe, newest first. Additive fields and new
 endpoints land without an entry unless they change how an existing request
 answers; this file exists for the rare case where one does.
 
+## Unreleased (issue 591) — a re-parse no longer drops a Tender's parties until the re-fold, nor announces their return as a correction
+
+- Before: re-parsing a notice in place (a parser fix rolled over stored notices) deleted every party and bid-party
+  row citing it. Its Tenders served without those parties until the paired re-fold, about an hour, and the re-fold
+  then announced each one as a `changed` correction (tender and lot change rows), though nothing had changed:
+  issue 577's first slice announced 126,812 Tenders that way.
+- Now only the party rows of a section the new parse no longer prints are removed. The re-fold corrects what the new
+  parse really changed, and a Tender whose parties are unchanged is neither emptied nor announced.
+
+## Unreleased (issue 561) — a value-bounded event stream reads each earlier version at its own value
+
+A subscription's diff re-evaluates `min_value`/`max_value` against the old and new version of the entity (issue 547),
+but an earlier version had no stored value: it matched when any amount it published lay inside the bound, or, under
+`min_value`, when its lot amounts, or separately its lot awards, summed from EUR 0 to the cap plus one cent a row
+reached it (issue 551). Under `max_value` that was almost every Tender with several lots, so a value dropping into the
+bound arrived as `changed`, not `added`; under `min_value` a refused, partner-only or `Part` figure did the same, or
+sent `removed` for a Tender the subscriber never held.
+- From the deploy on, the fold stores every version's elected value (the figure `value` had while that version was
+  current, a 551 lot sum included) and the diff reads it. The issue's reproduction (a EUR 900,000 procedure with a
+  EUR 300,000 lot, corrected to EUR 400,000) reaches `max_value=50000000` on `/v1/tenders` and `/v1/lots` as
+  `added`. A version written in the same fold as a later one, or reached by a lagging or resumed stream, is exact
+  too (issue 560's residue).
+- Residue: until a fold rewrites a Tender (any daily fold or refold that touches it), and while it awaits its refold
+  after a rate re-derivation, a merge or a targeted refold, its earlier versions are still read as that superset:
+  `changed` for `added`, or an idempotent `removed`; rarely, a stream that lags across such a refold keeps an entity
+  outside the bound. Apply `changed` as an upsert, as before.
+- A `min_value`/`max_value` stream on `/v1/tenders` or `/v1/lots` resumed from a token issued before the deploy gets
+  `reset` `{"reason":"value_probe_changed"}`: re-subscribe once. Until the first change after the deploy, a fresh
+  stream's `live` token is the same position and gets the same `reset` on a reconnect.
+- `/v1/sql`: `tender_versions.value_eur_cents` (column note; NULL also while not filled). The fill writes no change
+  row (quiet, ADR-0017 D5); polls and webhooks are unchanged. A Tender whose stored versions drifted from the current fold for another
+  reason is corrected the first time a fold touches it after the deploy, announced as `version: null` `changed` rows on
+  every transport, as on any refold.
+
 ## Unreleased (issue 586) — a touchpoint that names its own organization in another spelling, or as the body under its organ, serves that organization; contact labels, people, filing prose and platform names are no longer served as organizations
 
 Issue 576 served a touchpoint as its organization's own party only when it printed that organization's name up to
@@ -192,7 +226,7 @@ so `?country=FRI` found it. eForms and DÖE serve the place of performance only,
 different things in different eras. In the sampled r209 notices, about a third gained a `?country=` region match
 this way, and about 1% a match in a wrong country.
 - `country`, `?country=` and the `nuts` rows of field `place` (`classifications[]`, `/v1/sql`) are the place of
-  performance only, in every era. 8432519 serves `["FRK22"]` once refolded (see the last point).
+  performance only, in every era. 8432519 serves `["FRK22"]` since the refold (see the last point).
 - The buyer's and winner's regions are not deleted: they stay on the notice layer, `notice_classifications` on
   `/v1/sql`, under field ids `TED-CA_CE_NUTS` (buyer) and `TED-TENDERER_NUTS` (winner), and as `TED-NUTS` in the
   notice's address sections.
@@ -200,10 +234,13 @@ this way, and about 1% a match in a wrong country.
   contests, which publish only addresses) serves `country: []`, as eForms does. A later notice that publishes only
   addresses (e.g. an F14 corrigendum) no longer replaces the place an earlier notice of the same procedure published.
 - The sampled r2.0.8 notices (2013, and the 2019 ones) carry no address regions and serve what they served; the
-  issue-546 refold's cohort count is the full check.
-- Stored tenders change only after the issue-546 refold. Until then a legacy tender folded before this change may
-  still serve its buyer's or winner's region. The refold announces each corrected tender as a `version: null`
-  `changed` row (ADR-0017 D3).
+  refold's probes counted 4,488,813 notices that carry a buyer or winner region field and 4,490,549 r2.0.9
+  notices, and the refold covered the r2.0.9 notices.
+- The refold ran on 2026-10-24 (jobs 2764/2765: `refold` of the 4,490,549 `ted-export-r209` notices, then
+  `project`), so stored tenders serve the place of performance only too. Of the 2,274,874 Tenders it refolded,
+  1,191,581 changed, each announced as a `version: null` `changed` row (ADR-0017 D3); the other 1,083,293 were
+  verified unchanged. Tender 6440164 (notice 20297187: works in NO0, buyer in DEB3J) serves `["NO0"]` and
+  `?country=DE` no longer finds it.
 
 ## Unreleased (issue 551 B6) — `lot-sum-awards` is served again, guarded by two vouching guards
 
@@ -609,8 +646,8 @@ heard one it now admitted.
   version a fold writes is also announced whenever its value differs from the one the Tender served before the fold,
   or from the one before the fold's first written version, so the current version is probed. That does not make a
   fold of several versions exact: a version written in the same fold as a later one is still read as a superset on
-  both sides, and a Tender first folded with several versions has nothing to compare its last version against (issue
-  561, below).
+  both sides, and a Tender first folded with several versions has nothing to compare its last version against. Issue
+  561 (above) reads each version at its own stored value, so this holds only on a Tender not yet filled.
 - Unfiltered lots streams, `/v1/changes` polls and lot webhooks get those extra `changed` rows: about 1,000–3,000 a
   day. They include moves caused only by the rate on non-EUR Tenders. A TED version published today is compared at
   the previous day's fixing, and the next morning's rate re-derivation still re-announces its lots as a `version:
@@ -627,7 +664,8 @@ heard one it now admitted.
   superset on both sides, whether a later version was written in the same fold (a Tender first folded with several
   versions, or a value that moved and moved back within one fold) or the stream resumes, or lags, past it. So a
   `changed` or an `added` can name an entity outside the bound, on a live stream as well as a resumed one, until a
-  later change probes the current version (issue 561).
+  later change probes the current version (issue 561). Issue 561 (above) reads each version at its own stored value,
+  so this holds only on a Tender not yet filled.
 
 ## Unreleased (issue 551) — a Tender's `value` can be the sum of its lots, marked `value_derivation`
 
@@ -701,16 +739,17 @@ CURRENT figures on both sides. So a change that moved a Tender across one of tho
   and `order=asc` beside a date bound used to be refused. Pages answer exactly as before.
 - A stream whose date bound is the literal `now` is refused (issue 563, above): a resume would resolve `now` again,
   so its bound would move. The date-bounded streams this entry opens take an absolute timestamp.
-- The value bounds read the current value for the current version. An earlier version's elected value is not
-  stored, so the earlier side matches when any amount that version published lies within the bound. On
-  `/v1/tenders` a Tender whose current version leaves a bound always arrives as `removed`. An earlier version that
+- The value bounds read the current value for the current version. Since issue 561 (above) an earlier version reads
+  its own stored value. On a Tender not yet filled, or awaiting a refold after a rate re-derivation, a merge or a
+  targeted refold, an earlier version still matches when any amount it published lies within the bound, or, under
+  `min_value`, when the sum of its lot amounts, or separately the sum of its lot awards, each counted from EUR 0 to
+  the cap plus one cent a row, reaches the bound (issue 551). There an earlier version that
   published any figure inside the bound without electing it also reads as matching: a refused figure, a
   partner-only award figure (a framework value, BT-709/BT-660, served at its lot), a `Part` figure, or under
   `max_value` ANY figure below its value — which a Tender with several lots usually has, each lot's figure lying
   below the procedure total. That gives a `removed` for a Tender you never received (apply it as an idempotent delete, as
   the snapshot already requires), or `changed` where `added` was due, which under `max_value` is the usual outcome
   on a Tender with several lots: apply `changed` as an upsert by id too (re-read it, or subscribe with `include_data`).
-  Exact needs the elected value stored per version (issue 561).
 - `source` and `kind` still read the Tender's current label on both sides; a move of either is announced by the
   fold's `version: null` correction since issue 562 (above).
 - Pages, polls and webhooks are unchanged.

@@ -80,9 +80,10 @@ async fn a_mention_delete_proves_its_foreign_keys_by_index() {
     );
 }
 
-/// The re-parse clears a notice's party rows by `mention_notice_id` alone, and the
-/// wider key must keep serving that prefix — the narrow index it replaces existed
-/// for exactly this DELETE (issue 100).
+/// A notice-scoped party delete by `mention_notice_id` alone (the re-parse's clear until
+/// issue 591, which now deletes by the full key; the rehoming apply still keys by notice and
+/// organization) must keep seeking the prefix — the narrow index the wider key replaces
+/// existed for exactly this DELETE (issue 100).
 #[tokio::test]
 async fn the_notice_wide_party_delete_still_seeks() {
     let (db, path) = open("prefix").await;
@@ -176,4 +177,24 @@ async fn foreign_keys_are_checked_per_statement_and_the_defer_pragma_is_ignored(
         .expect_err("the insert itself names a missing parent");
     assert!(err.to_string().to_uppercase().contains("FOREIGN KEY"), "{err}");
     conn.execute("ROLLBACK", ()).await.unwrap();
+}
+
+/// Issue 591: the re-parse's clear deletes a vanishing section's party rows by the FK's full
+/// key, and that DELETE seeks the `_mention_key` index too.
+#[tokio::test]
+async fn the_per_section_party_delete_seeks() {
+    let (db, path) = open("section").await;
+    db.build_tender_indexes().await.unwrap();
+    let conn = writer_like(&path).await;
+    for table in ["tender_version_parties", "tender_version_bid_parties"] {
+        let ops = program(
+            &conn,
+            &format!("DELETE FROM {table} WHERE mention_notice_id = 1 AND mention_section_id = 'ORG-1'"),
+        )
+        .await;
+        assert!(
+            ops.iter().any(|(op, _)| op == "SeekGE") && !ops.iter().any(|(op, _)| op == "Rewind"),
+            "DELETE FROM {table} by (notice, section) seeks the full key: {ops:#?}"
+        );
+    }
 }

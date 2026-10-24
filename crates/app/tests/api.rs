@@ -4102,11 +4102,9 @@ fn diff_op(op: &str, entity: &str, id: i64) -> Option<(String, String, i64)> {
 /// procedure and its lot alike; its first change notice restates both as EUR 100,000. Before
 /// the SSE probes read the value at each probed version, both read the head column — so the
 /// `min_value` subscriber never heard `removed` (both sides read EUR 100,000 and the row was
-/// dropped) and the `max_value` one heard `changed` for a Tender it never had. That `added` is
-/// exact here only because the CN carries no figure below the bound: an earlier version is read
-/// as a superset (any of its amounts inside the bound), so had the CN's lot been under EUR
-/// 500,000 — each lot's figure is below the procedure total on a Tender with several lots — the
-/// `max_value` subscriber would still hear `changed` (`ValueBy::Version`; issue 561). The lots
+/// dropped) and the `max_value` one heard `changed` for a Tender it never had. Since issue 561
+/// an earlier version reads its own stored value, so that holds whatever the CN's lot figure
+/// (pinned by [`an_earlier_versions_unelected_figure_reads_outside_a_value_bound`]). The lots
 /// stream bounds a lot by its Tender's value (issue 490 decision 6). Here the lot's own figure
 /// moved too, but since issue 560 a move of the Tender's elected EUR value alone writes the
 /// lot's change row as well ([`a_tender_value_move_alone_reaches_a_lots_value_subscriber`]).
@@ -4229,11 +4227,11 @@ fn value_cents(row: &Value) -> Option<i64> {
 /// either version and every lots tape stayed silent while the pages flipped. Now each version
 /// is a lot `changed` row, and each tape, over a real SSE socket, hears:
 /// - `/v1/lots?min_value=` (EUR 500,000): `removed`, then `added`;
-/// - `/v1/lots?max_value=`: `changed` — version 1 is read as a superset, and its lot's EUR
-///   300,000 lies inside the bound (issue 561), so `changed` is applied as an upsert — then
-///   `removed`;
+/// - `/v1/lots?max_value=`: `added` — version 1 is read at its own stored EUR 1,000,000, outside
+///   the bound (issue 561; before it, version 1 was read as a superset and its lot's EUR 300,000
+///   gave `changed`) — then `removed`;
 /// - unfiltered `/v1/lots`: `changed`, `changed`;
-/// - the `/v1/tenders` tapes as before issue 560: `removed`/`added` and `changed`/`removed`.
+/// - the `/v1/tenders` tapes: `removed`/`added` and `added`/`removed`.
 #[tokio::test]
 async fn a_tender_value_move_alone_reaches_a_lots_value_subscriber() {
     let server = Server::start("sse-value-move-560").await;
@@ -4272,12 +4270,12 @@ async fn a_tender_value_move_alone_reaches_a_lots_value_subscriber() {
         next_ops(&mut tapes.iter_mut().collect::<Vec<_>>()).await,
         [
             diff_op("removed", "tender", id),
-            diff_op("changed", "tender", id),
+            diff_op("added", "tender", id),
             diff_op("removed", "lot", lot),
-            diff_op("changed", "lot", lot),
+            diff_op("added", "lot", lot),
             diff_op("changed", "lot", lot),
         ],
-        "version 2, EUR 400,000: {paths:?}"
+        "version 2, EUR 400,000 (version 1 read at its stored EUR 1,000,000, issue 561): {paths:?}"
     );
 
     server.ingest_bytes("r209/f14-000400-2019.xml", r209_f14("000400", "20190116", &total_change("400 000,00", "1 000 000,00")).as_bytes()).await;
@@ -4314,17 +4312,17 @@ async fn a_tender_value_move_alone_reaches_a_lots_value_subscriber() {
     );
 }
 
-/// Issue 560's net-move rule, over the socket: a lot's value bound is read exactly only at the
-/// Tender's head, and SSE probes every other version as a superset on both sides. When a fold
-/// writes two versions of one Tender in ONE run — a day's corrigendum and a later notice of the
-/// same day — the first version's row is classified with the second already the head. Here the
-/// CN states EUR 400,000; then, in one batch, an F14 corrects the total to EUR 1,000,000 and a
-/// second F14 moves only the deadline (the value stays EUR 1,000,000). The `max_value=` (EUR
-/// 500,000) subscriber held the lot. Version 2 reads superset against superset (the lot's EUR
-/// 300,000 is inside the bound on both sides), so it is `changed`; version 3 moved no value
-/// against version 2, but the run's net value moved (EUR 400,000 to 1,000,000), so it is a lot
-/// row too, probes the head, and the tape ends with `removed`. Without the rule it ended with
-/// `changed`, the lot held outside the bound.
+/// Issue 560's net-move rule, over the socket, since issue 561. When a fold writes two versions
+/// of one Tender in ONE run — a day's corrigendum and a later notice of the same day — the first
+/// version's row is classified with the second already the head. Here the CN states EUR
+/// 400,000; then, in one batch, an F14 corrects the total to EUR 1,000,000 and a second F14
+/// moves only the deadline (the value stays EUR 1,000,000). The `max_value=` (EUR 500,000)
+/// subscriber held the lot. Each version now reads its own stored value (issue 561), so version
+/// 2's row is exact: EUR 400,000 inside, then EUR 1,000,000 outside, `removed`; version 3's is
+/// outside on both sides and dropped. Before issue 561 version 2 read superset against superset
+/// (the lot's EUR 300,000 inside on both sides, `changed`) and only the net-move rule's version-3
+/// row, probing the head, ended the tape with `removed`. The rule still writes that row: a
+/// Tender awaiting its fill reads the superset fallback, which needs it.
 #[tokio::test]
 async fn a_net_value_move_folded_in_one_run_ends_a_lots_tape_with_its_membership() {
     let server = Server::start("sse-net-move-560").await;
@@ -4343,11 +4341,171 @@ async fn a_net_value_move_folded_in_one_run_ends_a_lots_tape_with_its_membership
     assert_eq!((tender["version"].as_i64(), value_cents(&tender)), (Some(3), Some(1_000_000_00)), "{tender}");
     assert!(items(&server.get("/v1/lots?max_value=50000000").await).is_empty(), "the page: outside the bound");
     assert_eq!(
-        next_ops(&mut [&mut below]).await.into_iter().chain(next_ops(&mut [&mut below]).await).collect::<Vec<_>>(),
-        [diff_op("changed", "lot", lot), diff_op("removed", "lot", lot)],
-        "version 2 superset against superset, then version 3 at the head"
+        next_ops(&mut [&mut below]).await,
+        [diff_op("removed", "lot", lot)],
+        "version 2 at its own stored values, inside then outside; version 3 outside on both sides"
     );
     assert!(below.quiet().await);
+    assert_eq!(
+        server.get("/v1/changes?since=0&entity=lot").await["events"]
+            .as_array()
+            .expect("events")
+            .iter()
+            .filter_map(|e| e["version"].as_i64())
+            .collect::<Vec<_>>(),
+        [1, 2, 3],
+        "the net-move rule still writes version 3's lot row (the superset fallback needs it)"
+    );
+}
+
+/// Issue 561: subscribe each of `paths` on a fresh server holding the R2.0.9 CN `cn` (snapshot
+/// empty), keep its live token, ingest the F14 `r209_f14("000300", "20190109", change)`, set
+/// every Tender's epoch to `epoch` when one is given, then resume each path from its token and
+/// take its next event. Returns the Tender, its lot, the CN's detail as served before the F14,
+/// and the ops, one per path.
+async fn resumed_ops(
+    name: &str,
+    cn: String,
+    change: String,
+    paths: &[&str],
+    epoch: Option<i64>,
+) -> (i64, i64, Value, Vec<Option<(String, String, i64)>>) {
+    let server = Server::start(name).await;
+    server.ingest_bytes(R209_CN, cn.as_bytes()).await;
+    let id = items(&server.get("/v1/tenders").await)[0]["id"].as_i64().expect("the CN's Tender");
+    let lot = items(&server.get("/v1/lots").await)[0]["id"].as_i64().expect("the CN's lot");
+    let detail = server.get(&format!("/v1/tenders/{id}")).await;
+    let mut tokens = Vec::new();
+    for path in paths {
+        let mut tape = Tape::open(&server, path, None).await;
+        let (snapshot, live) = tape.until_live().await;
+        assert!(snapshot.is_empty(), "{name} {path}: the CN is outside the bound: {snapshot:?}");
+        tokens.push(live.id.expect("the live marker's resume token"));
+    }
+    server.ingest_bytes("r209/f14-000300-2019.xml", r209_f14("000300", "20190109", &change).as_bytes()).await;
+    if let Some(e) = epoch {
+        server.db.set_projection_epoch_for_test(e).await.expect("stamp the epoch");
+    }
+    let mut ops = Vec::new();
+    for (path, token) in paths.iter().zip(&tokens) {
+        let mut tape = Tape::open(&server, path, Some(token.as_str())).await;
+        ops.extend(next_ops(&mut [&mut tape]).await);
+    }
+    (id, lot, detail, ops)
+}
+
+/// Issue 561 (the Verify): an earlier version is read at its own stored elected value, so a
+/// figure it published but did not elect no longer puts it inside a value bound. Each case
+/// resumes a `/v1/tenders` and a `/v1/lots` subscription past an F14 that moves the procedure
+/// total into the bound (EUR 500,000), with version 1 probed as an EARLIER version:
+/// 1. `max_value`, the issue's reproduction: CN EUR 900,000 with a EUR 300,000 lot, corrected
+///    to EUR 400,000. The superset read the lot's EUR 300,000 inside and sent `changed`; now
+///    version 1 reads its EUR 900,000, outside: `added`.
+/// 2. The same chain stamped epoch 4 after the fold (a Tender not filled yet, or a rolled-back
+///    binary's): the superset fallback, `changed`, pinned.
+/// 3. `min_value`, a refused figure: CN EUR 400,000 with the lot at EUR 200 bn (above the cap,
+///    never elected), corrected to EUR 600,000. The superset matched the EUR 200 bn row; now
+///    `added`. (The partner-only BT-709 case of the issue has no R2.0.9 form; the store's
+///    per-prefix test pins it on 551 fixture 1024214.)
+///
+/// The spec's fourth case, an EUR 0.00 earlier version under `max_value`, cannot be built from
+/// these helpers: the R2.0.9 parse keeps a CN's 0.00 figures, but the F14 reader refuses a zero
+/// OLD figure (issue 489's `f14_value_text`), so no corrigendum moves such a CN's value. The
+/// store's per-prefix test (`the_stored_version_value_is_the_head_value_of_each_prefix`) pins
+/// that a EUR 0 version stores NULL.
+#[tokio::test]
+async fn an_earlier_versions_unelected_figure_reads_outside_a_value_bound() {
+    let max = ["/v1/tenders?max_value=50000000", "/v1/lots?max_value=50000000"];
+    let min = ["/v1/tenders?min_value=50000000", "/v1/lots?min_value=50000000"];
+    let both = |op: &str, id: i64, lot: i64| vec![diff_op(op, "tender", id), diff_op(op, "lot", lot)];
+
+    let (id, lot, _, ops) =
+        resumed_ops("sse-561-max", r209_cn("900000.00"), total_change("900 000,00", "400 000,00"), &max, None).await;
+    assert_eq!(ops, both("added", id, lot), "1: max_value, version 1 at its EUR 900,000: {max:?}");
+
+    let (id, lot, _, ops) =
+        resumed_ops("sse-561-max-e4", r209_cn("900000.00"), total_change("900 000,00", "400 000,00"), &max, Some(4)).await;
+    assert_eq!(ops, both("changed", id, lot), "2: below the epoch gate the superset reads the EUR 300,000 lot: {max:?}");
+
+    let refused = r209_cn("400000.00").replacen(">300000.00<", ">200000000000.00<", 1);
+    assert!(refused.contains(">200000000000.00<"), "the lot's figure replaced");
+    let (id, lot, cn, ops) =
+        resumed_ops("sse-561-min-refused", refused, total_change("400 000,00", "600 000,00"), &min, None).await;
+    assert_eq!(value_cents(&cn), Some(400_000_00), "the EUR 200 bn lot is refused, the total elected: {cn}");
+    assert_eq!(ops, both("added", id, lot), "3: min_value, the refused EUR 200 bn figure is not version 1's value: {min:?}");
+}
+
+/// Issue 561: a `min_value`/`max_value` stream on `/v1/tenders` or `/v1/lots` resumed from below
+/// the value probe's horizon (`projection_state.value_probe_cursor`, recorded by the boot that
+/// added `tender_versions.value_eur_cents`) gets `reset` `value_probe_changed`: the state it
+/// holds was classified while earlier versions were read as a superset. The reset diffs on from
+/// the log's head, not from 0 (561's check: at the deploy it meets a full log), so the tape is
+/// quiet after it. An unfiltered or a non-value stream resumes as before. A value-bounded resume
+/// from the horizon itself is reset too: that token was issued for the last row classified under
+/// the superset (deploy #4 review d4-contract-1). One past the horizon is not reset, and a fresh
+/// subscription snapshots as usual.
+#[tokio::test]
+async fn a_value_bounded_resume_from_before_the_stored_values_is_reset() {
+    let server = Server::start("sse-561-reset").await;
+    server.ingest(CHAIN[0]).await;
+    let paths = ["/v1/tenders?max_value=50000000", "/v1/lots?min_value=50000000", "/v1/tenders", "/v1/tenders?country=MT"];
+    let mut tokens = Vec::new();
+    for path in paths {
+        let mut tape = Tape::open(&server, path, None).await;
+        tokens.push(tape.until_live().await.1.id.expect("the live marker's resume token"));
+    }
+    server.ingest(CHAIN[1]).await;
+    let raw = store::turso::Builder::new_local(&server.path).build().await.expect("raw").connect().expect("connect");
+    raw.execute(
+        "UPDATE projection_state SET value_probe_cursor = (SELECT seq FROM sqlite_sequence WHERE name = 'changes') WHERE id = 0",
+        (),
+    )
+    .await
+    .expect("record a horizon above every token");
+    let horizon = {
+        let mut rows = raw.query("SELECT value_probe_cursor FROM projection_state WHERE id = 0", ()).await.unwrap();
+        rows.next().await.unwrap().expect("the state row").get_value(0).unwrap().as_integer().copied().unwrap()
+    };
+    let generation = server.get("/v1").await["generation"].as_i64().expect("the generation");
+
+    for (path, token) in paths[..2].iter().zip(&tokens) {
+        let mut tape = Tape::open(&server, path, Some(token.as_str())).await;
+        let first = tape.next().await.expect("an answer, not silence");
+        assert_eq!(first.name, "reset", "{path}: {first:?}");
+        assert_eq!(first.data["reason"], "value_probe_changed", "{path}");
+        assert_eq!(first.data["generation"].as_i64(), Some(generation), "{path}");
+        assert!(tape.quiet().await, "{path}: the reset diffs on from the head, no replay of the log");
+    }
+    let mut unfiltered = Tape::open(&server, paths[2], Some(tokens[2].as_str())).await;
+    assert_eq!(unfiltered.next().await.expect("CHAIN[1]'s change").name, "change", "an unfiltered stream is not reset");
+    let mut country = Tape::open(&server, paths[3], Some(tokens[3].as_str())).await;
+    if let Some(first) = country.next().await {
+        assert_eq!(first.name, "change", "a non-value filter is not reset: {first:?}");
+    }
+
+    let at_horizon = format!("{generation}:{horizon}");
+    let mut resumed = Tape::open(&server, paths[0], Some(at_horizon.as_str())).await;
+    let first = resumed.next().await.expect("an answer, not silence");
+    assert_eq!(first.name, "reset", "a value-bounded resume from the horizon itself is reset: {first:?}");
+    assert_eq!(first.data["reason"], "value_probe_changed");
+    assert!(resumed.quiet().await, "and diffs on from the head");
+    let mut fresh = Tape::open(&server, paths[1], None).await;
+    let (snapshot, live) = fresh.until_live().await;
+    assert_eq!(snapshot.len(), 1, "a fresh subscription snapshots as usual: {snapshot:?}");
+    assert_eq!(live.name, "live");
+
+    // A token past the horizon resumes as before: one more change row, then a fresh stream's live marker.
+    server.ingest(CHAIN[2]).await;
+    let past = {
+        let mut tape = Tape::open(&server, paths[0], None).await;
+        tape.until_live().await.1.id.expect("the live marker's resume token")
+    };
+    let cursor: i64 = past.rsplit(':').next().and_then(|c| c.parse().ok()).expect("a generation-qualified token");
+    assert!(cursor > horizon, "CHAIN[2] wrote past the horizon: {past} vs {horizon}");
+    for path in &paths[..2] {
+        let mut tape = Tape::open(&server, path, Some(past.as_str())).await;
+        assert!(tape.quiet().await, "{path}: a value-bounded resume past the horizon is not reset");
+    }
 }
 
 /// Issue 562: one SSE event as the source tests read it — its op, entity kind, id and
@@ -4972,6 +5130,22 @@ async fn a_rebuild_moves_the_generation_and_resets_stale_resumes() {
         id
     };
 
+    // Issue 561: a value probe horizon recorded at the old log's high-water, as on a migrated
+    // box. `clear_changes` must drop it with the log, or every value-bounded resume of the new
+    // generation would be reset until the new log passed the old high-water.
+    store::turso::Builder::new_local(&server.path)
+        .build()
+        .await
+        .expect("raw")
+        .connect()
+        .expect("connect")
+        .execute(
+            "UPDATE projection_state SET value_probe_cursor = (SELECT seq FROM sqlite_sequence WHERE name = 'changes') WHERE id = 0",
+            (),
+        )
+        .await
+        .expect("record a horizon");
+
     // The operator rebuilds from scratch: layer wiped, feed dropped — the
     // exact sequence `project rebuild=true clear_changes=true` runs.
     server.db.clear_canonical().await.expect("clear canonical");
@@ -4989,6 +5163,11 @@ async fn a_rebuild_moves_the_generation_and_resets_stale_resumes() {
     assert_eq!(first.name, "reset");
     assert_eq!(first.data["reason"], "feed_rebuilt");
     assert_eq!(first.data["generation"].as_i64(), Some(3));
+
+    // Issue 561: a value-bounded resume carrying the new generation is not reset: the new log
+    // is classified wholly by this binary, and `clear_changes` dropped the old horizon.
+    let mut valued = Tape::open(&server, "/v1/tenders?max_value=50000000", Some("3:0")).await;
+    assert!(valued.quiet().await, "no value_probe_changed reset in the new generation");
 
     // A bare pre-rebuild cursor (no generation to check) that points past the
     // dropped feed's head is caught by the ahead-of-head guard.

@@ -93,7 +93,8 @@ async fn ingest(db: &Db, fetch_id: i64, source: &str, relative: &str) {
 async fn snapshot(db: &Db) -> String {
     let digests = [
         ("tenders", "SELECT group_concat(r, x'0a') FROM (SELECT id||'|'||coalesce(procedure_key,'')||'|'||coalesce(island_notice_id,-1)||'|'||kind||'|'||source||'|'||coalesce(current_seq,-1) AS r FROM tenders ORDER BY id)"),
-        ("tender_versions", "SELECT group_concat(r, x'0a') FROM (SELECT tender_id||'|'||seq||'|'||caused_by_notice_id||'|'||coalesce(publication_id,'')||'|'||coalesce(notice_subtype,'')||'|'||published_at||'|'||coalesce(dispatched_at,-1) AS r FROM tender_versions ORDER BY tender_id, seq)"),
+        // Issue 561: the stored per-version value (-1 = NULL).
+        ("tender_versions", "SELECT group_concat(r, x'0a') FROM (SELECT tender_id||'|'||seq||'|'||caused_by_notice_id||'|'||coalesce(publication_id,'')||'|'||coalesce(notice_subtype,'')||'|'||published_at||'|'||coalesce(dispatched_at,-1)||'|'||coalesce(value_eur_cents,-1) AS r FROM tender_versions ORDER BY tender_id, seq)"),
         // Issue 490: the stored elected value rides the lot row (-1 / '' = NULL).
         ("tender_version_lots", "SELECT group_concat(r, x'0a') FROM (SELECT tender_id||'|'||seq||'|'||lot_id||'|'||kind||'|'||coalesce(value_cents,-1)||'|'||coalesce(value_currency,'')||'|'||coalesce(value_eur_cents,-1) AS r FROM tender_version_lots ORDER BY tender_id, seq, lot_id)"),
         ("tender_version_texts", "SELECT group_concat(r, x'0a') FROM (SELECT tender_id||'|'||seq||'|'||field||'|'||coalesce(lang,'')||'|'||value||'|'||coalesce(lot_id,-1) AS r FROM tender_version_texts ORDER BY tender_id, seq, field, lang, value, lot_id)"),

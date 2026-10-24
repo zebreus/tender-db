@@ -212,6 +212,116 @@ async fn an_existing_database_gains_the_lot_value_columns() {
     }
 }
 
+/// Issue 561: an existing database gains `tender_versions.value_eur_cents` through the ALTER
+/// (existing rows read NULL until a fold of their Tender fills them), and the boot that adds it
+/// records the change log's high-water as the value probe's resume horizon
+/// (`projection_state.value_probe_cursor`), read O(1) from `sqlite_sequence`. The ALTER and the
+/// horizon commit in one transaction (the check's item 6), which turso accepts. A reopen keeps
+/// the horizon (recorded once); a file created with the column records 0.
+#[tokio::test]
+async fn an_existing_database_gains_the_version_value_column_and_records_the_probe_cursor() {
+    let path = format!("/tmp/tender-db-satcol-versionvalue-{}.db", std::process::id());
+    let fresh = format!("/tmp/tender-db-satcol-versionvalue-fresh-{}.db", std::process::id());
+    for p in [&path, &fresh] {
+        for suffix in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{p}{suffix}"));
+        }
+    }
+    {
+        let raw = turso::Builder::new_local(&path).build().await.unwrap();
+        let c = raw.connect().unwrap();
+        // The frozen version table of `leaf_tables_match_the_schema_fresh_and_migrated`: the
+        // migrations add `dispatched_at`, `original_lang` and the new column.
+        c.execute(
+            "CREATE TABLE tender_versions (tender_id INTEGER NOT NULL, seq INTEGER NOT NULL, caused_by_notice_id INTEGER NOT NULL, published_at INTEGER NOT NULL, notice_subtype TEXT, publication_id TEXT NOT NULL, PRIMARY KEY (tender_id, seq), UNIQUE (tender_id, caused_by_notice_id)) STRICT",
+            (),
+        )
+        .await
+        .unwrap();
+        // The prod change log (canonical SCHEMA): AUTOINCREMENT, so `sqlite_sequence` holds its
+        // high-water.
+        c.execute(
+            "CREATE TABLE changes (
+                 cursor      INTEGER PRIMARY KEY AUTOINCREMENT,
+                 entity_kind TEXT NOT NULL,
+                 entity_id   INTEGER NOT NULL,
+                 version_seq INTEGER,
+                 op          TEXT NOT NULL,
+                 changed_at  INTEGER NOT NULL
+             ) STRICT",
+            (),
+        )
+        .await
+        .unwrap();
+        for id in 1..=3 {
+            c.execute(
+                "INSERT INTO changes(entity_kind, entity_id, version_seq, op, changed_at) VALUES ('tender', ?, 1, 'added', 0)",
+                (turso::Value::Integer(id),),
+            )
+            .await
+            .unwrap();
+        }
+        c.execute("INSERT INTO tender_versions VALUES (1, 1, 10, 0, NULL, 'p-1')", ()).await.unwrap();
+    }
+
+    let db = Db::open(&path).await.unwrap();
+    let sql = match db.scalar("SELECT sql FROM sqlite_master WHERE type='table' AND name='tender_versions'").await.unwrap() {
+        Some(turso::Value::Text(s)) => s,
+        other => panic!("no table sql: {other:?}"),
+    };
+    assert!(!sql.contains("Issue 561"), "precondition: still the pre-column table:\n{sql}");
+    assert_eq!(
+        db.scalar("SELECT COUNT(*) FROM tender_versions WHERE value_eur_cents IS NULL").await.unwrap(),
+        Some(turso::Value::Integer(1)),
+        "the pre-existing row reads NULL until a fold of its Tender fills it"
+    );
+    assert_eq!(
+        db.scalar("SELECT value_probe_cursor FROM projection_state WHERE id = 0").await.unwrap(),
+        Some(turso::Value::Integer(3)),
+        "the boot that added the column recorded the change log's high-water"
+    );
+    db.scalar(
+        "INSERT INTO tender_versions(tender_id, seq, caused_by_notice_id, published_at, dispatched_at, notice_subtype, original_lang, publication_id, value_eur_cents)
+         VALUES (1, 2, 11, 0, NULL, NULL, NULL, 'p-2', 500) RETURNING value_eur_cents",
+    )
+    .await
+    .expect("the fold's nine-column insert lands on the migrated table");
+    {
+        let raw = turso::Builder::new_local(&path).build().await.unwrap();
+        let c = raw.connect().unwrap();
+        for id in 4..=5 {
+            c.execute(
+                "INSERT INTO changes(entity_kind, entity_id, version_seq, op, changed_at) VALUES ('tender', ?, 1, 'added', 0)",
+                (turso::Value::Integer(id),),
+            )
+            .await
+            .unwrap();
+        }
+    }
+    drop(db);
+    let db = Db::open(&path).await.unwrap();
+    assert_eq!(
+        db.scalar("SELECT value_probe_cursor FROM projection_state WHERE id = 0").await.unwrap(),
+        Some(turso::Value::Integer(3)),
+        "a later boot does not move the horizon: it is recorded once, by the boot that adds the column"
+    );
+    assert_eq!(db.scalar("SELECT MAX(cursor) FROM changes").await.unwrap(), Some(turso::Value::Integer(5)));
+    drop(db);
+
+    let db = Db::open(&fresh).await.unwrap();
+    assert_eq!(
+        db.scalar("SELECT value_probe_cursor FROM projection_state WHERE id = 0").await.unwrap(),
+        Some(turso::Value::Integer(0)),
+        "a file created with the column has no horizon"
+    );
+    drop(db);
+    for p in [&path, &fresh] {
+        for suffix in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{p}{suffix}"));
+        }
+    }
+}
+
 /// Issue 495 unit 2: the fold's leaf descriptor (`store::canonical::LEAF_TABLES`) names
 /// exactly the columns each version-keyed table has, on a FRESH database and on an
 /// EXISTING one whose tables predate the 20 ALTER-added columns. The fold's INSERT, DELETE

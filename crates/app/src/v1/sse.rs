@@ -27,7 +27,10 @@
 //! `Last-Event-ID` and re-snapshots, rather than "resuming" past the snapshot's
 //! own undelivered remainder. A cursor below the log's horizon cannot be
 //! served either and gets a `reset` event instead, which means "re-snapshot"
-//! (Firestore's expired-token semantics).
+//! (Firestore's expired-token semantics). So does a `min_value`/`max_value`
+//! stream on `/v1/tenders` or `/v1/lots` resumed from a token at or below the
+//! value probe's horizon (issue 561, `value_probe_changed`): its earlier events
+//! were classified while an earlier version was read as a superset.
 
 use super::stop::BoundedReaders;
 use super::{
@@ -159,7 +162,11 @@ fn events(
         // away, this generator is dropped and the budget is released.
         let _slot = slot;
 
-        let started = match start(&readers, resume).await {
+        // Issue 561: a stream whose predicate reads the value probe (`/v1/tenders` and
+        // `/v1/lots` under `min_value`/`max_value`).
+        let value_bounded = matches!(collection, Collection::Tenders | Collection::Lots)
+            && (filter.min_value.is_some() || filter.max_value.is_some());
+        let started = match start(&readers, resume, value_bounded).await {
             Ok(started) => started,
             Err(e) => {
                 yield Ok(read_error_event(&e));
@@ -293,7 +300,11 @@ enum Started {
 /// Step 2's decision: where this subscription starts. One pooled read, no
 /// transaction — the heavy part (the snapshot itself) happens lazily in the
 /// stream so it can be cancelled and never buffers more than a page.
-async fn start(readers: &Arc<BoundedReaders>, resume: Option<Resume>) -> Result<Started, store::turso::Error> {
+async fn start(
+    readers: &Arc<BoundedReaders>,
+    resume: Option<Resume>,
+    value_bounded: bool,
+) -> Result<Started, store::turso::Error> {
     let reader = readers.get().await?;
     let generation = read::feed_generation(&reader).await?;
 
@@ -327,6 +338,25 @@ async fn start(readers: &Arc<BoundedReaders>, resume: Option<Resume>) -> Result<
             return Ok(Started::Resume {
                 initial: vec![reset_event("cursor_ahead", generation)],
                 cursor: 0,
+                generation,
+            });
+        }
+        // Issue 561: rows up to the migration's horizon were classified while an earlier version was
+        // read as a superset; a value-bounded state built on them does not compose with the exact probe.
+        // The horizon row itself included: a client whose last event was the final pre-deploy row, or
+        // whose resume caught up to it, holds `gen:<horizon>` and can hold a superset-era ghost that only
+        // the old probe would have healed (deploy #4 review d4-contract-1). The cost: a fresh snapshot
+        // taken after the deploy, before the first new change row, also goes live at the horizon and
+        // re-snapshots once per reconnect until that row lands. 0 means none recorded (a file created
+        // with the column, or a log `clear_changes` dropped): nothing is reset. The diff goes on from
+        // the log's head, not from 0: this reset fires against a full log (every value-bounded
+        // subscriber reconnects at the deploy), and the reset already says re-snapshot, so a client
+        // that ignores it is not handed the whole log (561's check, item 1).
+        let horizon = if value_bounded { read::value_probe_cursor(&reader).await? } else { 0 };
+        if horizon > 0 && from <= horizon {
+            return Ok(Started::Resume {
+                initial: vec![reset_event("value_probe_changed", generation)],
+                cursor: read::latest_cursor(&reader).await?,
                 generation,
             });
         }

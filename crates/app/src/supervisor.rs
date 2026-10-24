@@ -31102,11 +31102,22 @@ mod tests {
         // 24 KiB, the incremental wrapper 17, `project_incremental_chunked_observed`
         // 117, then turso's prepare (~23) and its recursive expression parser at
         // ~50 KiB per nesting level. The parser's depth is turso's, so the next
-        // lever is splitting that 117 KiB fold frame, not this number.
+        // lever is splitting that 117 KiB fold frame, not this number (issue 561 did).
         // Issue 469 U5 pushed it past 472 again (470 KiB painted, 2026-10-11): the
         // register alias and issue 518 roughly doubled `MentionResolver`'s inline
         // `altid`, and the resolver moves by value through the fold's frames. Boxing
         // that field brought it to 456 KiB (the 4 MiB paint described below).
+        // Issue 561 (epoch 5) pushed it past 472 again (2026-10-24, a SIGABRT here and so
+        // a gate red with no FAILED line). gdb on the overflow read this fn 30,512 B, the
+        // incremental wrapper 22,576 and `project_incremental_chunked_observed` 126,768,
+        // over turso's parser at 52 KiB per expression level. At O0 even `Box::pin(f(..))`
+        // builds f's future in slots of the CALLER's poll frame, so the chunked fold's four
+        // full fallbacks, its phase 2 and the wrapper's call to it now build theirs in
+        // non-inlined fns (`full_fallback_boxed`, `incremental_phase2_boxed`,
+        // `chunked_observed_boxed`). That brought the two frames to 78,944 and 16,128 B and
+        // the deep path to 409 KiB (painted, 2026-10-24), so ≥ 50 KiB of headroom. Any change
+        // on the fold path (store's `apply_tenders`, ingest's `project_*`) runs this test in
+        // its focused set: its frames are the fold's, and it is the only test that reads them.
         // The arguments keep each poll short and four of them off any write: the
         // job is marked cancelled (analyze and the merged-identifier backfill stop
         // at their first check), the sweep refuses (the scratch DB lacks its org FK

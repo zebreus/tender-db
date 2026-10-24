@@ -874,7 +874,9 @@ async fn a_derived_lot_sum_head_is_stored_and_served_as_the_fold_derived_it() {
 /// from 2026-10-19, had left v1 on the copy, read inside only as a superset.) A second notice
 /// admits a EUR 1.5 m estimate. Path V under
 /// `max_value`: six awards of EUR 500 k vouched by a refused EUR 3 bn (no copy) derive EUR 3 m;
-/// a second notice admits a EUR 5 m estimate.
+/// a second notice admits a EUR 5 m estimate. Issue 561: v1 now reads the value the fold stored
+/// for it on a Tender stamped `VERSION_VALUE_EPOCH`, and the superset (with its lot legs) below
+/// it; both stamps are probed.
 #[tokio::test]
 async fn an_earlier_derived_head_is_read_inside_the_bound_it_was_in() {
     use store::canonical::{LotResultState, LotState, Round, StatedTotal, StatedTotalKind};
@@ -960,9 +962,14 @@ async fn an_earlier_derived_head_is_read_inside_the_bound_it_was_in() {
     };
     db.apply_tenders(&[tender(vec![vouched(version(1, copy(), &awards)), estimated])], PUBLISHED_AT, false).await.unwrap();
     assert_eq!(marker(&conn).await, (Some(150_000_000), None, None, None, None), "v2 elects the estimate");
-    assert!(!at(conn.clone(), min(200_000_000), 2).await, "the new head is below EUR 2 m");
-    assert!(at(conn.clone(), min(200_000_000), 1).await, "v1's EUR 2.2 m was inside it: the probe pair reads `removed`");
-    assert!(!at(conn.clone(), min(250_000_000), 1).await, "the superset is bounded: v1's lots total EUR 2.2 m");
+    // Issue 561: stamped 5, v1 reads the EUR 2.2 m the fold stored for it; stamped 4, the superset
+    // fallback reads its lot figures. Both read it inside, and both are bounded.
+    for epoch in [5, 4] {
+        db.set_projection_epoch_for_test(epoch).await.unwrap();
+        assert!(!at(conn.clone(), min(200_000_000), 2).await, "epoch {epoch}: the new head is below EUR 2 m");
+        assert!(at(conn.clone(), min(200_000_000), 1).await, "epoch {epoch}: v1's EUR 2.2 m was inside it: the probe pair reads `removed`");
+        assert!(!at(conn.clone(), min(250_000_000), 1).await, "epoch {epoch}: bounded: v1's lots total EUR 2.2 m");
+    }
     drop((db, conn));
     let _ = std::fs::remove_file(path("derived-at-w"));
 
@@ -980,10 +987,13 @@ async fn an_earlier_derived_head_is_read_inside_the_bound_it_was_in() {
     };
     db.apply_tenders(&[tender(vec![version(1, slipped(), &awards), estimated])], PUBLISHED_AT, false).await.unwrap();
     assert_eq!(marker(&conn).await.0, Some(500_000_000), "v2 elects the estimate");
-    assert!(!at(conn.clone(), max(400_000_000), 2).await, "the new head is above EUR 4 m");
-    assert!(at(conn.clone(), max(400_000_000), 1).await, "v1's EUR 3 m was inside it (its only amount row is the EUR 3 bn slip)");
     let band = Filter { min_value: Some(250_000_000), max_value: Some(400_000_000), ..Filter::default() };
-    assert!(at(conn.clone(), band, 1).await, "and inside a band around it");
+    for epoch in [5, 4] {
+        db.set_projection_epoch_for_test(epoch).await.unwrap();
+        assert!(!at(conn.clone(), max(400_000_000), 2).await, "epoch {epoch}: the new head is above EUR 4 m");
+        assert!(at(conn.clone(), max(400_000_000), 1).await, "epoch {epoch}: v1's EUR 3 m was inside it (its only amount row is the EUR 3 bn slip)");
+        assert!(at(conn.clone(), band.clone(), 1).await, "epoch {epoch}: and inside a band around it");
+    }
     drop((db, conn));
     let _ = std::fs::remove_file(path("derived-at-v"));
 }
@@ -1132,7 +1142,9 @@ async fn tender_feed(conn: &turso::Connection, cursor: i64) -> Vec<String> {
 /// whole probe failed, and a value-bounded stream that reached the version was stuck on it. Only
 /// figures a derived sum can contain are summed (each converts to at most S, and S to at most
 /// EUR 100 bn), so the probe answers. Two lot estimates and two lot awards of EUR 4.97e16 at v1;
-/// v2 admits a procedure estimate.
+/// v2 admits a procedure estimate. Issue 561: the lot-sum legs are the superset FALLBACK now (a
+/// Tender below `VERSION_VALUE_EPOCH`), so the overflow guard is pinned with the Tender stamped
+/// 4; stamped 5, v1 reads its own stored value, which elected nothing, and matches neither bound.
 #[tokio::test]
 async fn an_earlier_version_whose_lot_figures_overflow_a_sum_still_probes() {
     use store::canonical::{LotResultState, LotState, Round};
@@ -1183,13 +1195,18 @@ async fn an_earlier_version_whose_lot_figures_overflow_a_sum_still_probes() {
     let awards = scalar(&conn, "SELECT COUNT(*) FROM tender_version_lot_results WHERE tender_id = 1 AND seq = 1 AND awarded_eur_cents = 4970000000000000000").await;
     assert_eq!(awards, Some(2), "and both lot awards");
     let lot_id = scalar(&conn, "SELECT MIN(id) FROM lots WHERE tender_id = 1").await.expect("a lot");
+    assert_eq!(scalar(&conn, "SELECT COUNT(value_eur_cents) FROM tender_versions WHERE tender_id = 1 AND seq = 1").await, Some(0), "v1 elected nothing");
     let min = Filter { min_value: Some(1), ..Filter::default() };
     let band = Filter { min_value: Some(1), max_value: Some(100_000_000_000), ..Filter::default() };
-    for (name, f, inside) in [("min_value", &min, true), ("value band", &band, false)] {
-        let tenders = read::tenders(&conn, f, Scope::At { id: 1, seq: 1 }).await;
-        assert_eq!(tenders.map(|rows| !rows.is_empty()).map_err(|e| e.to_string()), Ok(inside), "tenders At {name} answers");
-        let lots = read::lots(&conn, f, Scope::At { id: lot_id, seq: 1 }).await;
-        assert_eq!(lots.map(|rows| !rows.is_empty()).map_err(|e| e.to_string()), Ok(inside), "lots At {name} answers");
+    // (epoch, whether v1 matches min_value): the fallback's superset reads the huge rows inside.
+    for (epoch, min_inside) in [(4, true), (5, false)] {
+        db.set_projection_epoch_for_test(epoch).await.unwrap();
+        for (name, f, inside) in [("min_value", &min, min_inside), ("value band", &band, false)] {
+            let tenders = read::tenders(&conn, f, Scope::At { id: 1, seq: 1 }).await;
+            assert_eq!(tenders.map(|rows| !rows.is_empty()).map_err(|e| e.to_string()), Ok(inside), "epoch {epoch}: tenders At {name} answers");
+            let lots = read::lots(&conn, f, Scope::At { id: lot_id, seq: 1 }).await;
+            assert_eq!(lots.map(|rows| !rows.is_empty()).map_err(|e| e.to_string()), Ok(inside), "epoch {epoch}: lots At {name} answers");
+        }
     }
     drop((db, conn));
     let _ = std::fs::remove_file(path("derived-at-ovf"));
@@ -1205,7 +1222,9 @@ async fn an_earlier_version_whose_lot_figures_overflow_a_sum_still_probes() {
 /// sum to IDR 1,005.90, EUR 0.06, each lot won by one tenderer and the sum vouched by the award
 /// notice's BT-161 (R10; its notice's round holds twelve LotResults, each on a summed lot, so both
 /// B6 guards keep it): v1 serves EUR 0.06 marked `lot-sum-awards`; v2 admits a EUR 1.5 m estimate.
-/// The bounds sit on S's own EUR 0.06, so v1's served head is just inside both.
+/// The bounds sit on S's own EUR 0.06, so v1's served head is just inside both. Issue 561: v1
+/// reads its own stored EUR 0.06 on a Tender stamped `VERSION_VALUE_EPOCH`; the lot legs are the
+/// fallback below it, so both stamps are probed.
 #[tokio::test]
 async fn an_earlier_derived_head_of_zero_euro_summands_is_read_inside_its_bound() {
     use store::canonical::{LotResultState, LotState, Round, StatedTotal, StatedTotalKind};
@@ -1281,12 +1300,15 @@ async fn an_earlier_derived_head_of_zero_euro_summands_is_read_inside_its_bound(
     let lot_id = scalar(&conn, "SELECT MIN(id) FROM lots WHERE tender_id = 1").await.expect("a lot");
     let max = Filter { max_value: Some(6), ..Filter::default() };
     let min = Filter { min_value: Some(6), ..Filter::default() };
-    for (name, f, at_v2) in [("max_value", &max, false), ("min_value", &min, true)] {
-        for (seq, inside) in [(2, at_v2), (1, true)] {
-            let tenders = !read::tenders(&conn, f, Scope::At { id: 1, seq }).await.unwrap().is_empty();
-            assert_eq!(tenders, inside, "tenders At v{seq} under {name}");
-            let lots = !read::lots(&conn, f, Scope::At { id: lot_id, seq }).await.unwrap().is_empty();
-            assert_eq!(lots, inside, "lots At v{seq} under {name}");
+    for epoch in [5, 4] {
+        db.set_projection_epoch_for_test(epoch).await.unwrap();
+        for (name, f, at_v2) in [("max_value", &max, false), ("min_value", &min, true)] {
+            for (seq, inside) in [(2, at_v2), (1, true)] {
+                let tenders = !read::tenders(&conn, f, Scope::At { id: 1, seq }).await.unwrap().is_empty();
+                assert_eq!(tenders, inside, "epoch {epoch}: tenders At v{seq} under {name}");
+                let lots = !read::lots(&conn, f, Scope::At { id: lot_id, seq }).await.unwrap().is_empty();
+                assert_eq!(lots, inside, "epoch {epoch}: lots At v{seq} under {name}");
+            }
         }
     }
     drop((db, conn));
@@ -1342,4 +1364,33 @@ fn the_derived_head_marker_has_one_writer() {
         canonical.contains("let value = head_value_eur_cents_with(head, &partners, &rates);"),
         "the fold's head must take the value and its marker from the election"
     );
+}
+
+/// Issue 561: `tender_versions.value_eur_cents` has ONE writer besides the version row's own
+/// INSERT: the fold's quiet refresh (`version_value_update`, also the shrink restatement), and
+/// both take the figure from the election, `head_value_eur_cents_with` over the running rule —
+/// the issue-375 rule, as for every head column. A walk that wrote it from SQL would be a second
+/// copy of the election; a re-derivation stamps the Tender 0 and its next fold refreshes it.
+#[test]
+fn the_version_value_has_one_writer() {
+    let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
+    let mut writers: Vec<String> = Vec::new();
+    for rel in ["src/lib.rs", "src/canonical.rs", "src/read.rs", "src/rates.rs", "src/inplace.rs"] {
+        let text = std::fs::read_to_string(root.join(rel)).expect(rel);
+        for (n, line) in text.lines().enumerate() {
+            let code = line.split("//").next().unwrap_or("");
+            if code.contains("SET value_eur_cents") {
+                writers.push(format!("{rel}:{}", n + 1));
+            }
+        }
+    }
+    assert_eq!(writers.len(), 1, "expected the fold's `version_value_update` alone; found {writers:?}");
+    assert!(writers[0].starts_with("src/canonical.rs:"), "{writers:?}");
+    let canonical = std::fs::read_to_string(root.join("src/canonical.rs")).unwrap();
+    assert_eq!(
+        canonical.matches("let version_value = head_value_eur_cents_with(version, &partners, &rates).eur_cents;").count(),
+        1,
+        "every written or compared version takes its stored value from the running election, once"
+    );
+    assert!(canonical.contains("opt_int(version_value),"), "the version row's INSERT carries the elected value");
 }

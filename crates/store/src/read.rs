@@ -1191,53 +1191,66 @@ enum ValueBy<'a> {
     /// ONE version, the SSE `Scope::At` probe (Tenders, and Lots, which a value bound reads
     /// through their Tender: issue 490 decision 6). The head column is the head's value only,
     /// so the seq and seq − 1 probes read one figure and a change across a bound was dropped
-    /// as `(false, false)` or served `changed`. At the head (`seq = head_seq`) this reads
-    /// `head_value`, exact. An earlier version has NO stored elected value —
-    /// `head_value_eur_cents` runs for the head alone, and its rule (the sentinel digit walk,
-    /// scale partners over the chain) is not transcribed into SQL (issues 366, 375) — so there
-    /// the bound reads a SUPERSET: an amount row of the version whose `eur_cents` lies within
-    /// it, OR (issue 551) the version's lot figures read as a lot sum's bound. The fold elects
-    /// one of the version's own stored rows (the amount pick in `tender_select_head` finds it by
-    /// `eur_cents` the same way) or, since issue 551, a DERIVED lot sum S that no amount row
-    /// carries (`canonical::DerivedValue`: the lots' latest awards, which live in
-    /// `tender_version_lot_results`, or their estimates or framework maxima). S is a sum of lot
-    /// figures each converted at S's own date and rate, so each stored summand is between EUR 0
-    /// (a summand can round to 0 while S rounds to a cent) and S. Under `>=` the version's TOTAL
-    /// of lot figures from EUR 0 to the cap (its lot amount rows, or its lot results) is at least
-    /// S, given one cent a row for the conversion's half-up rounding, and under `<=` any one
-    /// summed figure is at most S. Either way a version inside
-    /// the bound always matches, and a PROBED change that takes the head out of the bound reaches
-    /// its subscriber as `removed`. Probed: a lots stream reads only `lot` change rows. Since
-    /// issue 560 the fold writes one for each lot present on both sides whenever the Tender's
-    /// elected EUR value moved, as it does when the lot's facts, kind or its Tender's closure
-    /// moved — so a version that moves only the Tender's value (a procedure-total corrigendum, a
-    /// sibling lot's figure, the rate) probes its lots too. A fold's last version of a Tender
-    /// that already had versions is also a lot row whenever its value differs from the stored
-    /// head's or, past a kept or compared prefix, from the value before the run. That does not
-    /// make a fold of several versions exact: a version written in the same fold as a later one
-    /// is probed superset against superset (below), and a Tender first folded with several
-    /// versions (or rebuilt) has no value to compare its last version against, so a
-    /// value-bound lots stream can end holding a lot outside its bound, live or not (issue
-    /// 561). Change rows written before that deploy keep the gap. The error is
-    /// one-sided: an earlier version with any figure inside the bound that it did not elect —
-    /// a refused one, or under `max_value` ANY smaller one, which a Tender with several lots
-    /// usually has (each lot's figure is below the procedure total) — also matches: an
-    /// idempotent over-delivered `removed` for a Tender that never matched (issue 164's
-    /// direction), or `changed` where `added` was due (so `changed` is applied as an upsert,
-    /// `/docs`); and a subscriber catching up past a version since superseded reads both of its
-    /// probes this way, until the newer version's own change row probes the head. Exact
-    /// everywhere needs the elected value stored per version, as 490 stores the lots' (issue
-    /// 561). The amount EXISTS carries `seq IS NOT head_seq`, as `closed_at_version_sql` carries
-    /// its `cb_v.seq <> head_seq`: turso runs the ELSE leg's loop on a head probe too (it is
-    /// planned as a join loop, not a lazily evaluated subquery), and without the guard every
-    /// head probe walked the version's whole amount slice whenever no amount lay inside the
-    /// bound (measured 0.046 s against 0.004 s on 2,400 amount rows, review 2026-10-16). `IS
-    /// NOT` rather than `<>` keeps a NULL `head_seq` reading as today.
-    Version { head_seq: &'a str, head_value: &'a str },
+    /// as `(false, false)` or served `changed`. Three legs, in order:
+    ///
+    /// 1. At the head (`seq = head_seq`): `head_value`, exact.
+    /// 2. An earlier version of a Tender stamped at or above `canonical::VERSION_VALUE_EPOCH`
+    ///    (`epoch`): `version_value`, the head election the fold stored for that version (issue
+    ///    561: `tender_versions.value_eur_cents`, what the head column held while that version
+    ///    was the head, a 551 lot sum included), exact.
+    /// 3. An earlier version below that epoch (not filled yet, re-stamped 0 by a rate
+    ///    re-derivation, a merge or a targeted refold, or written by a rolled-back binary): the
+    ///    547/551 SUPERSET, kept for good as the fallback. It matches when an amount row of the
+    ///    version has its `eur_cents` within the bound, OR (issue 551) when the version's lot
+    ///    figures read as a lot sum's bound. The fold elects one of the version's own stored rows
+    ///    (the amount pick in `tender_select_head` finds it by `eur_cents` the same way) or, since
+    ///    issue 551, a DERIVED lot sum S that no amount row carries (`canonical::DerivedValue`:
+    ///    the lots' latest awards, which live in `tender_version_lot_results`, or their estimates
+    ///    or framework maxima). S is a sum of lot figures each converted at S's own date and rate,
+    ///    so each stored summand is between EUR 0 (a summand can round to 0 while S rounds to a
+    ///    cent) and S. Under `>=` the version's TOTAL of lot figures from EUR 0 to the cap (its lot
+    ///    amount rows, or its lot results) is at least S, given one cent a row for the
+    ///    conversion's half-up rounding, and under `<=` any one summed figure is at most S. Either
+    ///    way a version inside the bound always matches, and a PROBED change that takes the head
+    ///    out of the bound reaches its subscriber as `removed`. The error is one-sided: an
+    ///    earlier version with any figure inside the bound that it did not elect — a refused one,
+    ///    or under `max_value` ANY smaller one, which a Tender with several lots usually has (each
+    ///    lot's figure is below the procedure total) — also matches: an idempotent over-delivered
+    ///    `removed` for a Tender that never matched (issue 164's direction), or `changed` where
+    ///    `added` was due (so `changed` is applied as an upsert, `/docs`).
+    ///
+    /// Probed: a lots stream reads only `lot` change rows. Since issue 560 the fold writes one for
+    /// each lot present on both sides whenever the Tender's elected EUR value moved, as it does
+    /// when the lot's facts, kind or its Tender's closure moved — so a version that moves only the
+    /// Tender's value (a procedure-total corrigendum, a sibling lot's figure, the rate) probes its
+    /// lots too. A fold's last version of a Tender that already had versions is also a lot row
+    /// whenever its value differs from the stored head's or, past a kept or compared prefix, from
+    /// the value before the run (the superset fallback still needs that row).
+    ///
+    /// Every fallback subquery carries `seq IS NOT head_seq`, as `closed_at_version_sql` carries
+    /// its `cb_v.seq <> head_seq`, and `epoch < VERSION_VALUE_EPOCH`: turso runs the ELSE leg's
+    /// loop on every probe (it is planned as a join loop, not a lazily evaluated subquery).
+    /// Without the first guard every head probe walked the version's whole amount slice whenever
+    /// no amount lay inside the bound (measured 0.046 s against 0.004 s on 2,400 amount rows,
+    /// review 2026-10-16); without the second every gated probe did (0.10 s against 0.004 s,
+    /// 561's check). `IS NOT` rather than `<>` keeps a NULL `head_seq` reading as today. Both At
+    /// builders pin `v` to its primary key (`canonical::VERSION_PK_INDEX`): reading
+    /// `version_value`, or any non-key `v` column, otherwise moves turso 0.7.2 to the
+    /// `(tender_id, caused_by_notice_id)` index, which walks every version of the Tender per
+    /// probe (561's adversarial check).
+    Version { head_seq: &'a str, head_value: &'a str, version_value: &'a str, epoch: &'a str },
 }
 
 /// The Tender head's value column, as every head-scoped Tenders builder names it.
 const VALUE_BY_HEAD: ValueBy<'static> = ValueBy::Head("t.current_value_eur_cents");
+
+/// The SSE At probe's value bounds (issue 547, gated by issue 561), as both At builders name them.
+const VALUE_BY_VERSION: ValueBy<'static> = ValueBy::Version {
+    head_seq: "t.current_seq",
+    head_value: "t.current_value_eur_cents",
+    version_value: "v.value_eur_cents",
+    epoch: "t.projection_epoch",
+};
 
 /// A version's submission deadline as one scalar expression (issue 547): the MAX of its
 /// admitted rows — canonical's one selector, the rows [`StatusBy::Version`]'s EXISTS reads —
@@ -1427,15 +1440,21 @@ fn version_predicates(
                 q.push(&format!(" AND {value_col} {op} ?"), [Value::Integer(*eur_cents)]);
             }
         }
-        // Issue 547: the stored value at the head, a superset (one amount row of the version
-        // inside every bound) before it — see `ValueBy::Version`. Issue 551: or the version's
-        // lot figures inside every bound read as a lot sum's (a derived head is no amount row).
-        ValueBy::Version { head_seq, head_value } if !bounds.is_empty() => {
+        // Issue 547: the stored value at the head; issue 561: the value the fold stored for an
+        // earlier version of a filled Tender; below the gate a superset (one amount row of the
+        // version inside every bound, or, issue 551, the version's lot figures inside every bound
+        // read as a lot sum's: a derived head is no amount row) — see `ValueBy::Version`.
+        ValueBy::Version { head_seq, head_value, version_value, epoch } if !bounds.is_empty() => {
+            let gate = crate::canonical::VERSION_VALUE_EPOCH;
             let at_head: Vec<String> = bounds.iter().map(|(op, _)| format!("{head_value} {op} ?")).collect();
+            // Issue 561: a filled Tender's earlier version reads the value the fold stored for it.
+            let stored: Vec<String> = bounds.iter().map(|(op, _)| format!("{version_value} {op} ?")).collect();
             let a_row: Vec<String> = bounds.iter().map(|(op, _)| format!("va.eur_cents {op} ?")).collect();
-            // Each leg seeks the version's own rows and carries the head guard, as the amount
-            // EXISTS does. `SUM` over no row is NULL, so a version without lot figures fails it.
-            let version_rows = |alias: &str| format!("{alias}.tender_id = {tid} AND {alias}.seq = {seq} AND {seq} IS NOT {head_seq}");
+            // Each leg seeks the version's own rows and carries the head and epoch guards, as the
+            // amount EXISTS does. `SUM` over no row is NULL, so a version without lot figures fails it.
+            let version_rows = |alias: &str| {
+                format!("{alias}.tender_id = {tid} AND {alias}.seq = {seq} AND {seq} IS NOT {head_seq} AND {epoch} < {gate}")
+            };
             let (va_rows, vr_rows) = (version_rows("va"), version_rows("vr"));
             // Only a figure a derived sum can hold: non-negative and at most the cap, since each
             // summand converts to at most S and S to at most `IMPLAUSIBLE_EUR_CENTS` (both paths
@@ -1464,15 +1483,18 @@ fn version_predicates(
                     ),
                 })
                 .collect();
-            let mut params: Vec<Value> = bounds.iter().chain(&bounds).map(|(_, eur_cents)| Value::Integer(*eur_cents)).collect();
+            let mut params: Vec<Value> =
+                bounds.iter().chain(&bounds).chain(&bounds).map(|(_, eur_cents)| Value::Integer(*eur_cents)).collect();
             params.extend(bounds.iter().flat_map(|(_, eur_cents)| [Value::Integer(*eur_cents), Value::Integer(*eur_cents)]));
             q.push(
                 &format!(
                     " AND CASE WHEN {seq} = {head_seq} THEN ({})
+                          WHEN {epoch} >= {gate} THEN ({})
                           ELSE (EXISTS (SELECT 1 FROM tender_version_amounts va
                                          WHERE {va_rows} AND {})
                                 OR ({})) END",
                     at_head.join(" AND "),
+                    stored.join(" AND "),
                     a_row.join(" AND "),
                     lot_sum.join(" AND "),
                 ),
@@ -2506,7 +2528,7 @@ fn tenders_ordered_query(
     // rows, so this sort is trivial.
     let mut q = Query::default();
     q.push(
-        &tender_select_head(&format!("({}) w JOIN tenders t ON t.id = w.wid", inner.sql), filter.lang.as_deref()),
+        &tender_select_head(&format!("({}) w JOIN tenders t ON t.id = w.wid", inner.sql), filter.lang.as_deref(), false),
         inner.params,
     );
     q.push(&format!("w.wseq ORDER BY w.wkey {dir}, t.id {dir}"), []);
@@ -2533,7 +2555,12 @@ pub(crate) fn tenders_statement(filter: &Filter, scope: Scope) -> (String, Vec<V
 /// the id-ordered [`tenders_query`] and the published-ordered
 /// [`tenders_by_published_query`], so the two shapes cannot drift in WHAT a row is
 /// — they may only differ in which rows and in what order.
-fn tender_select_head(from: &str, lang: Option<&str>) -> String {
+///
+/// `pin_version` (issue 561): the SSE At probe pins `v` to its primary key
+/// (`canonical::VERSION_PK_INDEX`), so reading its value column cannot move it to the index that
+/// walks every version of the Tender. Pages are not pinned: two page families drive from or
+/// walk `v` by design (`the_page_statements_read_the_head_pointer_in_their_plans`).
+fn tender_select_head(from: &str, lang: Option<&str>, pin_version: bool) -> String {
     let title = pick(
         "tender_version_texts",
         "value",
@@ -2645,7 +2672,8 @@ fn tender_select_head(from: &str, lang: Option<&str>) -> String {
                 -- Issue 551: a derived head's method and detail (head version only).
                 {derivation_method}, {derivation_detail}
            FROM {from}
-           JOIN tender_versions v ON v.tender_id = t.id AND v.seq = ",
+           JOIN tender_versions v{pin} ON v.tender_id = t.id AND v.seq = ",
+        pin = if pin_version { format!(" INDEXED BY {}", crate::canonical::VERSION_PK_INDEX) } else { String::new() },
         cents = value("cents", "t.current_value_cents"),
         currency = value("currency", "t.current_value_currency"),
         derivation_method = derivation("t.current_value_derivation"),
@@ -3021,7 +3049,7 @@ fn tenders_query(filter: &Filter, scope: Scope) -> Query {
     // The `hits` set is the org's tenders (a superset of the matches); the untouched
     // `EXISTS` predicates below still decide membership, so the result is identical.
     let (from, seed_param) = tender_from(filter);
-    q.push(&tender_select_head(&from, filter.lang.as_deref()), seed_param);
+    q.push(&tender_select_head(&from, filter.lang.as_deref(), true), seed_param);
     let seq = seq_expr(scope, "t", &mut q.params);
     q.push(&format!("{seq} WHERE 1 = 1"), []);
 
@@ -3069,7 +3097,8 @@ fn tenders_query(filter: &Filter, scope: Scope) -> Query {
     // Issue 533: this shape is `Scope::At` only (the page returned above), the SSE diff
     // probe, so status is decided at the probed version, not by the head columns, which
     // read the same on both sides of the change that moved them. Issue 547: the value
-    // bounds too (`ValueBy::Version`: exact at the head, a superset before it).
+    // bounds too (`ValueBy::Version`: exact at the head and, issue 561, at an earlier version
+    // of a filled Tender; a superset before the gate).
     version_predicates(
         &mut q,
         filter,
@@ -3080,7 +3109,7 @@ fn tenders_query(filter: &Filter, scope: Scope) -> Query {
             head_seq: "t.current_seq",
             head_flag: "t.current_closed_by_notice",
         },
-        ValueBy::Version { head_seq: "t.current_seq", head_value: "t.current_value_eur_cents" },
+        VALUE_BY_VERSION,
     );
     match scope {
         Scope::Page { after, limit } => q.push(
@@ -3164,7 +3193,7 @@ fn tender_page_predicates(inner: &mut Query, filter: &Filter) {
 fn tender_page_wrap(inner: Query, lang: Option<&str>) -> Query {
     let mut q = Query::default();
     q.push(
-        &tender_select_head(&format!("({}) w JOIN tenders t ON t.id = w.wid", inner.sql), lang),
+        &tender_select_head(&format!("({}) w JOIN tenders t ON t.id = w.wid", inner.sql), lang, false),
         inner.params,
     );
     q.push("w.wseq ORDER BY t.id", []);
@@ -3959,11 +3988,18 @@ fn lots_query_previous(filter: &Filter, scope: Scope) -> Query {
         // The stream shape, unchanged: driving from `lots` in rowid order is the
         // right plan for a global id-ordered page.
         None => {
+            // Issue 561: the At probe pins `v` to its primary key (`canonical::VERSION_PK_INDEX`).
+            let pin = match scope {
+                Scope::At { .. } => format!(" INDEXED BY {}", crate::canonical::VERSION_PK_INDEX),
+                Scope::Page { .. } => String::new(),
+            };
             q.push(
-                "SELECT l.id, l.tender_id, l.lot_key, vl.kind, v.seq
-                   FROM lots l
-                   JOIN tenders t ON t.id = l.tender_id
-                   JOIN tender_versions v ON v.tender_id = t.id AND v.seq = ",
+                &format!(
+                    "SELECT l.id, l.tender_id, l.lot_key, vl.kind, v.seq
+                       FROM lots l
+                       JOIN tenders t ON t.id = l.tender_id
+                       JOIN tender_versions v{pin} ON v.tender_id = t.id AND v.seq = "
+                ),
                 [],
             );
             // Issue 547 review: the At probe binds the lot row's seq to its parameter too.
@@ -3972,11 +4008,13 @@ fn lots_query_previous(filter: &Filter, scope: Scope) -> Query {
             // walked every version's lot rows — 0.003 s to 0.35 s a probe on 2,400 lots × 31
             // versions, and a flip of that Tender is 4,800 probes per subscriber. Bound, `vl` seeks
             // its full key `(tender_id, seq, lot_id)` whatever the filter (`at_probe_plan_tests`
-            // pins it, `source`/`kind`/`tender` included). Only `vl` is guaranteed that: under a
-            // `source`, `kind` or `tender` filter the planner can still seek `tender_versions v`
-            // by the Tender alone (`(tender_id=?)` on the UNIQUE `(tender_id,
-            // caused_by_notice_id)` index) and walk its versions, once per probe — O(versions),
-            // not O(versions × lots), and the shape every lots At probe had before this.
+            // pins it, `source`/`kind`/`tender` included). `v` could still be sought by the Tender
+            // alone (`(tender_id=?)` on the UNIQUE `(tender_id, caused_by_notice_id)` index) and
+            // walk its versions once per probe, and since issue 561 the value bound reads a
+            // non-key `v` column (`v.value_eur_cents`), which moved it there in every gated shape
+            // (561's adversarial check, at561.plan). So the At probe pins `v` to its primary key
+            // above: it cannot be sought by the Tender alone any more, and `at_probe_plan_tests`
+            // requires its `(tender_id=? AND seq=?)` seek.
             let (seq, vl_seq) = match scope {
                 Scope::Page { .. } => {
                     ("(SELECT MAX(x.seq) FROM tender_versions x WHERE x.tender_id = t.id)".to_owned(), "v.seq")
@@ -4026,7 +4064,7 @@ fn lots_query_previous(filter: &Filter, scope: Scope) -> Query {
         // Issue 547: and the Tender's value at the probed version, which bounds a lot.
         match scope {
             Scope::Page { .. } => VALUE_BY_HEAD,
-            Scope::At { .. } => ValueBy::Version { head_seq: "t.current_seq", head_value: "t.current_value_eur_cents" },
+            Scope::At { .. } => VALUE_BY_VERSION,
         },
     );
     match scope {
@@ -5421,6 +5459,13 @@ pub async fn latest_cursor(conn: &Connection) -> turso::Result<i64> {
     max_cursor(conn).await
 }
 
+/// Issue 561: the change cursor at or below which a `min_value`/`max_value` SSE resume is answered
+/// with `reset` (`projection_state.value_probe_cursor`; 0 when none is recorded, and then nothing is).
+pub async fn value_probe_cursor(conn: &Connection) -> turso::Result<i64> {
+    let mut rows = conn.query("SELECT value_probe_cursor FROM projection_state WHERE id = 0", ()).await?;
+    Ok(rows.next().await?.map_or(0, |row| int(&row, 0)))
+}
+
 /// The change feed's generation (issue 46): bumped by every wipe of the
 /// canonical layer or the change log. Events from different generations do not
 /// compose — a client that sees this move must drop state and re-snapshot.
@@ -6311,6 +6356,38 @@ mod at_probe_plan_tests {
         params.remove(1);
         let plan = plan_of(&conn, &joined, params).await;
         assert!(!faults(&plan, true, false, true).is_empty(), "the check cannot tell a version-wide lot walk:\n{plan}");
+        // Issue 561: the version row `v` is pinned to its primary key in both At shapes
+        // (`canonical::VERSION_PK_INDEX`). Reading `v.value_eur_cents` (any non-key `v` column)
+        // moved turso 0.7.2 to the `(tender_id, caused_by_notice_id)` index in all 12 gated
+        // shapes on the prod schema (561's adversarial check, `d56x/adv561/at561.plan`), a walk
+        // of every version of the Tender per probe. The control strips the pin from the 12
+        // shapes (tenders, tenders + source, lots, lots + kind; each under max, min and a band)
+        // and asks whether `faults` names a `v` that no longer seeks its row.
+        let pin = format!(" INDEXED BY {}", crate::canonical::VERSION_PK_INDEX);
+        let mut moved = Vec::new();
+        for (bound, f) in [("max_value", &filters[1].1), ("min_value", &filters[0].1), ("value band", &filters[2].1)] {
+            let source = Filter { source: Some("ted".to_owned()), ..f.clone() };
+            let kind = Filter { kind: Some("Lot".to_owned()), ..f.clone() };
+            for (label, q, lots) in [
+                ("tenders", tenders_query(f, at), false),
+                ("tenders + source", tenders_query(&source, at), false),
+                ("lots", lots_query(f, at), true),
+                ("lots + kind", lots_query(&kind, at), true),
+            ] {
+                assert!(q.sql.contains(&pin), "{label} {bound}: the At probe pins `v`:\n{}", q.sql);
+                let unpinned = q.sql.replace(&pin, "");
+                let plan = plan_of(&conn, &unpinned, q.params.clone()).await;
+                if faults(&plan, true, false, lots).iter().any(|w| w.contains("`v`")) {
+                    moved.push(format!("{label} {bound}"));
+                }
+            }
+        }
+        if print {
+            println!("unpinned shapes whose `v` walks on this fixture: {moved:?}");
+        }
+        // The pin is load-bearing here as on the prod schema: on 2026-10-24 all 12 unpinned
+        // shapes sought `v` by the Tender alone on this fixture too.
+        assert!(!moved.is_empty(), "no unpinned At shape walks `v`: the control cannot tell the pin is load-bearing");
         drop(conn);
         for s in ["", "-wal", "-shm"] {
             let _ = std::fs::remove_file(format!("{path}{s}"));
@@ -6318,13 +6395,41 @@ mod at_probe_plan_tests {
         assert!(failures.is_empty(), "{} plan(s) failed:\n{}", failures.len(), failures.join("\n"));
     }
 
+    /// Issue 561: the At probe reads an earlier version of a filled Tender at the value the
+    /// fold stored for it, behind the epoch gate, with the superset kept as the fallback.
+    #[test]
+    fn the_at_probe_reads_the_stored_version_value_behind_the_epoch_gate() {
+        let f = Filter { max_value: Some(50_000_000), now: NOW, ..Filter::default() };
+        for (label, sql) in [
+            ("tenders", tenders_at_statement(&f, 7, 2).0),
+            ("lots", lots_statement(&f, Scope::At { id: 70, seq: 2 }).0),
+        ] {
+            assert!(sql.contains("WHEN t.projection_epoch >= 5 THEN (v.value_eur_cents <= ?)"), "{label}: the gated leg:\n{sql}");
+            assert!(sql.contains("ELSE (EXISTS (SELECT 1 FROM tender_version_amounts va"), "{label}: the fallback stays:\n{sql}");
+            assert!(sql.contains("AND t.projection_epoch < 5"), "{label}: each fallback leg carries the epoch guard:\n{sql}");
+            assert!(sql.contains("JOIN tender_versions v INDEXED BY sqlite_autoindex_tender_versions_1"), "{label}: `v` pinned:\n{sql}");
+        }
+        // Pages read the head column and are not pinned (two page families walk `v` by design).
+        let page = tenders_query(&f, Scope::Page { after: 0, limit: 10 }).sql;
+        assert!(!page.contains("INDEXED BY sqlite_autoindex_tender_versions_1"), "a page is not pinned:\n{page}");
+        assert!(!page.contains("projection_epoch"), "a page reads the head column:\n{page}");
+    }
+
     /// What is wrong with an At probe's plan: any SCAN, a missing `va` (value: amount rows), `vr`
     /// (value: lot results, issue 551) or `vd` (deadline) leg where the filter has one, any leg
     /// reached by anything but the version's own `(tender_id=? AND seq=?)` rows, and on a lots probe a `vl` leg that does
-    /// not seek the lot row's full key.
+    /// not seek the lot row's full key. Issue 561: and a version row `v` that does not seek its
+    /// primary key (sought by the Tender alone it walks every version of the Tender).
     fn faults(plan: &str, valued: bool, dated: bool, lots: bool) -> Vec<String> {
         let lines: Vec<&str> = plan.lines().map(str::trim).collect();
         let mut why: Vec<String> = lines.iter().filter(|l| l.starts_with("SCAN ")).map(|l| format!("scans: `{l}`")).collect();
+        let v: Vec<&&str> = lines.iter().filter(|l| l.starts_with("SEARCH v ")).collect();
+        if v.is_empty() {
+            why.push("no `v` leg".to_owned());
+        }
+        why.extend(
+            v.iter().filter(|l| !l.contains("(tender_id=? AND seq=?)")).map(|l| format!("`v` does not seek the version row: `{l}`")),
+        );
         if lots {
             let vl: Vec<&&str> = lines.iter().filter(|l| l.starts_with("SEARCH vl ")).collect();
             if vl.is_empty() {

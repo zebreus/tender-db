@@ -1046,6 +1046,28 @@ async fn migrate(conn: &Connection) -> turso::Result<()> {
     // O(1) at boot like the eur_cents columns; the standing corpus is stamped by
     // the `backfill-original-lang` job rather than a refold.
     add_column(conn, "ALTER TABLE tender_versions ADD COLUMN original_lang TEXT").await?;
+    // Issue 561: the SSE value probe's resume horizon (projection_state schema comment).
+    add_column(conn, "ALTER TABLE projection_state ADD COLUMN value_probe_cursor INTEGER NOT NULL DEFAULT 0").await?;
+    // Issue 561: each version's elected value. Nullable, no default: metadata-only on the 14.9 M-row
+    // table (`alter_add_column_cost.rs`). Existing rows read NULL until a fold of their Tender fills them;
+    // the reader trusts the column only at projection_epoch >= VERSION_VALUE_EPOCH. Also in canonical's
+    // SCHEMA and LEAF_TABLES (the issue-372 lesson). The boot that adds it records the change log's
+    // high-water (O(1) from sqlite_sequence, as `max_cursor`; MAX(cursor) scans, issue 61): every row up
+    // to it was classified under the superset, so a value-bounded SSE resume below it is reset. The
+    // ALTER and the horizon commit together (561's check, item 6): a boot that died between them would
+    // otherwise leave the column without a horizon, and every later boot skips the ALTER.
+    Db::immediate(conn, async {
+        if add_column(conn, "ALTER TABLE tender_versions ADD COLUMN value_eur_cents INTEGER").await? {
+            conn.execute(
+                "UPDATE projection_state SET value_probe_cursor =
+                     COALESCE((SELECT seq FROM sqlite_sequence WHERE name = 'changes'), 0) WHERE id = 0",
+                (),
+            )
+            .await?;
+        }
+        Ok(())
+    })
+    .await?;
     // Issue 87: a failed re-parse stamps its attempt and rewrites the row's
     // reason/detail to the CURRENT failure (the first-ingest pair is preserved
     // once in first_reason/first_detail). Nullable and absent by default, so
@@ -1944,6 +1966,18 @@ impl Db {
                 Parse::Pending | Parse::Quarantined { .. } => std::collections::HashSet::new(),
             };
             self.clear_parsed(conn, stale, &keep).await?;
+            // Stamp the Tenders this notice caused epoch-stale (issue 591, the skeptic's sibling
+            // case): `projected = 0` alone re-queues the notice, but a Tender whose chain reads
+            // identical takes the fold's early return, so the version row's stale
+            // `publication_id`, and any party row of a section the new parse dropped, would
+            // never be rewritten. One seek of `tender_versions_notice`; the checkpointing
+            // `stamp_tenders_stale` has no place inside this per-notice transaction.
+            conn.execute(
+                "UPDATE tenders SET projection_epoch = 0
+                   WHERE id IN (SELECT tender_id FROM tender_versions WHERE caused_by_notice_id = ?)",
+                (Value::Integer(stale),),
+            )
+            .await?;
             conn.execute(
                 "UPDATE notices SET publication_id = ?, profile = ?, declared_version = ?,
                      published_at = ?, dispatched_at = ?, published_offset = ?,
@@ -2465,27 +2499,20 @@ impl Db {
         // sections ordering fixed earlier was necessary and not sufficient; this is
         // the layer above it.
         //
-        // Deleting them is coherent rather than collateral: `projected = 0`, set at
-        // the end of this same transaction, declares exactly that everything derived
-        // from this notice's parse is stale, and these rows are derived from it. The
-        // re-fold rebuilds them from the new parse. It does leave a window in which
-        // the Tender carries texts and amounts but no parties — inherent to
-        // re-parsing in place, and the bulk path (`reclaim_only` then one rebuild)
-        // spends that window with the canonical layer under reconstruction anyway.
+        // Only what the FK forces is deleted, and since issue 248 that is the party rows of
+        // the sections whose mentions go away (the loop below), not every party row citing
+        // the notice. A section the new parse re-creates keeps its mention, so its party
+        // rows pin nothing and stay: `projected = 0`, set at the end of this same
+        // transaction, re-folds the Tender, and the fold's compare (issue 495) rewrites
+        // exactly what the new parse changed. Deleting them all left the Tender serving
+        // no parties until that fold ran, and the fold then announced every such Tender
+        // as corrected for restoring the rows (issue 591: 577's slice 1, 126,812 Tenders
+        // "corrected", only the two party tables differing).
         //
-        // Only what the FK forces is deleted. `lot_results`, `bids` and `contracts`
-        // also reference this notice, but by `notice_id` onto `notices`, so nothing
-        // breaks by leaving them for the fold to replace — and a re-parse that
-        // quietly widened into the results layer would be much harder to reason about.
-        for table in ["tender_version_parties", "tender_version_bid_parties"] {
-            self.step(
-                conn,
-                table,
-                &format!("DELETE FROM {table} WHERE mention_notice_id = ?"),
-                id,
-            )
-            .await?;
-        }
+        // `lot_results`, `bids` and `contracts` also reference this notice, but by
+        // `notice_id` onto `notices`, so nothing breaks by leaving them for the fold to
+        // replace — and a re-parse that quietly widened into the results layer would be
+        // much harder to reason about.
         // Seek before deleting, because this one statement was the whole cost of a
         // re-parse (issue 247): 153 ms a notice, measured, scanning all 41.78M mention
         // rows even for a notice that has none. Most notices have none — the era being
@@ -2528,6 +2555,29 @@ impl Db {
             out
         };
         for section in &sections {
+            // Children first (issue 591): the party rows that pin this vanishing mention,
+            // by the FK's full key, which the `_mention_key` indexes serve as a seek
+            // (issue 441).
+            for table in ["tender_version_parties", "tender_version_bid_parties"] {
+                let started = std::time::Instant::now();
+                if let Err(e) = conn
+                    .execute(
+                        &format!("DELETE FROM {table} WHERE mention_notice_id = ? AND mention_section_id = ?"),
+                        (Value::Integer(id), t(section)),
+                    )
+                    .await
+                {
+                    eprintln!("[store] notice {id}: clear {table} of section {section} failed: {e}");
+                    return Err(e);
+                }
+                *self
+                    .reparse
+                    .clear_stmt_nanos
+                    .lock()
+                    .expect("clear stmt lock")
+                    .entry(table)
+                    .or_insert(0) += started.elapsed().as_nanos() as u64;
+            }
             let started = std::time::Instant::now();
             if let Err(e) = conn
                 .execute(
@@ -10312,9 +10362,9 @@ tmpfs /data/ramcache tmpfs rw 0 0
         // It folded, as an ingested notice does within the hour.
         let conn = db.conn().await;
         conn.execute(
-            "INSERT INTO tenders(id, source, kind, created_at, current_seq)
-             VALUES(1, 'ted', 'procedure', 0, 1)",
-            (),
+            "INSERT INTO tenders(id, source, kind, created_at, current_seq, projection_epoch)
+             VALUES(1, 'ted', 'procedure', 0, 1, ?)",
+            (Value::Integer(crate::canonical::PROJECTION_EPOCH),),
         )
         .await
         .unwrap();
@@ -10361,6 +10411,12 @@ tmpfs /data/ramcache tmpfs rw 0 0
             int_of(&db, "SELECT caused_by_notice_id FROM tender_versions").await,
             Some(stale),
             "the Tender still holds the version this notice caused"
+        );
+        assert_eq!(
+            int_of(&db, "SELECT projection_epoch FROM tenders WHERE id = 1").await,
+            Some(0),
+            "and the Tender is stamped epoch-stale, or the fold's early return on an identical \
+             chain never rewrites that version row (issue 591)"
         );
 
         let _ = std::fs::remove_file(&path);

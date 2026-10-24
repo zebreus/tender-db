@@ -3122,14 +3122,28 @@ pub async fn project_incremental_observed_stoppable(
     db.set_foreign_keys(false).await?;
     // Boxed (issue 479): inline, the chunked fold's state made this future — and
     // so the temporary every caller builds it in — as big again as the fold,
-    // which pushed the supervisor's `run_project` past its poll budget.
-    let result =
-        Box::pin(project_incremental_chunked_observed(db, INCREMENTAL_CHUNK, None, on_progress, stop)).await;
+    // which pushed the supervisor's `run_project` past its poll budget. Built in a
+    // frame of its own (issue 561's review): at O0 `Box::pin(f(..))` here still put
+    // f's future in slots of THIS poll frame, which sits on that budget's chain.
+    let result = chunked_observed_boxed(db, on_progress, stop).await;
     let restored = db.set_foreign_keys(true).await;
     let report = result?;
     restored?;
     wipe_guard_post(db, pre_populated).await?;
     Ok(report)
+}
+
+/// [`project_incremental_chunked_observed`] at [`INCREMENTAL_CHUNK`], built and boxed in a
+/// frame of its own, so [`project_incremental_observed_stoppable`]'s poll frame holds a
+/// pointer rather than slots the size of the fold's future (issue 467's `run_project`
+/// budget; the [`declared_window_boxed`] shape).
+#[inline(never)]
+fn chunked_observed_boxed<'a, P: FnMut(Progress) + 'a>(
+    db: &'a Db,
+    on_progress: P,
+    stop: &'a (dyn Fn() -> bool + Sync),
+) -> std::pin::Pin<Box<impl std::future::Future<Output = turso::Result<Report>> + 'a>> {
+    Box::pin(project_incremental_chunked_observed(db, INCREMENTAL_CHUNK, None, on_progress, stop))
 }
 
 /// Notices per Phase-1 chunk of the incremental fold (issue 81). The incremental
@@ -3468,6 +3482,20 @@ async fn incremental_full_fallback(
     .await
 }
 
+/// [`incremental_full_fallback`], built and boxed in a frame of its own (issue 467). At O0
+/// even `Box::pin(incremental_full_fallback(..))` builds the ~8 KB future in slots of the
+/// CALLER's poll frame before moving it, and [`project_incremental_chunked_observed`] has
+/// four fallback sites: their slots were the largest share of the 124 KiB frame that put
+/// the supervisor's `run_project` over its poll budget (issue 561's review).
+#[inline(never)]
+fn full_fallback_boxed<'a, P: FnMut(Progress)>(
+    db: &'a Db,
+    on_progress: &'a mut P,
+    stop: &'a (dyn Fn() -> bool + Sync),
+) -> std::pin::Pin<Box<impl std::future::Future<Output = turso::Result<Report>> + 'a>> {
+    Box::pin(incremental_full_fallback(db, on_progress, stop))
+}
+
 pub async fn project_incremental_chunked_phase2(
     db: &Db,
     chunk_size: usize,
@@ -3568,7 +3596,7 @@ pub async fn project_incremental_chunked_observed(
              un-projected legacy notices exceed the closure cap ({LEGACY_CLOSURE_CAP}) \
              (issue 305); re-projecting the whole corpus"
         );
-        return Box::pin(incremental_full_fallback(db, &mut on_progress, stop)).await;
+        return full_fallback_boxed(db, &mut on_progress, stop).await;
     }
     let chunk_size = chunk_size.max(1);
     let now = store::now_unix();
@@ -3658,7 +3686,7 @@ pub async fn project_incremental_chunked_observed(
                     "[project] INCREMENTAL → FULL fallback: {reason} (issue 58 v2); \
                      re-projecting the whole corpus"
                 );
-                return Box::pin(incremental_full_fallback(db, &mut on_progress, stop)).await;
+                return full_fallback_boxed(db, &mut on_progress, stop).await;
             }
         }
     };
@@ -3722,14 +3750,14 @@ pub async fn project_incremental_chunked_observed(
             eprintln!(
                 "[project] INCREMENTAL → FULL fallback: {reason} (issue 481); re-projecting the whole corpus"
             );
-            return Box::pin(incremental_full_fallback(db, &mut on_progress, stop)).await;
+            return full_fallback_boxed(db, &mut on_progress, stop).await;
         }
     }
     // Issue 482 unit 2: every Tender of each refused key the plan touches (boxed: issue
     // 467's poll budget).
     if let Err(reason) = Box::pin(refused_sibling_closure(db, &mut touched_tenders, &mut all_ids)).await? {
         eprintln!("[project] INCREMENTAL → FULL fallback: {reason} (issue 482); re-projecting the whole corpus");
-        return Box::pin(incremental_full_fallback(db, &mut on_progress, stop)).await;
+        return full_fallback_boxed(db, &mut on_progress, stop).await;
     }
 
     // Pass 2 (streamed): build the ONE plan in id-ordered chunks so the org bulk-load
@@ -3837,64 +3865,10 @@ pub async fn project_incremental_chunked_observed(
         Phase2::ParsedFold
     });
     eprintln!("[project] incremental phase 2: {phase2:?} over {} planned notices", all_ids.len());
-    match phase2 {
-        Phase2::ParsedFold => {
-            let mut after = String::new();
-            let mut tenders_done = 0u64;
-            loop {
-                // Cooperative stop between batches (issue 256): folded notices are
-                // already `projected = 1`, the rest re-enter the next delta.
-                if stop() {
-                    report.stopped = true;
-                    break;
-                }
-                let groups = db.next_plan_batch(&after, INCREMENTAL_PARSED_BATCH).await?;
-                let Some(last) = groups.last() else { break };
-                after = last.group_key.clone();
-                tenders_done += groups.len() as u64;
-                report.applied.add(apply_plan_batch(db, &groups, now, false).await?);
-                on_progress(Progress::Applying {
-                    tenders: tenders_done,
-                    total: tenders,
-                    versions: report.applied.versions_written,
-                    leaf_rows: report.applied.leaf_rows,
-                    verified: report.applied.tenders_verified,
-                    corrected: report.applied.tenders_corrected,
-                });
-                // Heartbeat per batch: without it a wedged fold is indistinguishable
-                // from a slow one (issue 90).
-                eprintln!(
-                    "[project] incremental fold: {tenders_done}/{tenders} Tenders folded, \
-                     {} versions written",
-                    report.applied.versions_written
-                );
-            }
-        }
-        Phase2::Buckets { shards } => {
-            bucketed_fold(
-                db,
-                APPLY_NOTICE_BATCH,
-                shards,
-                now,
-                false,
-                &mut report,
-                |p| {
-                    if let Progress::Applying { tenders, total, versions, leaf_rows, verified, corrected } = p {
-                        // `versions` is the load-bearing number: `tenders` climbs to
-                        // completion even if every fold early-returns (issue 99).
-                        eprintln!(
-                            "[project] incremental fold: {tenders}/{total} Tenders folded, \
-                             {versions} versions written, {leaf_rows} leaf rows{}",
-                            compare_tail(verified, corrected)
-                        );
-                    }
-                    on_progress(p);
-                },
-                stop,
-            )
-            .await?;
-        }
-    }
+    // Its own fn, built and boxed off this poll frame (issue 561's review): the fold's
+    // futures and per-batch temporaries held O0 slots here for the whole run, and this
+    // frame is on issue 467's `run_project` budget.
+    incremental_phase2_boxed(db, phase2, now, &mut report, &mut on_progress, stop).await?;
     stage("phase 2 fold + apply");
     if report.stopped {
         // Stopped between batches: folded notices are marked, unfolded ones stay
@@ -3928,6 +3902,94 @@ pub async fn project_incremental_chunked_observed(
         eprintln!("[project] {line}");
     }
     Ok(report)
+}
+
+/// Phase 2 of [`project_incremental_chunked_observed`]: fold + apply the touched Tenders,
+/// reading the parsed layer the way `phase2` says. Out of that fn's poll frame (issue
+/// 561's review; issue 467's `run_project` budget), reached through
+/// [`incremental_phase2_boxed`].
+async fn incremental_phase2(
+    db: &Db,
+    phase2: Phase2,
+    now: i64,
+    report: &mut Report,
+    on_progress: &mut impl FnMut(Progress),
+    stop: &(dyn Fn() -> bool + Sync),
+) -> turso::Result<()> {
+    match phase2 {
+        Phase2::ParsedFold => {
+            let mut after = String::new();
+            let mut tenders_done = 0u64;
+            loop {
+                // Cooperative stop between batches (issue 256): folded notices are
+                // already `projected = 1`, the rest re-enter the next delta.
+                if stop() {
+                    report.stopped = true;
+                    break;
+                }
+                let groups = db.next_plan_batch(&after, INCREMENTAL_PARSED_BATCH).await?;
+                let Some(last) = groups.last() else { break };
+                after = last.group_key.clone();
+                tenders_done += groups.len() as u64;
+                report.applied.add(apply_plan_batch(db, &groups, now, false).await?);
+                on_progress(Progress::Applying {
+                    tenders: tenders_done,
+                    total: report.tenders,
+                    versions: report.applied.versions_written,
+                    leaf_rows: report.applied.leaf_rows,
+                    verified: report.applied.tenders_verified,
+                    corrected: report.applied.tenders_corrected,
+                });
+                // Heartbeat per batch: without it a wedged fold is indistinguishable
+                // from a slow one (issue 90).
+                eprintln!(
+                    "[project] incremental fold: {tenders_done}/{} Tenders folded, \
+                     {} versions written",
+                    report.tenders,
+                    report.applied.versions_written
+                );
+            }
+        }
+        Phase2::Buckets { shards } => {
+            bucketed_fold(
+                db,
+                APPLY_NOTICE_BATCH,
+                shards,
+                now,
+                false,
+                report,
+                |p| {
+                    if let Progress::Applying { tenders, total, versions, leaf_rows, verified, corrected } = p {
+                        // `versions` is the load-bearing number: `tenders` climbs to
+                        // completion even if every fold early-returns (issue 99).
+                        eprintln!(
+                            "[project] incremental fold: {tenders}/{total} Tenders folded, \
+                             {versions} versions written, {leaf_rows} leaf rows{}",
+                            compare_tail(verified, corrected)
+                        );
+                    }
+                    on_progress(p);
+                },
+                stop,
+            )
+            .await?;
+        }
+    }
+    Ok(())
+}
+
+/// [`incremental_phase2`], built and boxed in a frame of its own (the
+/// [`full_fallback_boxed`] shape).
+#[inline(never)]
+fn incremental_phase2_boxed<'a, P: FnMut(Progress)>(
+    db: &'a Db,
+    phase2: Phase2,
+    now: i64,
+    report: &'a mut Report,
+    on_progress: &'a mut P,
+    stop: &'a (dyn Fn() -> bool + Sync),
+) -> std::pin::Pin<Box<impl std::future::Future<Output = turso::Result<()>> + 'a>> {
+    Box::pin(incremental_phase2(db, phase2, now, report, on_progress, stop))
 }
 
 /// Fold one streamed batch of whole Tenders and reconcile them. Reads only the
