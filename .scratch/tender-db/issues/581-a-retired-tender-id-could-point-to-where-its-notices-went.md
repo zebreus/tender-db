@@ -1,6 +1,6 @@
 # 581 — a retired Tender id could point to where its notices went (308 / 410 with successors)
 
-Status: ready-for-agent — filed 2026-10-24, split from 580's triage (wf_fcc4cb46-314; option (b′) in
+Status: ready-for-agent — **BUILT 2026-10-24 (ff8a6f2 on the session branch): retired_tenders ledger + resolve_tender + 308/410/404 with Cache-Control: no-store on GET /v1/tenders/{id}.** Drafted from `build-specs/581.md` (spec + adversarial check, wf_b8e47a6e-d46) in an isolated worktree (wf_5cd7b201-7c5), merged, compiled and focused-tested (91 passed across the deploy #3 batch); full gate and a 3-lens adversarial review (wf_c35791a6-e18) running. NEXT: deploy #3 when 546 U4's project 2765 ends; after deploy #3: Verify (8811451 → 410 with successors null, retired before the ledger; a fresh retirement answers 308/410 with successors), then DONE. Was: ready-for-agent — filed 2026-10-24, split from 580's triage (wf_fcc4cb46-314; option (b′) in
 `.scratch/tender-db/580-triage/design.md`, corrected by `skeptic.md`). Blocked by: 551 U9 ending 11-04, because this adds a
 store write path inside retirement (B4 probe, C9'), and by 580 unit 2 (the docs) landing first. Next: build after 11-04.
 Kind: API contract (follow-up to 580: docs only today, a pointer here)

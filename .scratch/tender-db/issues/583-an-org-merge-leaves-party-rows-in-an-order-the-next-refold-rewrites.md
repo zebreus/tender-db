@@ -1,6 +1,6 @@
 # 583 — an organization merge leaves party rows in an order the next refold rewrites (579's merge-side twin)
 
-Status: ready-for-agent — filed 2026-10-24 as issue 579's U6. Next: unit 1, measure whether merges leave Tenders whose next
+Status: ready-for-agent — **BUILT 2026-10-24 (c83fec5 on the session branch): announce_repointed_tenders: every merge stamps and re-queues the Tenders its repoint touched.** Drafted from `build-specs/583.md` (spec + adversarial check, wf_b8e47a6e-d46) in an isolated worktree (wf_5cd7b201-7c5), merged, compiled and focused-tested (91 passed across the deploy #3 batch); full gate and a 3-lens adversarial review (wf_c35791a6-e18) running. NEXT: deploy #3 when 546 U4's project 2765 ends; after deploy #3: U3 per spec (a `project` after the next wet merge; nothing to drain now), then Verify. Was: ready-for-agent — filed 2026-10-24 as issue 579's U6. Next: unit 1, measure whether merges leave Tenders whose next
 refold rewrites a party table with no fact change, and how many.
 Kind: data quality / rebuild parity (spurious corrections; no wrong value is served)
 Relates to:
