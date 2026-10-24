@@ -1,0 +1,846 @@
+
+### 5 ES n2keys=5 :: agencia de vivienda y rehabilitacion de andalucia
+  31975748 (21) 'AGENCIA DE VIVIENDA Y REHABILITACIÓN DE ANDALUCÍA  (Punto de contacto)'
+      parent 1400401 id=1 n=21 city=None pname='AGENCIA DE VIVIENDA Y REHABILITACIÓN DE ANDALUCÍA'
+  31975794 (1) 'AGENCIA DE VIVIENDA Y REHABILITACION DE ANDALUCIA (PUNTO DE CONTACTO)'
+      parent 1400401 id=1 n=1 city=None pname='AGENCIA DE VIVIENDA Y REHABILITACION DE ANDALUCIA'
+  31975933 (1) 'AGENCIA DE VIVIENDA Y REHABILITACION DE ANDALUCIA (PC)'
+      parent 1400401 id=1 n=1 city=None pname='AGENCIA DE VIVIENDA Y REHABILITACIÓN DE ANDALUCÍA (AVRA)'
+  31976931 (1) 'AGENCIA DE VIVIENDA Y REHABILITACIÓN DE ANDALUCÍA (otro punto de contacto)'
+      parent 1400401 id=1 n=1 city='SEVILLA' pname='AGENCIA DE VIVIENDA Y REHABILITACIÓN DE ANDALUCÍA'
+  31978334 (1) 'AGENCIA DE VIVIENDA Y REHABILITACIÓN DE ANDALUCIA'
+      parent 1400401 id=1 n=1 city=None pname='AGENCIA DE VIVIENDA Y REHABILITACIÓN DE ANDALUCÍA'
+
+### 5 FR n2keys=2 :: daj cellule marches
+  31975448 (4) 'DAJ-Cellule marchés'
+      parent 2958050 id=1 n=4 city=None pname='CHRU CAEN'
+  31975471 (4) 'DAJ  Cellule marchés'
+      parent 2958050 id=1 n=4 city=None pname='CHRU CAEN'
+  31975578 (8) 'DAJ - CELLULE MARCHES'
+      parent 2958050 id=1 n=8 city=None pname='CHU CAEN NORMANDIE' ~ 'Centre hospitalier universitaire Caen No'
+  31976088 (3) 'DAJ CELLULE MARCHES'
+      parent 2958050 id=1 n=3 city=None pname='CHRU CAEN'
+  31974975 (26) 'DAJ - Cellule marchés'
+      parent 2958050 id=1 n=26 city=None pname='CHRU CAEN' ~ 'Centre Hospitalier Universitaire Caen No'
+
+### 4 ES n2keys=4 :: consejeria de economia hacienda fondos europeos y transformacion digital
+  31976235 (49) 'Consejería de Economía, Hacienda, Fondos Europeos y Transformación Digital'
+      parent 3694 id=1 n=39 city='Murcia' pname='Consejería de Economía, Hacienda, Fondos Europeos y Transfor' ~ 'Consejería de Economía, Hacienda, Portav'
+      parent 8107 id=1 n=10 city='Murcia' pname='Consejería de Economía, Hacienda, Fondos Europeos y Transfor' ~ 'Consejería de Economía, Hacienda, Portav'
+  31976399 (1) 'Consejería de Economía, Hacienda, Fondos Europeos y Transformacion Digital'
+      parent 8107 id=1 n=1 city='Murcia' pname='Consejería de Economía, Hacienda, Fondos Europeos y Transfor'
+  31977289 (1) 'Consejeria de Economia, Hacienda, Fondos Europeos y Transformacion Digital'
+      parent 3694 id=1 n=1 city='Murcia' pname='Consejería de Economía, Hacienda, Fondos Europeos y Transfor'
+  31977743 (1) 'CONSEJERIA DE ECONOMÍA, HACIENDA, FONDOS EUROPEOS Y TRANSFORMACIÓN DIGITAL'
+      parent 3694 id=1 n=1 city='Murcia' pname='Consejería de Economía, Hacienda, Fondos Europeos y Transfor'
+
+### 4 ES n2keys=4 :: consejeria de hacienda transicion economica y transformacion digital
+  31975200 (44) 'Consejería de Hacienda, Transición Económica y Transformación Digital'
+      parent 22238051 id=1 n=44 city='Ceuta' pname='Órgano de Contratación de la Ciudad Autónoma de Ceuta'
+  31975271 (66) 'Consejeria de Hacienda, Transicion Economica y Transformacion Digital'
+      parent 22238051 id=1 n=66 city='CEUTA'..'ceuta' pname='Órgano de Contratación de la Ciudad Autónoma de Ceuta'
+  31978061 (11) 'CONSEJERIA DE HACIENDA, TRANSICION ECONOMICA Y TRANSFORMACIÓN DIGITAL'
+      parent 22238051 id=1 n=11 city='Ceuta' pname='Órgano de Contratación de la Ciudad Autónoma de Ceuta'
+  31978067 (7) 'CONSEJERIA DE HACIENDA, TRANSICIÓN ECONOMICA Y TRANSFORMACIÓN DIGITAL'
+      parent 22238051 id=1 n=7 city='CEUTA' pname='Órgano de Contratación de la Ciudad Autónoma de Ceuta'
+
+### 4 ES n2keys=4 :: tribunal administrativo de recursos contractuales de la junta de andalucia
+  31975749 (20) 'TRIBUNAL ADMINISTRATIVO DE RECURSOS CONTRACTUALES DE LA JUNTA DE ANDALUCIA (Punt'
+      parent 2660 id=1 n=20 city=None pname='TRIBUNAL ADMINISTRATIVO DE RECURSOS CONTRACTUALES DE LA JUNT'
+  31975768 (4) 'TRIBUNAL ADMINISTRATIVO DE RECURSOS CONTRACTUALES DE LA JUNTA DE ANDALUCÍA (Punt'
+      parent 22635797 id=1 n=3 city=None pname='TRIBUNAL ADMINISTRATIVO DE RECURSOS CONTRACTUALES DE LA JUNT'
+      parent 2660 id=1 n=1 city=None pname='Tribunal Administrativo de los Recursos Contractuales de la '
+  31975792 (2) 'Tribunal Administrativo de Recursos Contractuales de la Junta de Andalucía:'
+      parent 2659 id=1 n=2 city='Sevilla' pname='AGENCIA PÚBLICA DE PUERTOS DE ANDALUCÍA'
+  31975934 (1) 'TRIBUNAL ADMINISTRATIVO DE RECURSOS CONTRACTUALES DE LA JUNTA DE ANDALUCIA (PC)'
+      parent 2660 id=1 n=1 city=None pname='TRIBUNAL ADMINISTRATIVO DE LOS RECURSOS CONTRACTUALES DE LA '
+
+### 3 ES n2keys=2 :: ajuntament de la vall d uixo
+  31975411 (2) "Ajuntament de la Vall d'Uixó"
+      parent 22177040 id=1 n=2 city="VALL D'UIXO (LA)" pname="Junta de Gobierno del Ayuntamiento de La Vall d'Uixó"
+  31975634 (16) "Ajuntament de la Vall d'Uixó ( sede electrónica)"
+      parent 22177040 id=1 n=15 city="VALL D'UIXO (LA)" pname="Junta de Gobierno del Ayuntamiento de La Vall d'Uixó"
+      parent 23736920 id=1 n=1 city="VALL D'UIXO (LA)" pname="Pleno del Ayuntamiento de La Vall d'Uixó"
+  31978039 (4) "Ajuntament de la Vall d'Uixó (sede electrónica)"
+      parent 22177040 id=1 n=4 city="VALL D'UIXO (LA)" pname="Junta de Gobierno del Ayuntamiento de La Vall d'Uixó"
+
+### 3 ES n2keys=3 :: area de contratacion de maz m c s s no 11
+  31976989 (4) 'Area de contratacion de  MAZ M.C.S.S nº 11'
+      parent 14559 id=1 n=4 city='ZARAGOZA' pname='Gerencia de MAZ Mútua de Accidentes de Trabajo y Enfermedade'
+  31978190 (1) 'Área de contratación de  MAZ M.C.S.S. Nº 11'
+      parent 14559 id=1 n=1 city='Zaragoza' pname='Gerencia de MAZ Mútua de Accidentes de Trabajo y Enfermedade'
+  31978236 (2) 'Área de contratacion de MAZ, M.C.S.S. Nº 11'
+      parent 14559 id=1 n=2 city='ZARAGOZA' pname='Gerencia de MAZ Mútua de Accidentes de Trabajo y Enfermedade'
+
+### 3 ES n2keys=3 :: ayuntamiento de sevilla
+  31977441 (2) 'ayuntamiento de sevilla (servicio mujer)'
+      parent 3169 id=1 n=2 city='SEVILLA' pname='Junta de Gobierno del Ayuntamiento de Sevilla'
+  31977687 (2) 'Ayuntamiento de Sevilla (Servicio P. Ciudadana)'
+      parent 3169 id=1 n=2 city='SEVILLA' pname='Junta de Gobierno del Ayuntamiento de Sevilla'
+  31978113 (1) 'AYUNTAMIENTO DE SEVILLA ( SERVCIO P..CIUDADANA)'
+      parent 3169 id=1 n=1 city='SEVILLA' pname='Junta de Gobierno del Ayuntamiento de Sevilla'
+
+### 3 ES n2keys=2 :: d g de contratacion del ayuntamiento de logrono o juzgado de lo contencioso administrativo
+  31975430 (51) 'D.G. de Contratación del Ayuntamiento de Logroño o Juzgado de lo Contencioso Adm'
+      parent 3125 id=1 n=51 city='Logroño (La Rioja)' pname='Junta de Gobierno del Ayuntamiento de Logroño'
+  31975574 (5) 'D.G. de Contratación del Ayuntamiento de Logroño o Juzgado de lo Contencioso-Adm'
+      parent 3125 id=1 n=5 city='Logroño' pname='Junta de Gobierno del Ayuntamiento de Logroño'
+  31975644 (2) 'D.G. de Contratación del Ayuntamiento de Logroño o Juzgado de lo Contencioso-Adm'
+      parent 3125 id=1 n=2 city='Logroño' pname='Junta de Gobierno del Ayuntamiento de Logroño'
+
+### 3 ES n2keys=2 :: distrito de arganzuela departamento de contratacion
+  31977374 (5) 'DISTRITO DE ARGANZUELA DEPARTAMENTO DE CONTRATACION'
+      parent 15036 id=1 n=5 city='Madrid' pname='Distrito de Arganzuela'
+  31977785 (2) 'DISTRITO DE ARGANZUELA. DEPARTAMENTO DE CONTRATACION'
+      parent 15036 id=1 n=2 city='MADRID' pname='Distrito de Arganzuela'
+  31978138 (3) 'Distrito de Arganzuela. Departamento de contratación'
+      parent 15036 id=1 n=3 city='Madrid' pname='Distrito de Arganzuela'
+
+### 3 ES n2keys=1 :: instituto nacional de seguridad y salud en el trabajo oa mp
+  31977122 (14) 'INSTITUTO NACIONAL DE SEGURIDAD Y SALUD EN EL TRABAJO OA,MP'
+      parent 11965 id=1 n=14 city='MADRID' pname='Instituto Nacional de Seguridad y Salud en el Trabajo O.A. M'
+  31977830 (10) 'INSTITUTO NACIONAL DE SEGURIDAD Y SALUD EN EL TRABAJO OA, MP'
+      parent 11965 id=1 n=10 city='MADRID' pname='Instituto Nacional de Seguridad y Salud en el Trabajo O.A. M'
+  31978249 (4) 'Instituto Nacional de Seguridad y Salud en el Trabajo, OA, MP'
+      parent 11965 id=1 n=4 city='Madrid' pname='Instituto Nacional de Seguridad y Salud en el Trabajo O.A. M'
+
+### 3 ES n2keys=2 :: mostoles desarrollo promocion economica s a
+  31977371 (9) 'MÓSTOLES DESARROLLO PROMOCION ECONOMICA S.A.'
+      parent 23194875 id=1 n=9 city='MÓSTOLES'..'Móstoles' pname='Gerencia de Móstoles Desarrollo Promoción Económica S.A.'
+  31977502 (1) 'MÓSTOLES DESARROLLO PROMOCIÓN ECONÓMICA, S.A.'
+      parent 23194875 id=1 n=1 city='MÓSTOLES' pname='Gerencia de Móstoles Desarrollo Promoción Económica S.A.'
+  31978201 (6) 'MÓSTOLES DESARROLLO PROMOCIÓN ECONÓMICA S.A'
+      parent 23194875 id=1 n=6 city='MÓSTOLES'..'Móstoles' pname='Gerencia de Móstoles Desarrollo Promoción Económica S.A.'
+
+### 3 ES n2keys=3 :: seccion de asuntos economicos sae ume
+  31977448 (2) 'Seccion de asuntos economicos SAE-UME'
+      parent 22216250 id=1 n=2 city='TORREJÓN DE ARDOZ' pname='Jefatura de la Sección de Asuntos Económicos de la Unidad Mi'
+  31977449 (5) 'Sección de asuntos económicos SAE UME'
+      parent 22216250 id=1 n=5 city='TORREJÓN DE ARDOZ'..'Torrejón de Ardoz' pname='Jefatura de la Sección de Asuntos Económicos de la Unidad Mi'
+  31977458 (2) 'Sección de asuntos economicos SAE-UME'
+      parent 22216250 id=1 n=2 city='TORREJÓN DE ARDOZ' pname='Jefatura de la Sección de Asuntos Económicos de la Unidad Mi'
+
+### 3 ES n2keys=3 :: tribunal administrativo de contratos publicos de aragon
+  31976677 (4) 'Tribunal Administrativo de Contratos Públicos de Aragòn'
+      parent 22154379 id=1 n=2 city='Zaragoza' pname='Departamento de Hacienda y Administración Pública'
+      parent 22897382 id=1 n=2 city='Zaragoza' pname='Departamento de Hacienda, Interior y Administración Pública '
+  31976731 (14) 'Tribunal Administrativo de COntratos Públicos de Aragon (TACPA)'
+      parent 22663897 id=1 n=14 city='Zaragoza' pname='Concejalía Delegada de Hacienda y Régimen Interior del Ayunt'
+  31978367 (3) 'Tribunal Administrativo de Contratos Públicos de Aragón ( TACPA)'
+      parent 24590952 id=1 n=2 city='Monzon' pname='Presidencia del Patronato Municipal Residencia Riosol de Mon'
+      parent 23389633 id=1 n=1 city='Zaragoza' pname='Alcaldía del Ayuntamiento de Monzón'
+
+### 3 ES n2keys=3 :: tribunal administrativo de recursos contractuales junta andalucia
+  31977444 (2) '.Tribunal Administrativo de Recursos Contractuales, Junta Andalucía'
+      parent 22818482 id=1 n=2 city='sevilla' pname='Presidencia del Consorcio Provincial de Prevención y Extinci'
+  31977445 (1) 'Tribunal Administrativo de Recursos Contractuales Junta Andalucia'
+      parent 22992421 id=1 n=1 city='Sevilla' pname='Junta de Gobierno del Ayuntamiento de Guillena'
+  31978235 (4) 'Tribunal Administrativo de Recursos Contractuales Junta Andalucia (TARCJA)'
+      parent 22336418 id=1 n=4 city='Sevilla' pname='Alcaldía del Ayuntamiento de Lora del Río'
+
+### 3 ES n2keys=1 :: tribunal adtvo central de recursos contractuales
+  31977668 (2) 'Tribunal Adtvo Central de Recursos contractuales'
+      parent 7782 id=1 n=2 city='Madrid' pname='Servicio Murciano de Salud - Gerencia'
+  31978046 (3) 'Tribunal Adtvo. Central de Recursos Contractuales'
+      parent 7782 id=1 n=3 city='Madrid' pname='Servicio Murciano de Salud - Gerencia'
+  31978060 (2) 'Tribunal Adtvo.Central de recursos contractuales'
+      parent 7782 id=1 n=2 city='MADRID' pname='Servicio Murciano de Salud - Gerencia'
+
+### 3 FR n2keys=3 :: tribunal judiciaire cite judiciaire rue general fabvier 54035 nancy cedex
+  31975462 (40) 'Tribunal Judiciaire - Cite judiciaire rue Général Fabvier - 54035 NANCY CEDEX'
+      parent 22686448 id=1 n=27 city=None pname='VIVEST'
+      parent 17423623 id=0 n=13 city=None pname='VIVEST'
+  31976356 (1) 'Tribunal Judiciaire - Cite judiciaire rue General Fabvier - 54035 NANCY CEDEX'
+      parent 22686448 id=1 n=1 city=None pname='VIVEST'
+  31977484 (1) 'Tribunal Judiciaire - Cité judiciaire rue Général Fabvier - 54035 NANCY CEDEX'
+      parent 22686448 id=1 n=1 city=None pname='VIVEST'
+
+### 2 ES n2keys=2 :: 1a zona guardia civil
+  31976638 (1) '1ª Zona Guardia Civil'
+      parent 22834661 id=1 n=1 city='Madrid' pname='General Jefe 1ª Zona Guardia Civil Madrid'
+  31977442 (4) '1ª Zona Guardia Civil (Comunidad de Madrid)'
+      parent 22834661 id=1 n=4 city='Madrid' pname='General Jefe 1ª Zona Guardia Civil Madrid'
+
+### 2 ES n2keys=2 :: administrativo de recursos contractuales de la junta de andalucia
+  31978432 (2) 'ADMINISTRATIVO DE RECURSOS CONTRACTUALES DE LA JUNTA DE ANDALUCIA'
+      parent 10487 id=1 n=2 city='SEVILLA'..'Sevilla' pname='Consejería Delegada de Agua y Residuos del Campo de Gibralta'
+  31978690 (1) 'Administrativo de Recursos Contractuales de la Junta de Andalucía'
+      parent 31966876 id=1 n=1 city='Sevilla' pname='Alcaldía del Ayuntamiento de Carboneras'
+
+### 2 ES n2keys=1 :: aracove
+  31976186 (10) 'ARACOVE'
+      parent 22672614 id=1 n=10 city='CHINCHON'..'CHINCHÓN' pname='Presidencia de la Asociación de Desarrollo Rural Comarca de '
+  31976509 (2) '"ARACOVE"'
+      parent 22672614 id=1 n=2 city='Chinchón' pname='Presidencia de la Asociación de Desarrollo Rural Comarca de '
+
+### 2 ES n2keys=2 :: area de gobierno de vicealcaldia portavoz seguridad y emergencias
+  31977958 (4) 'Area de Gobierno de Vicealcaldía, Portavoz, Seguridad y Emergencias.'
+      parent 22198339 id=1 n=4 city='Madrid' pname='Área de Gobierno de Vicealcaldía, Portavoz, Seguridad y Emer'
+  31978173 (2) 'Área de Gobierno de Vicealcaldía, Portavoz, Seguridad y Emergencias'
+      parent 22198339 id=1 n=2 city='Madrid' pname='Área de Gobierno de Vicealcaldía, Portavoz, Seguridad y Emer'
+
+### 2 ES n2keys=2 :: ayuntamiento alajero
+  31978006 (4) 'AYUNTAMIENTO ALAJERÓ'
+      parent 23549580 id=1 n=4 city='ALAJERÓ' pname='Alcaldía del Ayuntamiento de Alajeró'
+  31978007 (4) 'AYUNTAMIENTO ALAJERO'
+      parent 23549580 id=1 n=4 city='ALAJERÓ' pname='Alcaldía del Ayuntamiento de Alajeró'
+
+### 2 ES n2keys=2 :: ayuntamiento aldeamayor de san martin
+  31977270 (11) 'AYUNTAMIENTO ALDEAMAYOR DE SAN MARTIN'
+      parent 22625353 id=1 n=9 city='ALDEAMAYOR DE SAN MARTIN' pname='Junta de Gobierno Local del Ayuntamiento de Aldeamayor de Sa'
+      parent 23152531 id=1 n=2 city='ALDEAMAYOR DE SAN MARTIN' pname='Alcaldía del Ayuntamiento de Aldeamayor de San Martín'
+  31977717 (3) 'Ayuntamiento Aldeamayor de San Martín'
+      parent 22625353 id=1 n=3 city='Aldeamayor de San Martín' pname='Junta de Gobierno Local del Ayuntamiento de Aldeamayor de Sa'
+
+### 2 ES n2keys=2 :: ayuntamiento de arges
+  31978490 (1) 'AYUNTAMIENTO DE ARGES'
+      parent 30894128 id=1 n=1 city='ARGES' pname='Junta de Gobierno del Ayuntamiento de Argés'
+  31978491 (1) 'AYUNTAMIENTO DE ARGÉS'
+      parent 30894128 id=1 n=1 city='ARGES' pname='Junta de Gobierno del Ayuntamiento de Argés'
+
+### 2 ES n2keys=2 :: ayuntamiento de belinchon
+  31977006 (1) 'Ayuntamiento de Belinchon'
+      parent 23033401 id=1 n=1 city='Belinchón' pname='Pleno del Ayuntamiento de Belinchón'
+  31977007 (1) 'Ayuntamiento de Belinchón'
+      parent 23033401 id=1 n=1 city='Belinchón' pname='Pleno del Ayuntamiento de Belinchón'
+
+### 2 ES n2keys=2 :: ayuntamiento de castillo de locubin
+  31977909 (1) 'AYUNTAMIENTO DE CASTILLO DE LOCUBÍN'
+      parent 23477451 id=1 n=1 city='CASTILLO DE LOCUBÍN' pname='Pleno del Ayuntamiento de Castillo de Locubín'
+  31978227 (1) 'AYUNTAMIENTO DE CASTILLO DE LOCUBIN'
+      parent 23477451 id=1 n=1 city='Castillo de Locubin' pname='Pleno del Ayuntamiento de Castillo de Locubín'
+
+### 2 ES n2keys=2 :: ayuntamiento de hijar
+  31976878 (2) 'AYUNTAMIENTO DE HIJAR'
+      parent 22964078 id=1 n=1 city='HIJAR' pname='Alcaldía del Ayuntamiento de Híjar'
+      parent 24594682 id=1 n=1 city='Híjar' pname='Pleno del Ayuntamiento de Híjar'
+  31976879 (2) 'AYUNTAMIENTO DE HÍJAR'
+      parent 22964078 id=1 n=1 city='HIJAR' pname='Alcaldía del Ayuntamiento de Híjar'
+      parent 24594682 id=1 n=1 city='Híjar' pname='Pleno del Ayuntamiento de Híjar'
+
+### 2 ES n2keys=2 :: ayuntamiento de l alcudia de crespins
+  31977450 (6) "Ayuntamiento de L' Alcúdia de Crespins"
+      parent 23226709 id=1 n=4 city="L' Alcúdia de Crespins".."L'Alcúdia de Crespins" pname="Pleno del Ayuntamiento de L'Alcudia de Crespins"
+      parent 23726602 id=1 n=2 city="L' Alcúdia de Crespins" pname="Alcaldía del Ayuntamiento de L'Alcudia de Crespins"
+  31978188 (6) "AYUNTAMIENTO DE L' ALCUDIA DE CRESPINS"
+      parent 23726602 id=1 n=4 city="L' Alcúdia de Crespins".."l' Alcúdia de Crespins" pname="Alcaldía del Ayuntamiento de L'Alcudia de Crespins"
+      parent 23226709 id=1 n=2 city="L' Alcúdia de Crespins" pname="Pleno del Ayuntamiento de L'Alcudia de Crespins"
+
+### 2 ES n2keys=1 :: ayuntamiento de madrid distrito de carabanchel
+  31976025 (1) 'AYUNTAMIENTO DE MADRID-DISTRITO DE CARABANCHEL'
+      parent 22151568 id=1 n=1 city='Madrid' pname='Distrito de Carabanchel'
+  31978099 (5) 'AYUNTAMIENTO DE MADRID/DISTRITO DE CARABANCHEL'
+      parent 22151568 id=1 n=5 city='Madrid' pname='Distrito de Carabanchel'
+
+### 2 ES n2keys=1 :: ayuntamiento de sevilla registro general
+  31977029 (4) 'Ayuntamiento de Sevilla - Registro General'
+      parent 3169 id=1 n=4 city='SEVILLA' pname='Junta de Gobierno del Ayuntamiento de Sevilla'
+  31977674 (1) 'Ayuntamiento de Sevilla.- Registro General'
+      parent 3169 id=1 n=1 city='SEVILLA' pname='Junta de Gobierno del Ayuntamiento de Sevilla'
+
+### 2 ES n2keys=1 :: ayuntamiento de sevilla tarcas
+  31977178 (5) 'Ayuntamiento de Sevilla-TARCAS'
+      parent 3169 id=1 n=5 city='SEVILLA' pname='Junta de Gobierno del Ayuntamiento de Sevilla'
+  31977795 (2) 'Ayuntamiento de Sevilla - TARCAS'
+      parent 3169 id=1 n=2 city='SEVILLA' pname='Junta de Gobierno del Ayuntamiento de Sevilla'
+
+### 2 ES n2keys=2 :: ayuntamiento santa maria de guia
+  31975560 (1) 'ayuntamiento santa maria de guia'
+      parent 22536322 id=1 n=1 city='santa maria de guia' pname='Alcaldía del Ayuntamiento de Santa María de Guía'
+  31978090 (3) 'Ayuntamiento Santa María de Guía'
+      parent 22536322 id=1 n=3 city='Santa María de Guía' pname='Alcaldía del Ayuntamiento de Santa María de Guía'
+
+### 2 ES n2keys=2 :: camara de comercio de sevilla
+  31975151 (5) 'Cámara de Comercio de Sevilla'
+      parent 22256947 id=1 n=5 city='Sevilla' pname='Cámara Oficial de Comercio, Industria, Servicios y Navegació'
+  31976723 (1) 'Camara de Comercio de Sevilla'
+      parent 22256947 id=1 n=1 city='Sevilla' pname='Cámara Oficial de Comercio, Industria, Servicios y Navegació'
+
+### 2 ES n2keys=2 :: comarca de valdejalon
+  31976334 (1) 'COMARCA DE VALDEJALON'
+      parent 22709876 id=1 n=1 city='La Almunia de DªGodina' pname='Consejo Comarcal de la Comarca de Valdejalón'
+  31976335 (2) 'Comarca de Valdejalón'
+      parent 22709876 id=1 n=2 city='La Almunia de Dª Godina' pname='Consejo Comarcal de la Comarca de Valdejalón'
+
+### 2 ES n2keys=2 :: consejeria de fomento cooperacion local y prevencion de incendios
+  31975275 (11) 'Consejería de Fomento, Cooperación Local y Prevención de Incendios'
+      parent 5668 id=1 n=11 city='OVIEDO'..'Oviedo' pname='Consejería de Fomento, Cooperación Local y Prevención de Inc' ~ 'Consejería de Movilidad, Medio Ambiente '
+  31975308 (1) 'consejeria de fomento , cooperación local y prevención de incendios'
+      parent 5668 id=1 n=1 city='Oviedo' pname='Consejería de Fomento, Cooperación Local y Prevención de Inc'
+
+### 2 ES n2keys=2 :: consejeria salud
+  31977495 (2) 'Consejería Salud'
+      parent 22205275 id=1 n=2 city='Oviedo' pname='Gerencia del Área Sanitaria IV del Servicio de Salud del Pri'
+  31978515 (1) 'CONSEJERIA SALUD'
+      parent 7782 id=1 n=1 city='Murcia' pname='Servicio Murciano de Salud - Gerencia'
+
+### 2 PT n2keys=1 :: conselho diretivo do instituto de gestao financeira e equipamentos da justica i p
+  31976634 (4) 'Conselho Diretivo do Instituto de Gestão Financeira e Equipamentos da Justiça, I'
+      parent 7193339 id=1 n=4 city='Lisboa' pname='INSTITUTO DE GESTÃO FINANCEIRA E EQUIPAMENTOS DA JUSTIÇA, I.' ~ 'Instituto de Gestão Financeira e Equipam'
+  31976654 (2) 'Conselho Diretivo do Instituto de Gestão Financeira e equipamentos da Justiça, I'
+      parent 7193339 id=1 n=2 city=None pname='Instituto de Gestão Financeira e Equipamentos da Justiça, I.'
+
+### 2 ES n2keys=2 :: conselleria de sanidad
+  31976299 (3) 'Conselleria de Sanidad (Dept. Salud de Sagunto)'
+      parent 22468865 id=1 n=3 city='Puerto de Sagunto' pname='Departamento de Salud de Sagunto. Dirección Económica-Gerenc'
+  31976925 (3) 'Conselleria de Sanidad (Departamento de Salud de Sagunto)'
+      parent 22468865 id=1 n=2 city='Puerto de Sagunto' pname='Departamento de Salud de Sagunto. Dirección Económica-Gerenc'
+      parent 1774124 id=1 n=1 city='Puerto de Sagunto' pname='Departamento de Salud de Sagunto. Dirección Económica-Gerenc'
+
+### 2 ES n2keys=2 :: consorcio de gestion de residuos v5
+  31977246 (6) 'CONSORCIO DE GESTIÓN DE RESIDUOS V5'
+      parent 23140554 id=1 n=6 city='XÁTIVA' pname='Comisión de Gobierno del Consorcio para la Gestión de Residu'
+  31977328 (2) 'CONSORCIO DE GESTION DE RESIDUOS V5'
+      parent 23140554 id=1 n=2 city='XÀTIVA' pname='Comisión de Gobierno del Consorcio para la Gestión de Residu'
+
+### 2 ES n2keys=1 :: consorcio valencia 2007 en liquidacion
+  31975810 (1) 'Consorcio Valencia 2007, en liquidación'
+      parent 22584715 id=1 n=1 city='Valencia' pname='Consorcio Valencia 2007'
+  31975811 (2) 'Consorcio Valencia 2007 en liquidación'
+      parent 22584715 id=1 n=2 city='Valencia' pname='Consorcio Valencia 2007'
+
+### 2 IT n2keys=1 :: cuc comune di fano
+  31976426 (1) 'CUC -Comune di Fano'
+      parent 30900374 id=0 n=1 city=None pname='CUC - Comune di Fano'
+  31977044 (1) 'CUC- Comune di Fano'
+      parent 30900374 id=0 n=1 city=None pname='CUC - Comune di Fano'
+
+### 2 ES n2keys=2 :: d g de contratacion del ayuntamiento de logrono o juzgado de los contencioso administrativ
+  31975603 (60) 'D.G de Contratación del Ayuntamiento de Logroño o Juzgado de los Contencioso-Adm'
+      parent 3125 id=1 n=60 city='Logroño'..'Logroño (La Rioja)' pname='Junta de Gobierno del Ayuntamiento de Logroño'
+  31977724 (2) 'D.G de Contratación del Ayuntamiento de Logroño o Juzgado de los Contencioso-Adm'
+      parent 3125 id=1 n=2 city='Logroño' pname='Junta de Gobierno del Ayuntamiento de Logroño'
+
+### 2 DK n2keys=1 :: danish consumer and competition agency
+  31975365 (3) 'Danish Consumer and Competition Agency'
+      parent 14911 id=1 n=3 city='Valby' pname='Metroselskabet I/S'
+  31975721 (1) 'Danish Consumer- and Competition Agency'
+      parent 14911 id=1 n=1 city='Valby' pname='Metroselskabet I/S'
+
+### 2 ES n2keys=2 :: delegacion del gobierno en asturias
+  31975608 (5) 'Delegación del Gobierno en Asturias (registro)'
+      parent 22274854 id=1 n=5 city='Oviedo'..'oviedo' pname='Delegación del Gobierno en Asturias'
+  31978174 (2) 'DELEGACIÓN DEL GOBIERNO EN ASTURIAS (Registro Electrónico)'
+      parent 22274854 id=1 n=2 city='Oviedo' pname='Delegación del Gobierno en Asturias'
+
+### 2 ES n2keys=2 :: depart de salud de valencia clinico malvarrosa servicio de compras y aprovisionamiento
+  31975857 (2) 'Depart. de salud de Valencia-Clínico-Malvarrosa. Servicio de Compras y Aprovisio'
+      parent 22200154 id=1 n=2 city='Valencia' pname='Departamento de Salud de Valencia Clínico. Dirección Económi'
+  31976177 (31) 'Depart. de Salud de Valencia -Clinico - Malvarrosa: Servicio de Compras y Aprovi'
+      parent 22200154 id=1 n=30 city='Valencia' pname='Departamento de Salud de Valencia Clínico. Dirección Económi'
+      parent 1774124 id=1 n=1 city='Valencia' pname='Departamento de Salud de Valencia Clínico. Dirección Económi'
+
+### 2 ES n2keys=2 :: departamento de salud de denia
+  31977337 (5) 'Departamento de Salud de Denia'
+      parent 22636195 id=1 n=5 city='Denia' pname='Departamento de Salud de Denia. Dirección Económica-Gerencia'
+  31977462 (1) 'Departamento de Salud de Dénia'
+      parent 22636195 id=1 n=1 city='Dénia' pname='Departamento de Salud de Denia. Dirección Económica-Gerencia'
+
+### 2 ES n2keys=2 :: dg produccion agricola y ganadera conselleria de agricultura agua ganaderia y pesca
+  31975022 (1) 'DG Producción Agricola y Ganadera-Conselleria de Agricultura, Agua, Ganaderia y '
+      parent 10083 id=1 n=1 city='Valencia' pname='Subsecretaría de la Conselleria de Agricultura, Agua, Ganade'
+  31977418 (1) 'DG Producción Agrícola y Ganadera - Conselleria de Agricultura, Agua, Ganadería '
+      parent 10083 id=1 n=1 city='Valencia' pname='Subsecretaría de la Conselleria de Agricultura, Agua, Ganade'
+
+### 2 ES n2keys=2 :: direccion de gestion economica de la jefatura de apoyo logistico
+  31975450 (1) 'Direccion de Gestion Economica de la Jefatura de Apoyo Logistico'
+      parent 12184 id=1 n=1 city='Madrid' pname='Dirección de Gestión Económica de la Jefatura de Apoyo Logís'
+  31976627 (1) 'Dirección de Gestión Económica de la Jefatura de Apoyo Logístico'
+      parent 12184 id=1 n=1 city='Madrid' pname='Dirección de Gestión Económica de la Jefatura de Apoyo Logís'
+
+### 2 ES n2keys=2 :: direccion general de emergencias
+  31975965 (3) 'DIRECCION GENERAL DE EMERGENCIAS'
+      parent 22624319 id=1 n=3 city='Las Palmas de Gran Canaria'..'Las Palmas de Gran Canarias' pname='Dirección General de Emergencias de la Consejería de Polític'
+  31976499 (5) 'Dirección General de Emergencias'
+      parent 22861167 id=1 n=3 city='Las Palmas de Gran Canaria' pname='Dirección General de Seguridad y Emergencias del Gobierno de'
+      parent 22624319 id=1 n=2 city='Las Palmas de Gran Canaria' pname='Dirección General de Emergencias de la Consejería de Polític'
+
+### 2 ES n2keys=2 :: direccion general de estudios formacion e investigacion en seguridad publica
+  31975963 (1) 'DIRECCION GENERAL DE ESTUDIOS, FORMACION E INVESTIGACION EN SEGURIDAD PUBLICA'
+      parent 22624058 id=1 n=1 city='Las Palmas de Gran Canarias' pname='Dirección General de Estudios, Formación e Investigación en '
+  31977048 (4) 'Dirección General de Estudios, Formación e Investigación en Seguridad Pública'
+      parent 22624058 id=1 n=4 city='Las Palmas de GC'..'Las Palmas de Gran Canaria' pname='Dirección General de Estudios, Formación e Investigación en '
+
+### 2 ES n2keys=2 :: direccion gestion economica de la jefatura de apoyo logistico de la armada
+  31975447 (3) 'Direccion  Gestion Economica de la Jefatura de Apoyo Logistico de la Armada'
+      parent 12184 id=1 n=3 city='Madrid' pname='Dirección de Gestión Económica de la Jefatura de Apoyo Logís'
+  31975704 (3) 'Dirección Gestión Económica de la Jefatura de Apoyo Logístico de la Armada'
+      parent 12184 id=1 n=3 city='Madrid' pname='Dirección de Gestión Económica de la Jefatura de Apoyo Logís'
+
+### 2 ES n2keys=2 :: direccion principal
+  31974991 (420) 'Dirección Principal'
+  31975075 (13) 'Direccion Principal'
+      parent 22180399 id=1 n=13 city='Leganés' pname='Junta de Gobierno del Ayuntamiento de Leganés'
+
+### 2 ES n2keys=2 :: direccion provincial de la tgss de cantabria
+  31975334 (1) 'Dirección Provincial de la TGSS de Cantabria'
+      parent 22171217 id=1 n=1 city='Santander' pname='TGSS-Dirección provincial de Cantabria'
+  31975335 (2) 'Direccion Provincial de la TGSS de Cantabría'
+      parent 22171217 id=1 n=2 city='Santander' pname='TGSS-Dirección provincial de Cantabria'
+
+### 2 ES n2keys=2 :: direccion provincial del sepe de guadalajara
+  31978375 (1) 'Dirección Provincial del SEPE de Guadalajara'
+      parent 24489529 id=1 n=1 city='Guadalajara' pname='Dirección Provincial del Servicio Público de Empleo Estatal '
+  31978376 (2) 'Direccion Provincial del SEPE de Guadalajara'
+      parent 24489529 id=1 n=2 city='Guadalajara' pname='Dirección Provincial del Servicio Público de Empleo Estatal '
+
+### 2 FR n2keys=1 :: direction des operations franck dujoux
+  31975408 (1) 'Direction des Opérations - Franck DUJOUX'
+      parent 8254386 id=1 n=1 city=None pname='APRR'
+  31976229 (2) 'Direction des Opérations Franck DUJOUX'
+      parent 8254386 id=1 n=2 city=None pname='APRR.'
+
+### 2 FR n2keys=1 :: direction des operations nicolas brossier
+  31975478 (2) 'Direction des Opérations - Nicolas BROSSIER'
+      parent 8254386 id=1 n=2 city=None pname='APRR' ~ 'APRR.'
+  31975925 (2) 'Direction des Opérations Nicolas BROSSIER'
+      parent 8254386 id=1 n=2 city=None pname='APRR.'
+
+### 2 SK n2keys=1 :: ebiz consulting s r o
+  31975055 (10) 'eBIZ Consulting, s.r.o.,'
+      parent 13946 id=1 n=5 city='Bratislava - mestská časť Staré Mesto' pname='Univerzitná nemocnica L. Pasteura Košice'
+      parent 41 id=1 n=3 city='Bratislava' pname='Nemocnica s poliklinikou n.o. Kráľovský Chlmec'
+      parent 31763430 id=1 n=2 city='Bratislava - mestská časť Staré Mesto' pname='Obec Čierne nad Topľou'
+  31977608 (1) 'eBIZ Consulting s.r.o.'
+      parent 13946 id=1 n=1 city='Bratislava - mestská časť Staré Mesto' pname='Univerzitná nemocnica L. Pasteura Košice'
+
+### 2 SK n2keys=1 :: ebiz corp s r o
+  31975088 (15) 'eBIZ Corp, s.r.o.,'
+      parent 10279 id=1 n=6 city='Bratislava - mestská časť Staré Mesto' pname='Prešovský samosprávny kraj'
+      parent 1413679 id=1 n=3 city='Bratislava - mestská časť Staré Mesto' pname='Mesto Banská Bystrica'
+      parent 22686865 id=1 n=2 city='Bratislava - mestská časť Staré Mesto' pname='Stredná odborná škola priemyselných technológii, Učňovská 5,'
+      parent 1332407 id=1 n=1 city='Bratislava' pname='Ponitrianske združenie obcí pre separovaný zber a nakladanie'
+      parent 2775436 id=1 n=1 city='Bratislava - mestská časť Staré Mesto' pname='Mesto Modra'
+      parent 3283475 id=1 n=1 city='Bratislava - mestská časť Staré Mesto' pname='Obchodná akadémia, Komenského 1, Humenné'
+      parent 3495508 id=1 n=1 city='Bratislava - mestská časť Staré Mesto' pname='Mesto Dunajská Streda'
+  31977980 (2) 'eBIZ Corp s. r. o.'
+      parent 13946 id=1 n=2 city='Bratislava' pname='Univerzitná nemocnica L. Pasteura Košice'
+
+### 2 DE n2keys=1 :: fe ei w beschaffung infrastruktur west
+  31975097 (101) 'FE.EI-W Beschaffung Infrastruktur West'
+      parent 254 id=1 n=77 city='D-47057'..'Duisburg' pname='DB InfraGO AG – Geschäftsbereich Fahrweg (Bukr 16)'
+      parent 9197 id=1 n=9 city='Duisburg' pname='DB Netz AG (Bukr 16)'
+      parent 3203 id=1 n=8 city='Duisburg' pname='DB InfraGO AG – Geschäftsbereich Personenbahnhöfe (Bukr 11)'
+      parent 255 id=1 n=6 city='Duisburg' pname='Vergabekammer des Bundes'
+      parent 21983834 id=1 n=1 city='Duisburg' pname='DB Fernverkehr AG (Bukr 13)'
+  31976555 (7) 'FE.EI-W-Beschaffung Infrastruktur West'
+      parent 254 id=1 n=7 city='Duisburg' pname='DB InfraGO AG – Geschäftsbereich Fahrweg (Bukr 16)'
+
+### 2 ES n2keys=1 :: fecoev m p s a u
+  31976884 (8) 'FECOEV M.P. S.A.U.'
+      parent 22611213 id=1 n=8 city='Eivissa y Formentera' pname='Vicepresidencia del Consejo de Administración de Fires, Cong'
+  31977810 (4) 'FECOEV, M.P.S.A.U.'
+      parent 22611213 id=1 n=4 city='Eivissa'..'Eivissa y Formentera' pname='Vicepresidencia del Consejo de Administración de Fires, Cong'
+
+### 2 DE n2keys=1 :: fei w beschaffung infrastruktur region west
+  31975071 (7) 'FEI-W Beschaffung Infrastruktur Region West'
+      parent 21983834 id=1 n=5 city='Duisburg' pname='DB Fernverkehr AG (Bukr 13)'
+      parent 9197 id=1 n=2 city='Duisburg' pname='DB Netz AG (Bukr 16)'
+  31975157 (1) 'FEI-W-Beschaffung Infrastruktur Region West'
+      parent 9197 id=1 n=1 city='Duisburg' pname='DB Netz AG (Bukr 16)'
+
+### 2 DE n2keys=2 :: finanzbehorde interner service und steuerung vergabekammer
+  31975947 (5) 'Finanzbehörde Interner Service und Steuerung Vergabekammer'
+      parent 1419008 id=0 n=3 city='Hamburg' pname='Stadtreinigung Hamburg AöR'
+      parent 13174390 id=0 n=1 city='Hamburg' pname='Müllverwertung Borsigstraße GmbH'
+      parent 22294235 id=1 n=1 city='Hamburg' pname='Stadtreinigung Hamburg AöR'
+  31976127 (2) 'Finanzbehörde Interner Service  und Steuerung Vergabekammer (Abt.14)'
+      parent 1419008 id=0 n=1 city='Hamburg' pname='Stadtreinigung Hamburg AöR'
+      parent 21208692 id=0 n=1 city='Hamburg' pname='MVR Müllverwertung Rugenberger Damm GmbH'
+
+### 2 ES n2keys=1 :: fundacion ciudad de la energia ciuden f s p
+  31976159 (6) 'Fundación Ciudad de la Energía CIUDEN F.S.P.'
+      parent 22273596 id=1 n=6 city='Cubillos del Sil' pname='Dirección General de la Fundación Ciudad de la Energía'
+  31976162 (18) 'Fundación Ciudad de la Energía - CIUDEN F.S.P'
+      parent 22273596 id=1 n=18 city='Cubillos del Sil' pname='Dirección General de la Fundación Ciudad de la Energía'
+
+### 2 ES n2keys=2 :: fundacion general de la universidad de leon y de la empresa
+  31976066 (1) 'FUNDACIÓN GENERAL DE LA UNIVERSIDAD DE LEON Y DE LA EMPRESA'
+      parent 22646878 id=1 n=1 city='LEON' pname='Dirección de la Fundación General de la Universidad de León '
+  31978597 (2) 'Fundación General de la Universidad de León y de la Empresa'
+      parent 22646878 id=1 n=2 city='León' pname='Dirección de la Fundación General de la Universidad de León '
+
+### 2 ES n2keys=1 :: fundacion la laboral centro de arte creacion industrial y promocion cultural
+  31975384 (2) 'Fundación La LABoral Centro de Arte, Creación Industrial y Promoción Cultural'
+      parent 22499531 id=1 n=2 city='Gijón' pname='Dirección Gerencia de la Fundación La Laboral, Centro de Art'
+  31975528 (1) 'Fundación La Laboral. Centro de Arte, Creación Industrial y Promoción Cultural'
+      parent 22499531 id=1 n=1 city='Gijón' pname='Dirección Gerencia de la Fundación La Laboral, Centro de Art'
+
+### 2 ES n2keys=2 :: gerencia municipal de urbanismo de cordoba
+  31978265 (1) 'GERENCIA MUNICIPAL DE URBANISMO DE CÓRDOBA'
+      parent 22199582 id=1 n=1 city='CÓRDOBA' pname='Presidencia del Consejo Rector de la Gerencia Municipal de U'
+  31978708 (2) 'GERENCIA MUNICIPAL DE URBANISMO DE CORDOBA'
+      parent 22199582 id=1 n=2 city='CÓRDOBA' pname='Presidencia del Consejo Rector de la Gerencia Municipal de U'
+
+### 2 ES n2keys=1 :: gestio municipal de neteja s l
+  31978126 (7) 'Gestió Municipal de Neteja S.L'
+      parent 23623443 id=1 n=7 city='GUARDAMAR DEL SEGURA' pname='Consejo de Administración de Gestió Municipal de Neteja, S.L'
+  31978632 (2) 'GESTIÓ MUNICIPAL DE NETEJA, S.L.'
+      parent 23623443 id=1 n=2 city='Guardamar del Segura' pname='Consejo de Administración de Gestió Municipal de Neteja, S.L'
+
+### 2 ES n2keys=2 :: gestion de servicios para la salud y seguridad en canarias sa
+  31975764 (11) 'GESTIÓN DE SERVICIOS PARA LA SALUD Y SEGURIDAD EN CANARIAS SA'
+      parent 22503720 id=1 n=11 city='LAS PALMAS DE GRAN CANARIA'..'Las Palmas de GC' pname='Gerencia de Gestión de Servicios para la Salud y Seguridad e'
+  31975846 (1) 'GESTION DE SERVICIOS PARA LA SALUD Y SEGURIDAD EN CANARIAS SA'
+      parent 22503720 id=1 n=1 city='LAS PALMAS DE PALMAS DE GRAN CANARIA' pname='Gerencia de Gestión de Servicios para la Salud y Seguridad e'
+
+### 2 PL n2keys=1 :: gmina panki ul tysiaclecia 5 42 140 panki
+  31977139 (2) 'Gmina Panki ul. Tysiąclecia 5; 42-140 Panki'
+      parent 22657838 id=1 n=2 city='Panki' pname='Gmina Panki'
+  31978194 (2) 'Gmina Panki ul. Tysiąclecia 5; 42-140 Panki'
+      parent 22657838 id=1 n=2 city=None pname='Gmina Panki'
+
+### 2 FR n2keys=1 :: hopital bellevue cellule marches
+  31975523 (1) 'HOPITAL BELLEVUE - CELLULE MARCHES'
+      parent 1212 id=1 n=1 city=None pname='CHU DE SAINT ÉTIENNE'
+  31975705 (1) 'HOPITAL BELLEVUE -CELLULE MARCHES'
+      parent 22565293 id=1 n=1 city=None pname='CHU DE SAINT-ETIENNE'
+
+### 2 ES n2keys=2 :: hospital universitario de melilla
+  31977311 (68) 'Hospital Universitario de Melilla'
+      parent 22203586 id=1 n=68 city='MELILLA'..'Melilla' pname='Gerencia de Atención Sanitaria de Melilla - Instituto Nacion'
+  31977363 (44) 'Hospìtal Universitario de Melilla'
+      parent 22203586 id=1 n=44 city='Melilla' pname='Gerencia de Atención Sanitaria de Melilla - Instituto Nacion'
+
+### 2 ES n2keys=1 :: instituto para la transicion justa o a
+  31975172 (1) 'Instituto para la Transición Justa. O.A.'
+      parent 22273596 id=1 n=1 city='Madrid' pname='Dirección General de la Fundación Ciudad de la Energía'
+  31976256 (1) 'Instituto para la Transición Justa, O. A.'
+      parent 12736067 id=1 n=1 city='Madrid' pname='Gerencia del Instituto para la Transición Justa, O. A.'
+
+### 2 ES n2keys=1 :: intendencia de rota unidad de contratacion
+  31976727 (20) 'Intendencia de Rota - Unidad de Contratación'
+      parent 10910 id=1 n=20 city='Rota Naval' pname='Intendente de Rota'
+  31977548 (5) 'Intendencia de Rota Unidad de Contratación'
+      parent 10910 id=1 n=5 city='Rota Naval' pname='Intendente de Rota'
+
+### 2 ES n2keys=1 :: juzgado de lo contencioso administrativo de las palmas
+  31977199 (4) 'Juzgado de lo Contencioso - Administrativo de Las Palmas'
+      parent 22198435 id=1 n=4 city='Las Palmas de Gran Canaria' pname='Alcaldía del Ayuntamiento de Las Palmas de Gran Canaria'
+  31977404 (5) 'Juzgado de lo Contencioso Administrativo de Las Palmas'
+      parent 22198435 id=1 n=5 city='Las Palmas de Gran Canaria' pname='Alcaldía del Ayuntamiento de Las Palmas de Gran Canaria'
+
+### 2 ML n2keys=1 :: l ambassade royale du danemark au mali
+  31976503 (1) 'L’Ambassade Royale du Danemark au Mali'
+      parent 8345820 id=1 n=1 city='Bamako' pname='Ministère des Affaires Etrangères du Danemark'
+  31976937 (1) "L'Ambassade Royale du Danemark au Mali"
+      parent 8345820 id=1 n=1 city='Bamako' pname='Ministère des Affaires Etrangères du Danemark'
+
+### 2 ES n2keys=1 :: logrono deporte s a
+  31976301 (6) 'logroño deporte s.a'
+      parent 22700578 id=1 n=6 city='logroño' pname='Consejo de Administración de Logroño Deporte S.A.'
+  31976302 (1) 'LOGROÑO DEPORTE.S.A.'
+      parent 22700578 id=1 n=1 city='LOGROÑO' pname='Consejo de Administración de Logroño Deporte S.A.'
+
+### 2 ES n2keys=1 :: mancomunidad de servicios los olmos
+  31977595 (2) 'Mancomunidad de Servicios Los Olmos'
+      parent 23309905 id=1 n=2 city='Villar del Olmo' pname='Junta General de la Mancomunidad de Servicios Los Olmos'
+  31977596 (2) 'Mancomunidad de Servicios "Los Olmos"'
+      parent 23309905 id=1 n=2 city='Villar del Olmo' pname='Junta General de la Mancomunidad de Servicios Los Olmos'
+
+### 2 ES n2keys=1 :: mancomunidad norte duero
+  31976371 (2) 'MANCOMUNIDAD NORTE-DUERO'
+      parent 22721248 id=1 n=2 city='Villalube'..'Villalube (Zamora)' pname='Asamblea de Representantes de la Mancomunidad Norte Duero'
+  31977966 (1) 'Mancomunidad Norte - Duero'
+      parent 22721248 id=1 n=1 city='Villalube' pname='Asamblea de Representantes de la Mancomunidad Norte Duero'
+
+### 2 NL n2keys=1 :: melinda wartan borbely
+  31975029 (11) 'Melinda Wartan-Borbely'
+      parent 11916 id=1 n=11 city='Utrecht' pname='Dienstencentrum voor de Rechtspraak'
+  31975030 (18) 'Melinda Wartan Borbely'
+      parent 11916 id=1 n=18 city='Utrecht' pname='Dienstencentrum voor de Rechtspraak'
+
+### 2 ES n2keys=2 :: mesa de contratacion jaemale
+  31974994 (30) 'MESA DE CONTRATACION JAEMALE'
+      parent 3534 id=1 n=30 city='MADRID'..'Madrid' pname='Jefatura de Asuntos Económicos del Mando de Apoyo Logístico'
+  31977292 (5) 'Mesa de Contratación JAEMALE'
+      parent 3534 id=1 n=5 city='MADRID'..'Madrid' pname='Jefatura de Asuntos Económicos del Mando de Apoyo Logístico'
+
+### 2 FR n2keys=1 :: minarm mediateur
+  31975710 (26) 'MINARM/MEDIATEUR'
+      parent 3543641 id=1 n=24 city='PARIS'..'Paris' pname='MINARM SGA SDPAMG' ~ "Sous-direction de la préfiguration de l'"
+      parent 2861 id=1 n=1 city='Paris' pname='MINARM/SGA/SDPAMG'
+      parent 23110745 id=1 n=1 city='PARIS' pname="Sous-Direction de la préfiguration de l'agence ministérielle"
+  31975836 (12) 'MINARM MEDIATEUR'
+      parent 3543641 id=1 n=12 city='Paris cedex 15' pname="Sous-direction de la préfiguration de l'agence ministérielle"
+
+### 2 ES n2keys=1 :: ministerio de derechos sociales consumo y agenda 2030
+  31975198 (54) 'Ministerio de Derechos Sociales, Consumo y Agenda 2030'
+      parent 22214148 id=1 n=44 city='Madrid' pname='Subdirección General de la Oficina Presupuestaria y Gestión ' ~ 'Subdirección General de la Oficina Presu'
+      parent 23301642 id=1 n=10 city='Madrid' pname='Subdirección General de Oficialía Mayor'
+  31975619 (9) 'Ministerio de Derechos Sociales Consumo y Agenda 2030'
+      parent 22214148 id=1 n=5 city='Madrid' pname='Subdirección General de la Oficina Presupuestaria y Gestión ' ~ 'Subdirección General de la Oficina Presu'
+      parent 23301642 id=1 n=4 city='Madrid' pname='Subdirección General de Oficialía Mayor'
+
+### 2 ES n2keys=2 :: organismo autonomo de deportes de san cristobal de la laguna
+  31977183 (1) 'ORGANISMO AUTÓNOMO DE DEPORTES DE SAN CRISTÓBAL DE LA LAGUNA.'
+      parent 23070637 id=1 n=1 city='San Cristóbal de la Laguna' pname='Junta de Gobierno del Organismo Autónomo de Deportes del Ayu'
+  31978238 (1) 'Organismo Autónomo de Deportes De San Cristobal de La Laguna'
+      parent 23070637 id=1 n=1 city='La Laguna' pname='Junta de Gobierno del Organismo Autónomo de Deportes del Ayu'
+
+### 2 ES n2keys=1 :: organismo autonomo municipal de parques jardines y biodiversidad urbana del ayuntamiento d
+  31978338 (1) 'Organismo Autónomo Municipal de Parques,  Jardines y Biodiversidad Urbana del Ay'
+      parent 22436064 id=1 n=1 city='València' pname='Vicepresidencia del Organismo Autónomo Municipal Parques y J'
+  31978388 (2) 'Organismo Autónomo Municipal de Parques, Jardines y Biodiversidad Urbana del Ayu'
+      parent 22436064 id=1 n=2 city='València' pname='Vicepresidencia del Organismo Autónomo Municipal Parques y J'
+
+### 2 PL n2keys=1 :: panstwowe gospodarstwo wodne wody polskie al adama mickiewicza 15
+  31977034 (3) 'Państwowe Gospodarstwo Wodne Wody Polskie, Al. Adama Mickiewicza 15'
+      parent 1893 id=1 n=3 city='Bydgoszcz' pname='Państwowe Gospodarstwo Wodne Wody Polskie'
+  31977799 (1) 'Państwowe Gospodarstwo Wodne Wody Polskie Al. Adama Mickiewicza 15'
+      parent 1893 id=1 n=1 city='Bydgoszcz' pname='Państwowe Gospodarstwo Wodne Wody Polskie'
+
+### 2 ES n2keys=2 :: parque cementerio de malaga s a
+  31974983 (2) 'PARQUE CEMENTERIO DE MALAGA S.A.'
+      parent 1905 id=1 n=2 city='Málaga' pname='Gerencia del Parque Cementerio de Málaga, S.A.'
+  31976958 (3) 'Parque Cementerio de Málaga, S.A.'
+      parent 1905 id=1 n=3 city='Málaga' pname='Gerencia del Parque Cementerio de Málaga, S.A.'
+
+### 2 ES n2keys=2 :: plataforma electronica de contratacion de la autoridad portuaria de barcelona
+  31975069 (46) 'Plataforma Electrónica de Contratación de la Autoridad Portuaria de Barcelona (P'
+      parent 22172024 id=1 n=46 city='Barcelona' pname='Presidencia del Consejo de Administración de la Autoridad Po'
+  31977061 (3) 'PLATAFORMA ELECTRÓNICA DE CONTRATACIÓN de la Autoridad Portuaria de Barcelona'
+      parent 22172024 id=1 n=3 city='Barcelona' pname='Presidencia del Consejo de Administración de la Autoridad Po'
+
+### 2 ES n2keys=1 :: procede recurso especial en materia de contratacion de acuerdo con lo establecido en los a
+  31977213 (3) 'Procede recurso especial en materia de contratación, de acuerdo con lo estableci'
+      parent 22196117 id=1 n=3 city='Madrid' pname='Dirección del Instituto Nacional de Gestión Sanitaria (INGES'
+  31977501 (1) 'Procede recurso especial en materia de contratación, de acuerdo con lo estableci'
+      parent 22196117 id=1 n=1 city='Madrid' pname='Dirección del Instituto Nacional de Gestión Sanitaria (INGES'
+
+### 2 ES n2keys=1 :: rectorado de la universidad de cadiz servicio de contrataciones y patrimonio
+  31975037 (12) 'Rectorado de la Universidad de Cádiz - Servicio de Contrataciones y Patrimonio'
+      parent 14416 id=1 n=12 city='Cádiz' pname='Rectorado de la Universidad de Cádiz'
+  31976094 (41) 'Rectorado de la Universidad de Cádiz. Servicio de Contrataciones y Patrimonio.'
+      parent 14416 id=1 n=41 city='Cádiz'..'Cádoz' pname='Rectorado de la Universidad de Cádiz'
+
+### 2 ES n2keys=2 :: red sara comision juridica de extremadura
+  31977332 (7) 'RED SARA (DIR3 UEX: U00200115)/Comisión Jurídica de Extremadura (DIR3: A11024428'
+      parent 22282169 id=1 n=7 city='Badajoz' pname='Rectorado de la Universidad de Extremadura'
+  31977354 (6) 'RED SARA/Comisión Jurídica de Extremadura (DIR3: A11024428)'
+      parent 22282169 id=1 n=6 city='Badajoz' pname='Rectorado de la Universidad de Extremadura'
+
+### 2 ES n2keys=2 :: red sara y comision juridica de extremadura
+  31975281 (5) 'RED SARA y Comisión jurídica de Extremadura'
+      parent 22282169 id=1 n=5 city='Badajoz' pname='Rectorado de la Universidad de Extremadura'
+  31977027 (9) 'RED SARA y Comisión jurídica de Extremadura (DIR3 A11024428)'
+      parent 22282169 id=1 n=9 city='Badajoz' pname='Rectorado de la Universidad de Extremadura'
+
+### 2 ES n2keys=2 :: registro general
+  31976934 (3) 'Registro General (Registro del TARCAS)'
+      parent 3169 id=1 n=3 city='SEVILLA' pname='Junta de Gobierno del Ayuntamiento de Sevilla'
+  31978465 (1) 'Registro General (del TARCAS)'
+      parent 3169 id=1 n=1 city='SEVILLA' pname='Junta de Gobierno del Ayuntamiento de Sevilla'
+
+### 2 ES n2keys=1 :: registro general ayuntamiento de sevilla tarcas
+  31974992 (8) 'Registro General Ayuntamiento de Sevilla- TARCAS'
+      parent 3169 id=1 n=8 city='SEVILLA' pname='Junta de Gobierno del Ayuntamiento de Sevilla'
+  31977351 (33) 'Registro General Ayuntamiento de Sevilla - TARCAS'
+      parent 3169 id=1 n=33 city='SEVILLA' pname='Junta de Gobierno del Ayuntamiento de Sevilla'
+
+### 2 ES n2keys=1 :: s a de gestio sagunt mitja propi municipal s a
+  31976653 (3) 'S.A DE GESTIO SAGUNT MITJA PROPI MUNICIPAL S.A'
+      parent 22291117 id=1 n=3 city='PUERTO DE SAGUNTO'..'PUERTO SAGUNTO' pname='Dirección General Societat Anonima de Gestió Sagunt Mitja Pr'
+  31976911 (13) 'S.A. DE GESTIO SAGUNT MITJA PROPI MUNICIPAL S.A'
+      parent 22291117 id=1 n=13 city='PUERTO DE SAGUNTO' pname='Dirección General Societat Anonima de Gestió Sagunt Mitja Pr'
+
+### 2 FR n2keys=2 :: service achats marches
+  31975711 (2) 'Service Achats/Marchés'
+      parent 14020213 id=1 n=2 city=None pname="ONIRIS\nEcole nationale vétérinaire agroalimentaire et de l'a" ~ 'ONIRIS Ecole nationale vétérinaire agroa'
+  31976324 (2) 'Service achats marches'
+      parent 22708010 id=1 n=2 city=None pname='COMMUNE DE PETIT CANAL'
+
+### 2 ES n2keys=2 :: servicio publico de empleo
+  31976619 (5) 'SERVICIO PUBLICO DE EMPLEO'
+      parent 22680477 id=1 n=5 city='OVIEDO'..'Oviedo' pname='Servicio Público de Empleo del Principado de Asturias'
+  31977426 (4) 'servicio público de empleo'
+      parent 22680477 id=1 n=4 city='Oviedo' pname='Servicio Público de Empleo del Principado de Asturias'
+
+### 2 FR n2keys=2 :: sncf reseau sa
+  31977555 (2) 'SNCF RESEAU SA'
+      parent 566 id=1 n=2 city=None pname='SNCF RESEAU'
+  31978542 (1) 'SNCF Réseau SA'
+      parent 566 id=1 n=1 city=None pname='SNCF RESEAU'
+
+### 2 ES n2keys=2 :: societat valenciana d inspeccio tecnica de vehicles s a
+  31975249 (1) 'SOCIETAT VALENCIANA D’INSPECCIÓ TÈCNICA DE VEHICLES, S.A. (SITVAL)'
+      parent 22374528 id=1 n=1 city='VALENCIA' pname='Societat Valenciana  de Inspecció Técnica de Vehicles S.A.'
+  31975935 (1) "Societat Valenciana d'Inspecció Técnica de Vehicles, S.A."
+      parent 22374528 id=1 n=1 city='Gandia' pname='Societat Valenciana  de Inspecció Técnica de Vehicles S.A.'
+
+### 2 ES n2keys=2 :: societat valenciana fira valencia sa
+  31975781 (3) 'Societat Valenciana Fira València SA'
+      parent 22579446 id=1 n=3 city='Valencia' pname='Consejo de Administración de la Societat Valenciana FIRA Val'
+  31976733 (21) 'SOCIETAT VALENCIANA FIRA VALENCIA SA'
+      parent 22579446 id=1 n=21 city='VALENCIA' pname='Consejo de Administración de la Societat Valenciana FIRA Val'
+
+### 2 ES n2keys=1 :: tacrc tribunal administrativo central de recursos contractuales
+  31977956 (28) 'TACRC-Tribunal Administrativo Central de Recursos Contractuales'
+      parent 6436 id=1 n=28 city='Madrid' pname='Dirección General de Gestión Económica, Contratación e Infra'
+  31978391 (1) 'TACRC “Tribunal Administrativo Central de Recursos Contractuales”'
+      parent 6436 id=1 n=1 city='Madrid' pname='Dirección General de Gestión Económica, Contratación e Infra'
+
+### 2 ES n2keys=1 :: tarcas ayuntamiento de sevilla
+  31978595 (1) 'TARCAS.- Ayuntamiento de Sevilla'
+      parent 3169 id=1 n=1 city='SEVILLA' pname='Junta de Gobierno del Ayuntamiento de Sevilla'
+  31978618 (1) 'TARCAS. AYUNTAMIENTO DE SEVILLA'
+      parent 3169 id=1 n=1 city='SEVILLA' pname='Junta de Gobierno del Ayuntamiento de Sevilla'
+
+### 2 FR n2keys=1 :: tribunal administratif de lyon 184 rue duguesclin 69433 lyon
+  31975971 (2) 'Tribunal administratif de Lyon\n184, rue Duguesclin 69433 LYON'
+      parent 3930 id=1 n=1 city=None pname='CNRS Rhône Auvergne'
+      parent 30946715 id=1 n=1 city=None pname='CNRS Rhône Auvergne'
+  31977593 (1) 'Tribunal administratif de Lyon 184 rue Duguesclin 69433 Lyon'
+      parent 3324757 id=1 n=1 city=None pname='Syndicat SICTOBA'
+
+### 2 FR n2keys=1 :: tribunal administratif de poitiers instance chargee de l introduction des recours
+  31975366 (38) "Tribunal administratif de Poitiers\nInstance chargée de l'introduction des recour"
+      parent 2644 id=1 n=24 city='Poitiers'..'Poitiers cedex' pname='Tribunal administratif de Poitiers' ~ 'Tribunal administratif de poitiers'
+      parent 22494766 id=1 n=12 city=None pname='Tribunal administratif de Poitiers'
+      parent 7454203 id=1 n=1 city=None pname='Mairie de Niort'
+      parent 23200206 id=1 n=1 city=None pname='Tribunal administratif de Poitiers'
+  31976203 (2) "Tribunal administratif de Poitiers : Instance chargée de l'introduction des reco"
+      parent 2644 id=1 n=2 city=None pname='Tribunal administratif de Poitiers'
+
+### 2 FR n2keys=1 :: tribunal administratif de strasbourg 31 avenue de la paix 67070 strasbourg
+  31976016 (1) 'Tribunal Administratif de Strasbourg\n31 avenue de la Paix \n67070 Strasbourg'
+      parent 22496348 id=1 n=1 city=None pname='Mulhouse Alsace Agglomération'
+  31976116 (1) 'Tribunal administratif de Strasbourg\n31 avenue de la Paix - 67070 Strasbourg'
+      parent 22496348 id=1 n=1 city=None pname='Mulhouse Alsace Agglomération'
+
+### 2 ES n2keys=2 :: tribunal administrativo central de recursos contractuales
+  31975284 (26) 'Tribunal Administrativo Central de Recursos Contractuales (TACRC'
+      parent 22273414 id=1 n=8 city='Madrid' pname='Departamento de Salud de Orihuela. Dirección Económica-Geren'
+      parent 22173842 id=1 n=5 city='Madrid' pname='Concejal de Contratación del Ayuntamiento de Oliva'
+      parent 4346 id=1 n=4 city='madrid' pname='Departamento de Salud La Fe. Dirección Económica-Gerencia'
+      parent 8548 id=1 n=4 city='Madrid' pname='Pleno de la Diputación Provincial de Valencia'
+      parent 6037 id=1 n=2 city='Madrid' pname='Presidencia de la Diputación Provincial de Valencia'
+      parent 1774124 id=1 n=2 city='Madrid' pname='Departamento de Salud La Fe. Dirección Económica-Gerencia'
+      parent 22963391 id=1 n=1 city='Madrid' pname='Hospital San Vicente Raspeig. Dirección Económica-Gerencia'
+  31975497 (1) 'Tribunal Administrativo Central de Recursos Contractuales( registro entrada OAC '
+      parent 22526805 id=1 n=1 city='Eivissa' pname="Presidencia del Consell Insular d'Eivissa"
+
+### 2 ES n2keys=1 :: tribunal administrativo central de recursos contractuales recurso especial
+  31976233 (76) 'Tribunal Administrativo Central de Recursos Contractuales - RECURSO ESPECIAL'
+      parent 22183301 id=1 n=76 city='Madrid' pname='Junta de Gobierno del Ayuntamiento de Albacete'
+  31976243 (48) 'Tribunal Administrativo Central de Recursos Contractuales- RECURSO ESPECIAL'
+      parent 22183301 id=1 n=48 city='Albacete'..'Madrid' pname='Junta de Gobierno del Ayuntamiento de Albacete'
+
+### 2 ES n2keys=1 :: tribunal administrativo central de recursos contractuales y art 16 de la ley 39 2015
+  31975872 (17) 'Tribunal Administrativo Central de Recursos Contractuales y art. 16 de la Ley 39'
+      parent 22202516 id=1 n=17 city='Madrid' pname='Junta de Contratación del Ministerio de Industria y Turismo' ~ 'Junta de Contratación del Ministerio de '
+  31976193 (2) 'Tribunal Administrativo Central de Recursos Contractuales y art. 16 de la Ley 39'
+      parent 22202516 id=1 n=2 city='Madrid' pname='Junta de Contratación del Ministerio de Industria, Comercio '
+
+### 2 ES n2keys=1 :: tribunal administrativo central de recursos contractuales y art 16 ley 39 2015
+  31976191 (2) 'Tribunal Administrativo Central de Recursos Contractuales y art. 16 Ley 39-2015'
+      parent 22202516 id=1 n=2 city='Madrid' pname='Junta de Contratación del Ministerio de Industria, Comercio '
+  31976339 (2) 'Tribunal Administrativo Central de Recursos Contractuales y art. 16 Ley 39/2015'
+      parent 22202516 id=1 n=2 city='Madrid' pname='Junta de Contratación del Ministerio de Industria, Comercio '
+
+### 2 ES n2keys=2 :: tribunal administrativo de recursos contractuales de andalucia
+  31977011 (3) 'Tribunal Administrativo de Recursos Contractuales de Andalucía (TARCA).'
+      parent 22417314 id=1 n=3 city='Sevilla' pname='Consejo de Administración de la Agencia de Régimen Especial '
+  31977755 (2) 'Tribunal Administrativo de Recursos Contractuales de Andalucia (TARCA)'
+      parent 22417314 id=1 n=2 city='Sevilla' pname='Consejo de Administración de la Agencia de Régimen Especial '
+
+### 2 ES n2keys=2 :: tribunal administrativo de recursos contractuales del ayto de cordoba
+  31975468 (4) 'TRIBUNAL ADMINISTRATIVO DE RECURSOS CONTRACTUALES DEL AYTO DE CORDOBA'
+      parent 22504421 id=1 n=4 city='Córdoba' pname='Consejo de Administración de la Empresa Municipal de Aguas d'
+  31976737 (4) 'Tribunal Administrativo de Recursos Contractuales del Ayto de Córdoba'
+      parent 22504421 id=1 n=4 city='Córdoba' pname='Consejo de Administración de la Empresa Municipal de Aguas d'
+
+### 2 ES n2keys=2 :: tribunal administrativo de recursos contractuales del ayuntamiento de sevilla
+  31975652 (2) 'Tribunal Administrativo de Recursos Contractuales del Ayuntamiento de Sevilla (T'
+      parent 22545051 id=1 n=2 city='Sevilla' pname='Comisión Ejecutiva de la Corporación de Empresas Municipales'
+  31977003 (2) 'Tribunal Administrativo de Recursos Contractuales (TARCAS)del Ayuntamiento de Se'
+      parent 3169 id=1 n=2 city='SEVILLA' pname='Junta de Gobierno del Ayuntamiento de Sevilla'
+
+### 2 ES n2keys=1 :: tribunal administrativo de recursos contractuales del excmo ayuntamiento de almeria
+  31977887 (3) 'Tribunal  Administrativo de Recursos Contractuales del Excmo Ayuntamiento de Alm'
+      parent 22767284 id=1 n=3 city='Madrid' pname='Comisión Ejecutiva de la Gerencia Municipal de Urbanismo del'
+  31978267 (1) 'TRIBUNAL ADMINISTRATIVO DE RECURSOS CONTRACTUALES DEL EXCMO. AYUNTAMIENTO DE ALM'
+      parent 22217422 id=1 n=1 city='ALMERÍA' pname='Junta de Gobierno del Ayuntamiento de Almería'
+
+### 2 ES n2keys=2 :: tribunal administrativo de recursos contractuales del excmo ayuntamiento de malaga
+  31978081 (2) 'Tribunal Administrativo de Recursos Contractuales del Excmo, Ayuntamiento de Mál'
+      parent 22593344 id=1 n=2 city='Málaga' pname='Dirección General del Palacio de Ferias y Congresos de Málag'
+  31978621 (1) 'Tribunal Administrativo de Recursos Contractuales del Excmo. Ayuntamiento de Mal'
+      parent 22593344 id=1 n=1 city='Málaga' pname='Dirección General del Palacio de Ferias y Congresos de Málag'
+
+### 2 ES n2keys=2 :: tribunal administrativo de recursos de contratacion publica de la diputacion de granada
+  31976280 (9) 'Tribunal Administrativo de Recursos de Contratación Pública de la Diputación de '
+      parent 23313395 id=1 n=6 city='Granada' pname='Junta de Gobierno del Ayuntamiento de Las Gabias'
+      parent 22358936 id=1 n=3 city='Granada' pname='Alcaldía del Ayuntamiento de Las Gabias'
+  31976682 (1) 'Tribunal administrativo de recursos de contratacion publica de la diputacion de '
+      parent 22358936 id=1 n=1 city='Granada' pname='Alcaldía del Ayuntamiento de Las Gabias'
+
+### 2 ES n2keys=2 :: tribunal central de recursos de contratacion administrativa
+  31976321 (5) 'Tribunal Central de Recursos de Contratacion Administrativa'
+      parent 22693422 id=1 n=5 city='Madrid' pname='Departamento de Salud de Manises. Dirección Económica-Gerenc'
+  31978036 (2) 'Tribunal Central de Recursos de Contratación Administrativa'
+      parent 22693422 id=1 n=2 city='Madrid' pname='Departamento de Salud de Manises. Dirección Económica-Gerenc'
+
+### 2 ES n2keys=2 :: tribunal recursos contractuales de andalucia
+  31975621 (18) 'Tribunal recursos contractuales de Andalucía'
+      parent 22504169 id=1 n=16 city='Sevilla' pname='Junta de Gobierno Local del Ayuntamiento de Maracena'
+      parent 22153631 id=1 n=2 city='SEVILLA' pname='Presidencia de la Mancomunidad de Servicios La Vega'
+  31977443 (2) 'Tribunal Recursos Contractuales de Andalucia'
+      parent 22437654 id=1 n=2 city='Sevilla' pname='Alcaldía del Ayuntamiento de Mairena del Alcor'
+
+### 2 ES n2keys=2 :: unidad de contratacion de la intendencia de cartagena
+  31975128 (96) 'Unidad de Contratación de la Intendencia de Cartagena'
+      parent 22217147 id=1 n=96 city='CARTAGENA'..'cartagena' pname='Intendente de Cartagena'
+  31977542 (7) 'Unidad de contratacion de la intendencia de cartagena'
+      parent 22217147 id=1 n=7 city='CARTAGENA'..'Cartagena' pname='Intendente de Cartagena'
+
+### 2 ES n2keys=2 :: unidad de contratacion del arsenal de cartagena
+  31976372 (114) 'UNIDAD DE CONTRATACIÓN DEL ARSENAL DE CARTAGENA'
+      parent 22217147 id=1 n=114 city='CARTAGENA'..'cartagena' pname='Intendente de Cartagena'
+  31976393 (2) 'UNIDAD DE CONTRATACION DEL ARSENAL DE CARTAGENA'
+      parent 22217147 id=1 n=2 city='CARTAGENA' pname='Intendente de Cartagena'
+
+### 2 ES n2keys=1 :: ver apartado 17 de la hrc rector de la universidad de vigo
+  31976055 (25) 'Ver apartado 17 de la HRC - Rector de la Universidad de Vigo'
+      parent 22629129 id=1 n=25 city='Vigo' pname='Rectorado de la Universidad de Vigo'
+  31976056 (36) 'Ver apartado 17 de la HRC. Rector de la Universidad de Vigo'
+      parent 22629129 id=1 n=36 city='Vigo' pname='Rectorado de la Universidad de Vigo'
+
+### 2 ES n2keys=1 :: ver apartado 17 de la hrc recurso de reposicion o alzada
+  31977190 (1) 'Ver apartado 17 de la HRC - Recurso de reposición o alzada'
+      parent 22629129 id=1 n=1 city='Vigo' pname='Rectorado de la Universidad de Vigo'
+  31977191 (2) 'Ver apartado 17 de la HRC. Recurso de reposición o alzada'
+      parent 22629129 id=1 n=2 city='Vigo' pname='Rectorado de la Universidad de Vigo'
+
+### 2 ES n2keys=1 :: ver apartado 17 de la hrc tribunal administrativo de contratacion publica de la comunidad 
+  31975984 (42) 'Ver apartado 17 de la HRC - Tribunal Administrativo de Contratación Pública de l'
+      parent 22629129 id=1 n=42 city='Santiago de Compostela' pname='Rectorado de la Universidad de Vigo'
+  31976908 (5) 'Ver apartado 17 de la HRC. Tribunal Administrativo de Contratación Pública de la'
+      parent 22629129 id=1 n=5 city='Santiago de Compostela' pname='Rectorado de la Universidad de Vigo'
+
+### 2 DE n2keys=2 :: vergabeprufstelle
+  31975627 (95) 'Vergabeprüfstelle (Emscher)'
+      parent 1316688 id=0 n=93 city='Essen' pname='Emschergenossenschaft'
+      parent 1731672 id=1 n=2 city='Essen' pname='Emschergenossenschaft'
+  31975977 (15) 'Vergabeprüfstelle (Lippe)'
+      parent 1247048 id=0 n=15 city='Essen' pname='Lippeverband'
+
+### 2 ES n2keys=2 :: viceconsejeria de justicia y seguridad
+  31978719 (1) 'VICECONSEJERÍA DE JUSTICIA Y SEGURIDAD'
+      parent 22647683 id=1 n=1 city='Las Palmas de Gran Canarias' pname='Viceconsejería de Justicia'
+  31978720 (1) 'VICECONSEJERIA DE JUSTICIA Y SEGURIDAD'
+      parent 22647683 id=1 n=1 city='Las Palmas de Gran Canaria' pname='Viceconsejería de Justicia'
+
+### 2 ES n2keys=2 :: vicepresidencia y consejeria de presidencia coordinacion de la accion de gobierno interior
+  31978406 (2) 'VICEPRESIDENCIA Y CONSEJERÍA DE PRESIDENCIA, COORDINACIÓN DE LA ACCIÓN DE GOBIER'
+      parent 22384357 id=1 n=2 city='Mérida' pname='Vicepresidencia y Consejería de Presidencia, Coordinación de'
+  31978602 (1) 'VICEPRESIDENCIA Y CONSEJERIA DE PRESIDENCIA, COORDINACIÓN DE LA ACCIÓN DE GOBIER'
+      parent 22384357 id=1 n=1 city='Mérida' pname='Vicepresidencia y Consejería de Presidencia, Coordinación de'
+
+### 2 GR n2keys=2 :: ενιαια αρχη δημοσιων συμβασεων
+  31976142 (6) 'ΕΝΙΑΙΑ ΑΡΧΗ ΔΗΜΟΣΙΩΝ ΣΥΜΒΑΣΕΩΝ (Ε.Α.ΔΗ.ΣΥ. - ΦΟΡΕΑΣ ΠΡΟΣΦΥΓΩΝ)'
+      parent 22664434 id=1 n=5 city='ΑΓ. ΙΩΑΝΝΗΣ ΡΕΝΤΗΣ - ΝΙΚΑΙΑ'..'ΑΘΗΝΑ' pname='ΔΗΜΟΣ ΑΡΤΑΙΩΝ'
+      parent 23292081 id=1 n=1 city='Αθήνα' pname='ΔΗΜΟΣ ΝΙΚΟΛΑΟΥ ΣΚΟΥΦΑ'
+  31976178 (6) 'ΕΝΙΑΙΑ ΑΡΧΗ ΔΗΜΟΣΙΩΝ ΣΥΜΒΑΣΕΩΝ (ΕΑΔΗΣΥ / ΟΡΓΑΝΙΣΜΟΣ ΠΡΟΣΦΥΓΗΣ)'
+      parent 22564784 id=1 n=4 city='ΑΓ. ΙΩΑΝΝΗΣ ΡΕΝΤΗΣ – ΝΙΚΑΙΑ' pname='ΓΕΝΙΚΟ ΝΟΣΟΚΟΜΕΙΟ ΗΜΑΘΙΑΣ' ~ 'ΓΕΝΙΚΟ ΝΟΣΟΚΟΜΕΙΟ ΗΜΑΘΙΑΣ (ΥΓ. ΜΟΝΑΔΑ ΒΕ'
+      parent 22758284 id=1 n=2 city='ΑΓ. ΙΩΑΝΝΗΣ ΡΕΝΤΗΣ – ΝΙΚΑΙΑ' pname='ΓΕΝΙΚΟ ΝΟΣΟΚΟΜΕΙΟ ΗΜΑΘΙΑΣ' ~ 'ΓΕΝΙΚΟ ΝΟΣΟΚΟΜΕΙΟ ΗΜΑΘΙΑΣ (ΜΟΝΑΔΑ ΒΕΡΟΙΑ'

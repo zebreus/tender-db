@@ -1,0 +1,286 @@
+{
+ "salt": "576-second-look-salted-40",
+ "population": "3751 orgs 31974972-31978722 sorted by id",
+ "labels": [
+  {
+   "id": 31976557,
+   "name": "Presidente EPREMASA",
+   "parent": 22503096,
+   "parent_printed": "Consejo de Administración de la Empresa Provincial de Residuos y Medio Ambiente, S.A.",
+   "label": "SELF"
+  },
+  {
+   "id": 31976016,
+   "name": "Tribunal Administratif de Strasbourg\n31 avenue de la Paix \n67070 Strasbourg",
+   "parent": 22496348,
+   "parent_printed": "Mulhouse Alsace Agglomération",
+   "label": "REVIEW"
+  },
+  {
+   "id": 31978204,
+   "name": "Solkind s.r.o., advokátní kancelář",
+   "parent": 5160,
+   "parent_printed": "Zlínský kraj",
+   "label": "OTHER-BODY"
+  },
+  {
+   "id": 31977978,
+   "name": "Tribunal Administratif de Melun",
+   "parent": 22397010,
+   "parent_printed": "Mairie de Choisy le Roi",
+   "label": "REVIEW"
+  },
+  {
+   "id": 31976946,
+   "name": "Agence de mutualisation des universités et des établissements d'enseignement supérieur ou de recherche et de support à l'enseignement supérieur\nSAJMP",
+   "parent": 23000953,
+   "parent_printed": "Agence de mutualisation des universités et des établissements d'enseignement supérieur ou de recherche et de support à l'enseignement supérieur",
+   "label": "SELF"
+  },
+  {
+   "id": 31976237,
+   "name": "Ajuntament de Biar",
+   "parent": 22684673,
+   "parent_printed": "Junta de Gobierno del Ayuntamiento de Biar",
+   "label": "SELF"
+  },
+  {
+   "id": 31976021,
+   "name": "Tribunal Administrativo de Contratos Públicos de la Comunidad Autónoma de Canariasnal Ad",
+   "parent": 22261763,
+   "parent_printed": "Concejalía Delegada del Ayuntamiento de Santa Brígida",
+   "label": "REVIEW"
+  },
+  {
+   "id": 31978475,
+   "name": "Procurement Department",
+   "parent": 16951336,
+   "parent_printed": "Museros Town Council",
+   "label": "LABEL"
+  },
+  {
+   "id": 31977639,
+   "name": "Alcaldía del Ayuntamiento de Agüimes",
+   "parent": 22621281,
+   "parent_printed": "Junta de Gobierno del Ayuntamiento Villa de Agüimes",
+   "label": "SELF"
+  },
+  {
+   "id": 31978488,
+   "name": "Ajuntament de Sant Antoni de Portmany",
+   "parent": 22329437,
+   "parent_printed": "Junta de Gobierno Local del Ayuntamiento de Sant Antoni de Portmany",
+   "label": "SELF"
+  },
+  {
+   "id": 31978618,
+   "name": "TARCAS. AYUNTAMIENTO DE SEVILLA",
+   "parent": 3169,
+   "parent_printed": "Junta de Gobierno del Ayuntamiento de Sevilla",
+   "label": "REVIEW"
+  },
+  {
+   "id": 31976366,
+   "name": "Marugán",
+   "parent": 22719400,
+   "parent_printed": "Pleno del Ayuntamiento de Marugán",
+   "label": "SELF"
+  },
+  {
+   "id": 31978417,
+   "name": "Presidencia de la Comarca de Ribagorza",
+   "parent": 22652225,
+   "parent_printed": "Presidencia de la Comarca de la Ribagorza",
+   "label": "SELF"
+  },
+  {
+   "id": 31978453,
+   "name": "Instituto Aragonés de la Juventud",
+   "parent": 23395564,
+   "parent_printed": "Instituto Aragonés de la Juventud (IAJ)",
+   "label": "SELF"
+  },
+  {
+   "id": 31978099,
+   "name": "AYUNTAMIENTO DE MADRID/DISTRITO DE CARABANCHEL",
+   "parent": 22151568,
+   "parent_printed": "Distrito de Carabanchel",
+   "label": "SELF"
+  },
+  {
+   "id": 31977669,
+   "name": "Bembibre",
+   "parent": 22411615,
+   "parent_printed": "Alcaldía del Ayuntamiento de Bembibre",
+   "label": "SELF"
+  },
+  {
+   "id": 31978431,
+   "name": "TUTTOGARE RACCONIGI",
+   "parent": 24595942,
+   "parent_printed": "Comune di Racconigi",
+   "label": "PLATFORM"
+  },
+  {
+   "id": 31978284,
+   "name": "Alcaldía Ayuntamiento de Tías",
+   "parent": 22264493,
+   "parent_printed": "Alcaldia del Ayuntamiento de Tías",
+   "label": "SELF"
+  },
+  {
+   "id": 31975662,
+   "name": "Estepa",
+   "parent": 22527174,
+   "parent_printed": "Alcaldia del Ayuntamiento de Estepa",
+   "label": "SELF"
+  },
+  {
+   "id": 31977159,
+   "name": "Tribunal Administrativo de Recursos Contractuales de la Excma. Diputación Provincial de Cádiz",
+   "parent": 22630820,
+   "parent_printed": "Gerencia del Consejo de Administración de la Empresa Municipal de Aguas de Cádiz S.A.",
+   "label": "REVIEW"
+  },
+  {
+   "id": 31976108,
+   "name": "GESPESA SAU",
+   "parent": 22443574,
+   "parent_printed": "Gerencia de GESPESA, S.A.U.",
+   "label": "SELF"
+  },
+  {
+   "id": 31976733,
+   "name": "SOCIETAT VALENCIANA FIRA VALENCIA SA",
+   "parent": 22579446,
+   "parent_printed": "Consejo de Administración de la Societat Valenciana FIRA València S.A.",
+   "label": "SELF"
+  },
+  {
+   "id": 31978557,
+   "name": "Navas del Rey",
+   "parent": 30940252,
+   "parent_printed": "Pleno del Ayuntamiento de Navas del Rey",
+   "label": "SELF"
+  },
+  {
+   "id": 31976094,
+   "name": "Rectorado de la Universidad de Cádiz. Servicio de Contrataciones y Patrimonio.",
+   "parent": 14416,
+   "parent_printed": "Rectorado de la Universidad de Cádiz",
+   "label": "DEPT"
+  },
+  {
+   "id": 31975879,
+   "name": "Rechtbank Oost-Brabant, zittingsplaats ’s-Hertogenbosch",
+   "parent": 8031,
+   "parent_printed": "Technische Universiteit Eindhoven",
+   "label": "REVIEW"
+  },
+  {
+   "id": 31977396,
+   "name": "COMANDANCIA GUARDIA CIVIL CADIZ",
+   "parent": 23020731,
+   "parent_printed": "Comandancia Guardia Civil de Cádiz",
+   "label": "SELF"
+  },
+  {
+   "id": 31975851,
+   "name": "Organo de Contratación de la SEA 62",
+   "parent": 22317581,
+   "parent_printed": "Jefatura de la Sección Económico-Administrativa 62 - Base Aérea de Cuatro Vientos",
+   "label": "SELF"
+  },
+  {
+   "id": 31976001,
+   "name": "EMAYA SA",
+   "parent": 7462,
+   "parent_printed": "Gerencia de EMAYA, Empresa Municipal d'Aigües i Clavegueram, S.A.",
+   "label": "SELF"
+  },
+  {
+   "id": 31975146,
+   "name": "Vergabekammer Baden-Württemberg",
+   "parent": 30921025,
+   "parent_printed": "Architekturbüro Thiele GmbH",
+   "label": "REVIEW"
+  },
+  {
+   "id": 31975186,
+   "name": "Consorcio Promedio",
+   "parent": 22297686,
+   "parent_printed": "Consorcio de Gestión de Servicios Medioambientales de Badajoz",
+   "label": "SELF"
+  },
+  {
+   "id": 31977665,
+   "name": "DIRECCION CENTRO PENITENCIARIO",
+   "parent": 22495305,
+   "parent_printed": "Dirección del Centro Penitenciario de Topas (Salamanca)",
+   "label": "SELF"
+  },
+  {
+   "id": 31976275,
+   "name": "Servicio de Contratación AG POLÍTICAS DE VIVIENDA",
+   "parent": 22236441,
+   "parent_printed": "Área de Gobierno de Políticas de Vivienda del Ayuntamiento de Madrid",
+   "label": "DEPT"
+  },
+  {
+   "id": 31977516,
+   "name": "Servicio de Comunicación y Relaciones Exteriores",
+   "parent": 8548,
+   "parent_printed": "Pleno de la Diputación Provincial de Valencia",
+   "label": "DEPT"
+  },
+  {
+   "id": 31977052,
+   "name": "Bienestar Social",
+   "parent": 8548,
+   "parent_printed": "Pleno de la Diputación Provincial de Valencia",
+   "label": "DEPT"
+  },
+  {
+   "id": 31976935,
+   "name": "Huéscar",
+   "parent": 22994414,
+   "parent_printed": "Alcaldía del Ayuntamiento de Huéscar",
+   "label": "SELF"
+  },
+  {
+   "id": 31977632,
+   "name": "Organismo Autónomo de Actividades Musicales del Ayto. La Laguna",
+   "parent": 22772755,
+   "parent_printed": "Consejo Rector del Organismo Autónomo de Actividades Musicales del Ayuntamiento de San Cristóbal de la Laguna",
+   "label": "SELF"
+  },
+  {
+   "id": 31977338,
+   "name": "CHGUV",
+   "parent": 5270,
+   "parent_printed": "Consorcio Hospital General Universitario de Valencia",
+   "label": "SELF"
+  },
+  {
+   "id": 31975139,
+   "name": "Poczta Polska S.A. Centrum Zamówień - Dział Zamówień Terenowych Zachód",
+   "parent": 4422,
+   "parent_printed": "Poczta Polska S.A.",
+   "label": "DEPT"
+  },
+  {
+   "id": 31977267,
+   "name": "Moaña",
+   "parent": 23151647,
+   "parent_printed": "Pleno del Ayuntamiento de Moaña",
+   "label": "SELF"
+  },
+  {
+   "id": 31975054,
+   "name": "Beschaffung Infrastruktur Region West",
+   "parent": 9197,
+   "parent_printed": "DB Netz AG (Bukr 16)",
+   "label": "DEPT"
+  }
+ ]
+}

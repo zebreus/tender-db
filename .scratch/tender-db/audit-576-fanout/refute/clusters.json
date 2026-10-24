@@ -1,0 +1,2372 @@
+[
+ {
+  "key": "agencia de vivienda y rehabilitacion de andalucia",
+  "country": "ES",
+  "n": 5,
+  "n2_distinct": 5,
+  "members": [
+   [
+    31975748,
+    21,
+    "AGENCIA DE VIVIENDA Y REHABILITACIÓN DE ANDALUCÍA  (Punto de contacto)"
+   ],
+   [
+    31975794,
+    1,
+    "AGENCIA DE VIVIENDA Y REHABILITACION DE ANDALUCIA (PUNTO DE CONTACTO)"
+   ],
+   [
+    31975933,
+    1,
+    "AGENCIA DE VIVIENDA Y REHABILITACION DE ANDALUCIA (PC)"
+   ],
+   [
+    31976931,
+    1,
+    "AGENCIA DE VIVIENDA Y REHABILITACIÓN DE ANDALUCÍA (otro punto de contacto)"
+   ],
+   [
+    31978334,
+    1,
+    "AGENCIA DE VIVIENDA Y REHABILITACIÓN DE ANDALUCIA"
+   ]
+  ]
+ },
+ {
+  "key": "daj cellule marches",
+  "country": "FR",
+  "n": 5,
+  "n2_distinct": 2,
+  "members": [
+   [
+    31975448,
+    4,
+    "DAJ-Cellule marchés"
+   ],
+   [
+    31975471,
+    4,
+    "DAJ  Cellule marchés"
+   ],
+   [
+    31975578,
+    8,
+    "DAJ - CELLULE MARCHES"
+   ],
+   [
+    31976088,
+    3,
+    "DAJ CELLULE MARCHES"
+   ],
+   [
+    31974975,
+    26,
+    "DAJ - Cellule marchés"
+   ]
+  ]
+ },
+ {
+  "key": "consejeria de economia hacienda fondos europeos y transformacion digital",
+  "country": "ES",
+  "n": 4,
+  "n2_distinct": 4,
+  "members": [
+   [
+    31976235,
+    49,
+    "Consejería de Economía, Hacienda, Fondos Europeos y Transformación Digital"
+   ],
+   [
+    31976399,
+    1,
+    "Consejería de Economía, Hacienda, Fondos Europeos y Transformacion Digital"
+   ],
+   [
+    31977289,
+    1,
+    "Consejeria de Economia, Hacienda, Fondos Europeos y Transformacion Digital"
+   ],
+   [
+    31977743,
+    1,
+    "CONSEJERIA DE ECONOMÍA, HACIENDA, FONDOS EUROPEOS Y TRANSFORMACIÓN DIGITAL"
+   ]
+  ]
+ },
+ {
+  "key": "consejeria de hacienda transicion economica y transformacion digital",
+  "country": "ES",
+  "n": 4,
+  "n2_distinct": 4,
+  "members": [
+   [
+    31975200,
+    44,
+    "Consejería de Hacienda, Transición Económica y Transformación Digital"
+   ],
+   [
+    31975271,
+    66,
+    "Consejeria de Hacienda, Transicion Economica y Transformacion Digital"
+   ],
+   [
+    31978061,
+    11,
+    "CONSEJERIA DE HACIENDA, TRANSICION ECONOMICA Y TRANSFORMACIÓN DIGITAL"
+   ],
+   [
+    31978067,
+    7,
+    "CONSEJERIA DE HACIENDA, TRANSICIÓN ECONOMICA Y TRANSFORMACIÓN DIGITAL"
+   ]
+  ]
+ },
+ {
+  "key": "tribunal administrativo de recursos contractuales de la junta de andalucia",
+  "country": "ES",
+  "n": 4,
+  "n2_distinct": 4,
+  "members": [
+   [
+    31975749,
+    20,
+    "TRIBUNAL ADMINISTRATIVO DE RECURSOS CONTRACTUALES DE LA JUNTA DE ANDALUCIA (Punto de contacto)"
+   ],
+   [
+    31975768,
+    4,
+    "TRIBUNAL ADMINISTRATIVO DE RECURSOS CONTRACTUALES DE LA JUNTA DE ANDALUCÍA (Punto de contacto)"
+   ],
+   [
+    31975792,
+    2,
+    "Tribunal Administrativo de Recursos Contractuales de la Junta de Andalucía:"
+   ],
+   [
+    31975934,
+    1,
+    "TRIBUNAL ADMINISTRATIVO DE RECURSOS CONTRACTUALES DE LA JUNTA DE ANDALUCIA (PC)"
+   ]
+  ]
+ },
+ {
+  "key": "ajuntament de la vall d uixo",
+  "country": "ES",
+  "n": 3,
+  "n2_distinct": 2,
+  "members": [
+   [
+    31975411,
+    2,
+    "Ajuntament de la Vall d'Uixó"
+   ],
+   [
+    31975634,
+    16,
+    "Ajuntament de la Vall d'Uixó ( sede electrónica)"
+   ],
+   [
+    31978039,
+    4,
+    "Ajuntament de la Vall d'Uixó (sede electrónica)"
+   ]
+  ]
+ },
+ {
+  "key": "area de contratacion de maz m c s s no 11",
+  "country": "ES",
+  "n": 3,
+  "n2_distinct": 3,
+  "members": [
+   [
+    31976989,
+    4,
+    "Area de contratacion de  MAZ M.C.S.S nº 11"
+   ],
+   [
+    31978190,
+    1,
+    "Área de contratación de  MAZ M.C.S.S. Nº 11"
+   ],
+   [
+    31978236,
+    2,
+    "Área de contratacion de MAZ, M.C.S.S. Nº 11"
+   ]
+  ]
+ },
+ {
+  "key": "ayuntamiento de sevilla",
+  "country": "ES",
+  "n": 3,
+  "n2_distinct": 3,
+  "members": [
+   [
+    31977441,
+    2,
+    "ayuntamiento de sevilla (servicio mujer)"
+   ],
+   [
+    31977687,
+    2,
+    "Ayuntamiento de Sevilla (Servicio P. Ciudadana)"
+   ],
+   [
+    31978113,
+    1,
+    "AYUNTAMIENTO DE SEVILLA ( SERVCIO P..CIUDADANA)"
+   ]
+  ]
+ },
+ {
+  "key": "d g de contratacion del ayuntamiento de logrono o juzgado de lo contencioso administrativo",
+  "country": "ES",
+  "n": 3,
+  "n2_distinct": 2,
+  "members": [
+   [
+    31975430,
+    51,
+    "D.G. de Contratación del Ayuntamiento de Logroño o Juzgado de lo Contencioso Administrativo"
+   ],
+   [
+    31975574,
+    5,
+    "D.G. de Contratación del Ayuntamiento de Logroño o Juzgado de lo Contencioso-Administrativo"
+   ],
+   [
+    31975644,
+    2,
+    "D.G. de Contratación del Ayuntamiento de Logroño o Juzgado de lo Contencioso-Administrativo (según cláusula 4ª PCAP)"
+   ]
+  ]
+ },
+ {
+  "key": "distrito de arganzuela departamento de contratacion",
+  "country": "ES",
+  "n": 3,
+  "n2_distinct": 2,
+  "members": [
+   [
+    31977374,
+    5,
+    "DISTRITO DE ARGANZUELA DEPARTAMENTO DE CONTRATACION"
+   ],
+   [
+    31977785,
+    2,
+    "DISTRITO DE ARGANZUELA. DEPARTAMENTO DE CONTRATACION"
+   ],
+   [
+    31978138,
+    3,
+    "Distrito de Arganzuela. Departamento de contratación"
+   ]
+  ]
+ },
+ {
+  "key": "instituto nacional de seguridad y salud en el trabajo oa mp",
+  "country": "ES",
+  "n": 3,
+  "n2_distinct": 1,
+  "members": [
+   [
+    31977122,
+    14,
+    "INSTITUTO NACIONAL DE SEGURIDAD Y SALUD EN EL TRABAJO OA,MP"
+   ],
+   [
+    31977830,
+    10,
+    "INSTITUTO NACIONAL DE SEGURIDAD Y SALUD EN EL TRABAJO OA, MP"
+   ],
+   [
+    31978249,
+    4,
+    "Instituto Nacional de Seguridad y Salud en el Trabajo, OA, MP"
+   ]
+  ]
+ },
+ {
+  "key": "mostoles desarrollo promocion economica s a",
+  "country": "ES",
+  "n": 3,
+  "n2_distinct": 2,
+  "members": [
+   [
+    31977371,
+    9,
+    "MÓSTOLES DESARROLLO PROMOCION ECONOMICA S.A."
+   ],
+   [
+    31977502,
+    1,
+    "MÓSTOLES DESARROLLO PROMOCIÓN ECONÓMICA, S.A."
+   ],
+   [
+    31978201,
+    6,
+    "MÓSTOLES DESARROLLO PROMOCIÓN ECONÓMICA S.A"
+   ]
+  ]
+ },
+ {
+  "key": "seccion de asuntos economicos sae ume",
+  "country": "ES",
+  "n": 3,
+  "n2_distinct": 3,
+  "members": [
+   [
+    31977448,
+    2,
+    "Seccion de asuntos economicos SAE-UME"
+   ],
+   [
+    31977449,
+    5,
+    "Sección de asuntos económicos SAE UME"
+   ],
+   [
+    31977458,
+    2,
+    "Sección de asuntos economicos SAE-UME"
+   ]
+  ]
+ },
+ {
+  "key": "tribunal administrativo de contratos publicos de aragon",
+  "country": "ES",
+  "n": 3,
+  "n2_distinct": 3,
+  "members": [
+   [
+    31976677,
+    4,
+    "Tribunal Administrativo de Contratos Públicos de Aragòn"
+   ],
+   [
+    31976731,
+    14,
+    "Tribunal Administrativo de COntratos Públicos de Aragon (TACPA)"
+   ],
+   [
+    31978367,
+    3,
+    "Tribunal Administrativo de Contratos Públicos de Aragón ( TACPA)"
+   ]
+  ]
+ },
+ {
+  "key": "tribunal administrativo de recursos contractuales junta andalucia",
+  "country": "ES",
+  "n": 3,
+  "n2_distinct": 3,
+  "members": [
+   [
+    31977444,
+    2,
+    ".Tribunal Administrativo de Recursos Contractuales, Junta Andalucía"
+   ],
+   [
+    31977445,
+    1,
+    "Tribunal Administrativo de Recursos Contractuales Junta Andalucia"
+   ],
+   [
+    31978235,
+    4,
+    "Tribunal Administrativo de Recursos Contractuales Junta Andalucia (TARCJA)"
+   ]
+  ]
+ },
+ {
+  "key": "tribunal adtvo central de recursos contractuales",
+  "country": "ES",
+  "n": 3,
+  "n2_distinct": 1,
+  "members": [
+   [
+    31977668,
+    2,
+    "Tribunal Adtvo Central de Recursos contractuales"
+   ],
+   [
+    31978046,
+    3,
+    "Tribunal Adtvo. Central de Recursos Contractuales"
+   ],
+   [
+    31978060,
+    2,
+    "Tribunal Adtvo.Central de recursos contractuales"
+   ]
+  ]
+ },
+ {
+  "key": "tribunal judiciaire cite judiciaire rue general fabvier 54035 nancy cedex",
+  "country": "FR",
+  "n": 3,
+  "n2_distinct": 3,
+  "members": [
+   [
+    31975462,
+    40,
+    "Tribunal Judiciaire - Cite judiciaire rue Général Fabvier - 54035 NANCY CEDEX"
+   ],
+   [
+    31976356,
+    1,
+    "Tribunal Judiciaire - Cite judiciaire rue General Fabvier - 54035 NANCY CEDEX"
+   ],
+   [
+    31977484,
+    1,
+    "Tribunal Judiciaire - Cité judiciaire rue Général Fabvier - 54035 NANCY CEDEX"
+   ]
+  ]
+ },
+ {
+  "key": "1a zona guardia civil",
+  "country": "ES",
+  "n": 2,
+  "n2_distinct": 2,
+  "members": [
+   [
+    31976638,
+    1,
+    "1ª Zona Guardia Civil"
+   ],
+   [
+    31977442,
+    4,
+    "1ª Zona Guardia Civil (Comunidad de Madrid)"
+   ]
+  ]
+ },
+ {
+  "key": "administrativo de recursos contractuales de la junta de andalucia",
+  "country": "ES",
+  "n": 2,
+  "n2_distinct": 2,
+  "members": [
+   [
+    31978432,
+    2,
+    "ADMINISTRATIVO DE RECURSOS CONTRACTUALES DE LA JUNTA DE ANDALUCIA"
+   ],
+   [
+    31978690,
+    1,
+    "Administrativo de Recursos Contractuales de la Junta de Andalucía"
+   ]
+  ]
+ },
+ {
+  "key": "aracove",
+  "country": "ES",
+  "n": 2,
+  "n2_distinct": 1,
+  "members": [
+   [
+    31976186,
+    10,
+    "ARACOVE"
+   ],
+   [
+    31976509,
+    2,
+    "\"ARACOVE\""
+   ]
+  ]
+ },
+ {
+  "key": "area de gobierno de vicealcaldia portavoz seguridad y emergencias",
+  "country": "ES",
+  "n": 2,
+  "n2_distinct": 2,
+  "members": [
+   [
+    31977958,
+    4,
+    "Area de Gobierno de Vicealcaldía, Portavoz, Seguridad y Emergencias."
+   ],
+   [
+    31978173,
+    2,
+    "Área de Gobierno de Vicealcaldía, Portavoz, Seguridad y Emergencias"
+   ]
+  ]
+ },
+ {
+  "key": "ayuntamiento alajero",
+  "country": "ES",
+  "n": 2,
+  "n2_distinct": 2,
+  "members": [
+   [
+    31978006,
+    4,
+    "AYUNTAMIENTO ALAJERÓ"
+   ],
+   [
+    31978007,
+    4,
+    "AYUNTAMIENTO ALAJERO"
+   ]
+  ]
+ },
+ {
+  "key": "ayuntamiento aldeamayor de san martin",
+  "country": "ES",
+  "n": 2,
+  "n2_distinct": 2,
+  "members": [
+   [
+    31977270,
+    11,
+    "AYUNTAMIENTO ALDEAMAYOR DE SAN MARTIN"
+   ],
+   [
+    31977717,
+    3,
+    "Ayuntamiento Aldeamayor de San Martín"
+   ]
+  ]
+ },
+ {
+  "key": "ayuntamiento de arges",
+  "country": "ES",
+  "n": 2,
+  "n2_distinct": 2,
+  "members": [
+   [
+    31978490,
+    1,
+    "AYUNTAMIENTO DE ARGES"
+   ],
+   [
+    31978491,
+    1,
+    "AYUNTAMIENTO DE ARGÉS"
+   ]
+  ]
+ },
+ {
+  "key": "ayuntamiento de belinchon",
+  "country": "ES",
+  "n": 2,
+  "n2_distinct": 2,
+  "members": [
+   [
+    31977006,
+    1,
+    "Ayuntamiento de Belinchon"
+   ],
+   [
+    31977007,
+    1,
+    "Ayuntamiento de Belinchón"
+   ]
+  ]
+ },
+ {
+  "key": "ayuntamiento de castillo de locubin",
+  "country": "ES",
+  "n": 2,
+  "n2_distinct": 2,
+  "members": [
+   [
+    31977909,
+    1,
+    "AYUNTAMIENTO DE CASTILLO DE LOCUBÍN"
+   ],
+   [
+    31978227,
+    1,
+    "AYUNTAMIENTO DE CASTILLO DE LOCUBIN"
+   ]
+  ]
+ },
+ {
+  "key": "ayuntamiento de hijar",
+  "country": "ES",
+  "n": 2,
+  "n2_distinct": 2,
+  "members": [
+   [
+    31976878,
+    2,
+    "AYUNTAMIENTO DE HIJAR"
+   ],
+   [
+    31976879,
+    2,
+    "AYUNTAMIENTO DE HÍJAR"
+   ]
+  ]
+ },
+ {
+  "key": "ayuntamiento de l alcudia de crespins",
+  "country": "ES",
+  "n": 2,
+  "n2_distinct": 2,
+  "members": [
+   [
+    31977450,
+    6,
+    "Ayuntamiento de L' Alcúdia de Crespins"
+   ],
+   [
+    31978188,
+    6,
+    "AYUNTAMIENTO DE L' ALCUDIA DE CRESPINS"
+   ]
+  ]
+ },
+ {
+  "key": "ayuntamiento de madrid distrito de carabanchel",
+  "country": "ES",
+  "n": 2,
+  "n2_distinct": 1,
+  "members": [
+   [
+    31976025,
+    1,
+    "AYUNTAMIENTO DE MADRID-DISTRITO DE CARABANCHEL"
+   ],
+   [
+    31978099,
+    5,
+    "AYUNTAMIENTO DE MADRID/DISTRITO DE CARABANCHEL"
+   ]
+  ]
+ },
+ {
+  "key": "ayuntamiento de sevilla registro general",
+  "country": "ES",
+  "n": 2,
+  "n2_distinct": 1,
+  "members": [
+   [
+    31977029,
+    4,
+    "Ayuntamiento de Sevilla - Registro General"
+   ],
+   [
+    31977674,
+    1,
+    "Ayuntamiento de Sevilla.- Registro General"
+   ]
+  ]
+ },
+ {
+  "key": "ayuntamiento de sevilla tarcas",
+  "country": "ES",
+  "n": 2,
+  "n2_distinct": 1,
+  "members": [
+   [
+    31977178,
+    5,
+    "Ayuntamiento de Sevilla-TARCAS"
+   ],
+   [
+    31977795,
+    2,
+    "Ayuntamiento de Sevilla - TARCAS"
+   ]
+  ]
+ },
+ {
+  "key": "ayuntamiento santa maria de guia",
+  "country": "ES",
+  "n": 2,
+  "n2_distinct": 2,
+  "members": [
+   [
+    31975560,
+    1,
+    "ayuntamiento santa maria de guia"
+   ],
+   [
+    31978090,
+    3,
+    "Ayuntamiento Santa María de Guía"
+   ]
+  ]
+ },
+ {
+  "key": "camara de comercio de sevilla",
+  "country": "ES",
+  "n": 2,
+  "n2_distinct": 2,
+  "members": [
+   [
+    31975151,
+    5,
+    "Cámara de Comercio de Sevilla"
+   ],
+   [
+    31976723,
+    1,
+    "Camara de Comercio de Sevilla"
+   ]
+  ]
+ },
+ {
+  "key": "comarca de valdejalon",
+  "country": "ES",
+  "n": 2,
+  "n2_distinct": 2,
+  "members": [
+   [
+    31976334,
+    1,
+    "COMARCA DE VALDEJALON"
+   ],
+   [
+    31976335,
+    2,
+    "Comarca de Valdejalón"
+   ]
+  ]
+ },
+ {
+  "key": "consejeria de fomento cooperacion local y prevencion de incendios",
+  "country": "ES",
+  "n": 2,
+  "n2_distinct": 2,
+  "members": [
+   [
+    31975275,
+    11,
+    "Consejería de Fomento, Cooperación Local y Prevención de Incendios"
+   ],
+   [
+    31975308,
+    1,
+    "consejeria de fomento , cooperación local y prevención de incendios"
+   ]
+  ]
+ },
+ {
+  "key": "consejeria salud",
+  "country": "ES",
+  "n": 2,
+  "n2_distinct": 2,
+  "members": [
+   [
+    31977495,
+    2,
+    "Consejería Salud"
+   ],
+   [
+    31978515,
+    1,
+    "CONSEJERIA SALUD"
+   ]
+  ]
+ },
+ {
+  "key": "conselho diretivo do instituto de gestao financeira e equipamentos da justica i p",
+  "country": "PT",
+  "n": 2,
+  "n2_distinct": 1,
+  "members": [
+   [
+    31976634,
+    4,
+    "Conselho Diretivo do Instituto de Gestão Financeira e Equipamentos da Justiça, I. P."
+   ],
+   [
+    31976654,
+    2,
+    "Conselho Diretivo do Instituto de Gestão Financeira e equipamentos da Justiça, I.P."
+   ]
+  ]
+ },
+ {
+  "key": "conselleria de sanidad",
+  "country": "ES",
+  "n": 2,
+  "n2_distinct": 2,
+  "members": [
+   [
+    31976299,
+    3,
+    "Conselleria de Sanidad (Dept. Salud de Sagunto)"
+   ],
+   [
+    31976925,
+    3,
+    "Conselleria de Sanidad (Departamento de Salud de Sagunto)"
+   ]
+  ]
+ },
+ {
+  "key": "consorcio de gestion de residuos v5",
+  "country": "ES",
+  "n": 2,
+  "n2_distinct": 2,
+  "members": [
+   [
+    31977246,
+    6,
+    "CONSORCIO DE GESTIÓN DE RESIDUOS V5"
+   ],
+   [
+    31977328,
+    2,
+    "CONSORCIO DE GESTION DE RESIDUOS V5"
+   ]
+  ]
+ },
+ {
+  "key": "consorcio valencia 2007 en liquidacion",
+  "country": "ES",
+  "n": 2,
+  "n2_distinct": 1,
+  "members": [
+   [
+    31975810,
+    1,
+    "Consorcio Valencia 2007, en liquidación"
+   ],
+   [
+    31975811,
+    2,
+    "Consorcio Valencia 2007 en liquidación"
+   ]
+  ]
+ },
+ {
+  "key": "cuc comune di fano",
+  "country": "IT",
+  "n": 2,
+  "n2_distinct": 1,
+  "members": [
+   [
+    31976426,
+    1,
+    "CUC -Comune di Fano"
+   ],
+   [
+    31977044,
+    1,
+    "CUC- Comune di Fano"
+   ]
+  ]
+ },
+ {
+  "key": "d g de contratacion del ayuntamiento de logrono o juzgado de los contencioso administrativo",
+  "country": "ES",
+  "n": 2,
+  "n2_distinct": 2,
+  "members": [
+   [
+    31975603,
+    60,
+    "D.G de Contratación del Ayuntamiento de Logroño o Juzgado de los Contencioso-Administrativo"
+   ],
+   [
+    31977724,
+    2,
+    "D.G de Contratación del Ayuntamiento de Logroño o Juzgado de los Contencioso-Administrativo (según cláusula ___4ª PCAP)"
+   ]
+  ]
+ },
+ {
+  "key": "danish consumer and competition agency",
+  "country": "DK",
+  "n": 2,
+  "n2_distinct": 1,
+  "members": [
+   [
+    31975365,
+    3,
+    "Danish Consumer and Competition Agency"
+   ],
+   [
+    31975721,
+    1,
+    "Danish Consumer- and Competition Agency"
+   ]
+  ]
+ },
+ {
+  "key": "delegacion del gobierno en asturias",
+  "country": "ES",
+  "n": 2,
+  "n2_distinct": 2,
+  "members": [
+   [
+    31975608,
+    5,
+    "Delegación del Gobierno en Asturias (registro)"
+   ],
+   [
+    31978174,
+    2,
+    "DELEGACIÓN DEL GOBIERNO EN ASTURIAS (Registro Electrónico)"
+   ]
+  ]
+ },
+ {
+  "key": "depart de salud de valencia clinico malvarrosa servicio de compras y aprovisionamiento",
+  "country": "ES",
+  "n": 2,
+  "n2_distinct": 2,
+  "members": [
+   [
+    31975857,
+    2,
+    "Depart. de salud de Valencia-Clínico-Malvarrosa. Servicio de Compras y Aprovisionamiento"
+   ],
+   [
+    31976177,
+    31,
+    "Depart. de Salud de Valencia -Clinico - Malvarrosa: Servicio de Compras y Aprovisionamiento"
+   ]
+  ]
+ },
+ {
+  "key": "departamento de salud de denia",
+  "country": "ES",
+  "n": 2,
+  "n2_distinct": 2,
+  "members": [
+   [
+    31977337,
+    5,
+    "Departamento de Salud de Denia"
+   ],
+   [
+    31977462,
+    1,
+    "Departamento de Salud de Dénia"
+   ]
+  ]
+ },
+ {
+  "key": "dg produccion agricola y ganadera conselleria de agricultura agua ganaderia y pesca",
+  "country": "ES",
+  "n": 2,
+  "n2_distinct": 2,
+  "members": [
+   [
+    31975022,
+    1,
+    "DG Producción Agricola y Ganadera-Conselleria de Agricultura, Agua, Ganaderia y Pesca"
+   ],
+   [
+    31977418,
+    1,
+    "DG Producción Agrícola y Ganadera - Conselleria de Agricultura, Agua, Ganadería y Pesca"
+   ]
+  ]
+ },
+ {
+  "key": "direccion de gestion economica de la jefatura de apoyo logistico",
+  "country": "ES",
+  "n": 2,
+  "n2_distinct": 2,
+  "members": [
+   [
+    31975450,
+    1,
+    "Direccion de Gestion Economica de la Jefatura de Apoyo Logistico"
+   ],
+   [
+    31976627,
+    1,
+    "Dirección de Gestión Económica de la Jefatura de Apoyo Logístico"
+   ]
+  ]
+ },
+ {
+  "key": "direccion general de emergencias",
+  "country": "ES",
+  "n": 2,
+  "n2_distinct": 2,
+  "members": [
+   [
+    31975965,
+    3,
+    "DIRECCION GENERAL DE EMERGENCIAS"
+   ],
+   [
+    31976499,
+    5,
+    "Dirección General de Emergencias"
+   ]
+  ]
+ },
+ {
+  "key": "direccion general de estudios formacion e investigacion en seguridad publica",
+  "country": "ES",
+  "n": 2,
+  "n2_distinct": 2,
+  "members": [
+   [
+    31975963,
+    1,
+    "DIRECCION GENERAL DE ESTUDIOS, FORMACION E INVESTIGACION EN SEGURIDAD PUBLICA"
+   ],
+   [
+    31977048,
+    4,
+    "Dirección General de Estudios, Formación e Investigación en Seguridad Pública"
+   ]
+  ]
+ },
+ {
+  "key": "direccion gestion economica de la jefatura de apoyo logistico de la armada",
+  "country": "ES",
+  "n": 2,
+  "n2_distinct": 2,
+  "members": [
+   [
+    31975447,
+    3,
+    "Direccion  Gestion Economica de la Jefatura de Apoyo Logistico de la Armada"
+   ],
+   [
+    31975704,
+    3,
+    "Dirección Gestión Económica de la Jefatura de Apoyo Logístico de la Armada"
+   ]
+  ]
+ },
+ {
+  "key": "direccion principal",
+  "country": "ES",
+  "n": 2,
+  "n2_distinct": 2,
+  "members": [
+   [
+    31974991,
+    420,
+    "Dirección Principal"
+   ],
+   [
+    31975075,
+    13,
+    "Direccion Principal"
+   ]
+  ]
+ },
+ {
+  "key": "direccion provincial de la tgss de cantabria",
+  "country": "ES",
+  "n": 2,
+  "n2_distinct": 2,
+  "members": [
+   [
+    31975334,
+    1,
+    "Dirección Provincial de la TGSS de Cantabria"
+   ],
+   [
+    31975335,
+    2,
+    "Direccion Provincial de la TGSS de Cantabría"
+   ]
+  ]
+ },
+ {
+  "key": "direccion provincial del sepe de guadalajara",
+  "country": "ES",
+  "n": 2,
+  "n2_distinct": 2,
+  "members": [
+   [
+    31978375,
+    1,
+    "Dirección Provincial del SEPE de Guadalajara"
+   ],
+   [
+    31978376,
+    2,
+    "Direccion Provincial del SEPE de Guadalajara"
+   ]
+  ]
+ },
+ {
+  "key": "direction des operations franck dujoux",
+  "country": "FR",
+  "n": 2,
+  "n2_distinct": 1,
+  "members": [
+   [
+    31975408,
+    1,
+    "Direction des Opérations - Franck DUJOUX"
+   ],
+   [
+    31976229,
+    2,
+    "Direction des Opérations Franck DUJOUX"
+   ]
+  ]
+ },
+ {
+  "key": "direction des operations nicolas brossier",
+  "country": "FR",
+  "n": 2,
+  "n2_distinct": 1,
+  "members": [
+   [
+    31975478,
+    2,
+    "Direction des Opérations - Nicolas BROSSIER"
+   ],
+   [
+    31975925,
+    2,
+    "Direction des Opérations Nicolas BROSSIER"
+   ]
+  ]
+ },
+ {
+  "key": "ebiz consulting s r o",
+  "country": "SK",
+  "n": 2,
+  "n2_distinct": 1,
+  "members": [
+   [
+    31975055,
+    10,
+    "eBIZ Consulting, s.r.o.,"
+   ],
+   [
+    31977608,
+    1,
+    "eBIZ Consulting s.r.o."
+   ]
+  ]
+ },
+ {
+  "key": "ebiz corp s r o",
+  "country": "SK",
+  "n": 2,
+  "n2_distinct": 1,
+  "members": [
+   [
+    31975088,
+    15,
+    "eBIZ Corp, s.r.o.,"
+   ],
+   [
+    31977980,
+    2,
+    "eBIZ Corp s. r. o."
+   ]
+  ]
+ },
+ {
+  "key": "fe ei w beschaffung infrastruktur west",
+  "country": "DE",
+  "n": 2,
+  "n2_distinct": 1,
+  "members": [
+   [
+    31975097,
+    101,
+    "FE.EI-W Beschaffung Infrastruktur West"
+   ],
+   [
+    31976555,
+    7,
+    "FE.EI-W-Beschaffung Infrastruktur West"
+   ]
+  ]
+ },
+ {
+  "key": "fecoev m p s a u",
+  "country": "ES",
+  "n": 2,
+  "n2_distinct": 1,
+  "members": [
+   [
+    31976884,
+    8,
+    "FECOEV M.P. S.A.U."
+   ],
+   [
+    31977810,
+    4,
+    "FECOEV, M.P.S.A.U."
+   ]
+  ]
+ },
+ {
+  "key": "fei w beschaffung infrastruktur region west",
+  "country": "DE",
+  "n": 2,
+  "n2_distinct": 1,
+  "members": [
+   [
+    31975071,
+    7,
+    "FEI-W Beschaffung Infrastruktur Region West"
+   ],
+   [
+    31975157,
+    1,
+    "FEI-W-Beschaffung Infrastruktur Region West"
+   ]
+  ]
+ },
+ {
+  "key": "finanzbehorde interner service und steuerung vergabekammer",
+  "country": "DE",
+  "n": 2,
+  "n2_distinct": 2,
+  "members": [
+   [
+    31975947,
+    5,
+    "Finanzbehörde Interner Service und Steuerung Vergabekammer"
+   ],
+   [
+    31976127,
+    2,
+    "Finanzbehörde Interner Service  und Steuerung Vergabekammer (Abt.14)"
+   ]
+  ]
+ },
+ {
+  "key": "fundacion ciudad de la energia ciuden f s p",
+  "country": "ES",
+  "n": 2,
+  "n2_distinct": 1,
+  "members": [
+   [
+    31976159,
+    6,
+    "Fundación Ciudad de la Energía CIUDEN F.S.P."
+   ],
+   [
+    31976162,
+    18,
+    "Fundación Ciudad de la Energía - CIUDEN F.S.P"
+   ]
+  ]
+ },
+ {
+  "key": "fundacion general de la universidad de leon y de la empresa",
+  "country": "ES",
+  "n": 2,
+  "n2_distinct": 2,
+  "members": [
+   [
+    31976066,
+    1,
+    "FUNDACIÓN GENERAL DE LA UNIVERSIDAD DE LEON Y DE LA EMPRESA"
+   ],
+   [
+    31978597,
+    2,
+    "Fundación General de la Universidad de León y de la Empresa"
+   ]
+  ]
+ },
+ {
+  "key": "fundacion la laboral centro de arte creacion industrial y promocion cultural",
+  "country": "ES",
+  "n": 2,
+  "n2_distinct": 1,
+  "members": [
+   [
+    31975384,
+    2,
+    "Fundación La LABoral Centro de Arte, Creación Industrial y Promoción Cultural"
+   ],
+   [
+    31975528,
+    1,
+    "Fundación La Laboral. Centro de Arte, Creación Industrial y Promoción Cultural"
+   ]
+  ]
+ },
+ {
+  "key": "gerencia municipal de urbanismo de cordoba",
+  "country": "ES",
+  "n": 2,
+  "n2_distinct": 2,
+  "members": [
+   [
+    31978265,
+    1,
+    "GERENCIA MUNICIPAL DE URBANISMO DE CÓRDOBA"
+   ],
+   [
+    31978708,
+    2,
+    "GERENCIA MUNICIPAL DE URBANISMO DE CORDOBA"
+   ]
+  ]
+ },
+ {
+  "key": "gestio municipal de neteja s l",
+  "country": "ES",
+  "n": 2,
+  "n2_distinct": 1,
+  "members": [
+   [
+    31978126,
+    7,
+    "Gestió Municipal de Neteja S.L"
+   ],
+   [
+    31978632,
+    2,
+    "GESTIÓ MUNICIPAL DE NETEJA, S.L."
+   ]
+  ]
+ },
+ {
+  "key": "gestion de servicios para la salud y seguridad en canarias sa",
+  "country": "ES",
+  "n": 2,
+  "n2_distinct": 2,
+  "members": [
+   [
+    31975764,
+    11,
+    "GESTIÓN DE SERVICIOS PARA LA SALUD Y SEGURIDAD EN CANARIAS SA"
+   ],
+   [
+    31975846,
+    1,
+    "GESTION DE SERVICIOS PARA LA SALUD Y SEGURIDAD EN CANARIAS SA"
+   ]
+  ]
+ },
+ {
+  "key": "gmina panki ul tysiaclecia 5 42 140 panki",
+  "country": "PL",
+  "n": 2,
+  "n2_distinct": 1,
+  "members": [
+   [
+    31977139,
+    2,
+    "Gmina Panki ul. Tysiąclecia 5; 42-140 Panki"
+   ],
+   [
+    31978194,
+    2,
+    "Gmina Panki ul. Tysiąclecia 5; 42-140 Panki"
+   ]
+  ]
+ },
+ {
+  "key": "hopital bellevue cellule marches",
+  "country": "FR",
+  "n": 2,
+  "n2_distinct": 1,
+  "members": [
+   [
+    31975523,
+    1,
+    "HOPITAL BELLEVUE - CELLULE MARCHES"
+   ],
+   [
+    31975705,
+    1,
+    "HOPITAL BELLEVUE -CELLULE MARCHES"
+   ]
+  ]
+ },
+ {
+  "key": "hospital universitario de melilla",
+  "country": "ES",
+  "n": 2,
+  "n2_distinct": 2,
+  "members": [
+   [
+    31977311,
+    68,
+    "Hospital Universitario de Melilla"
+   ],
+   [
+    31977363,
+    44,
+    "Hospìtal Universitario de Melilla"
+   ]
+  ]
+ },
+ {
+  "key": "instituto para la transicion justa o a",
+  "country": "ES",
+  "n": 2,
+  "n2_distinct": 1,
+  "members": [
+   [
+    31975172,
+    1,
+    "Instituto para la Transición Justa. O.A."
+   ],
+   [
+    31976256,
+    1,
+    "Instituto para la Transición Justa, O. A."
+   ]
+  ]
+ },
+ {
+  "key": "intendencia de rota unidad de contratacion",
+  "country": "ES",
+  "n": 2,
+  "n2_distinct": 1,
+  "members": [
+   [
+    31976727,
+    20,
+    "Intendencia de Rota - Unidad de Contratación"
+   ],
+   [
+    31977548,
+    5,
+    "Intendencia de Rota Unidad de Contratación"
+   ]
+  ]
+ },
+ {
+  "key": "juzgado de lo contencioso administrativo de las palmas",
+  "country": "ES",
+  "n": 2,
+  "n2_distinct": 1,
+  "members": [
+   [
+    31977199,
+    4,
+    "Juzgado de lo Contencioso - Administrativo de Las Palmas"
+   ],
+   [
+    31977404,
+    5,
+    "Juzgado de lo Contencioso Administrativo de Las Palmas"
+   ]
+  ]
+ },
+ {
+  "key": "l ambassade royale du danemark au mali",
+  "country": "ML",
+  "n": 2,
+  "n2_distinct": 1,
+  "members": [
+   [
+    31976503,
+    1,
+    "L’Ambassade Royale du Danemark au Mali"
+   ],
+   [
+    31976937,
+    1,
+    "L'Ambassade Royale du Danemark au Mali"
+   ]
+  ]
+ },
+ {
+  "key": "logrono deporte s a",
+  "country": "ES",
+  "n": 2,
+  "n2_distinct": 1,
+  "members": [
+   [
+    31976301,
+    6,
+    "logroño deporte s.a"
+   ],
+   [
+    31976302,
+    1,
+    "LOGROÑO DEPORTE.S.A."
+   ]
+  ]
+ },
+ {
+  "key": "mancomunidad de servicios los olmos",
+  "country": "ES",
+  "n": 2,
+  "n2_distinct": 1,
+  "members": [
+   [
+    31977595,
+    2,
+    "Mancomunidad de Servicios Los Olmos"
+   ],
+   [
+    31977596,
+    2,
+    "Mancomunidad de Servicios \"Los Olmos\""
+   ]
+  ]
+ },
+ {
+  "key": "mancomunidad norte duero",
+  "country": "ES",
+  "n": 2,
+  "n2_distinct": 1,
+  "members": [
+   [
+    31976371,
+    2,
+    "MANCOMUNIDAD NORTE-DUERO"
+   ],
+   [
+    31977966,
+    1,
+    "Mancomunidad Norte - Duero"
+   ]
+  ]
+ },
+ {
+  "key": "melinda wartan borbely",
+  "country": "NL",
+  "n": 2,
+  "n2_distinct": 1,
+  "members": [
+   [
+    31975029,
+    11,
+    "Melinda Wartan-Borbely"
+   ],
+   [
+    31975030,
+    18,
+    "Melinda Wartan Borbely"
+   ]
+  ]
+ },
+ {
+  "key": "mesa de contratacion jaemale",
+  "country": "ES",
+  "n": 2,
+  "n2_distinct": 2,
+  "members": [
+   [
+    31974994,
+    30,
+    "MESA DE CONTRATACION JAEMALE"
+   ],
+   [
+    31977292,
+    5,
+    "Mesa de Contratación JAEMALE"
+   ]
+  ]
+ },
+ {
+  "key": "minarm mediateur",
+  "country": "FR",
+  "n": 2,
+  "n2_distinct": 1,
+  "members": [
+   [
+    31975710,
+    26,
+    "MINARM/MEDIATEUR"
+   ],
+   [
+    31975836,
+    12,
+    "MINARM MEDIATEUR"
+   ]
+  ]
+ },
+ {
+  "key": "ministerio de derechos sociales consumo y agenda 2030",
+  "country": "ES",
+  "n": 2,
+  "n2_distinct": 1,
+  "members": [
+   [
+    31975198,
+    54,
+    "Ministerio de Derechos Sociales, Consumo y Agenda 2030"
+   ],
+   [
+    31975619,
+    9,
+    "Ministerio de Derechos Sociales Consumo y Agenda 2030"
+   ]
+  ]
+ },
+ {
+  "key": "organismo autonomo de deportes de san cristobal de la laguna",
+  "country": "ES",
+  "n": 2,
+  "n2_distinct": 2,
+  "members": [
+   [
+    31977183,
+    1,
+    "ORGANISMO AUTÓNOMO DE DEPORTES DE SAN CRISTÓBAL DE LA LAGUNA."
+   ],
+   [
+    31978238,
+    1,
+    "Organismo Autónomo de Deportes De San Cristobal de La Laguna"
+   ]
+  ]
+ },
+ {
+  "key": "organismo autonomo municipal de parques jardines y biodiversidad urbana del ayuntamiento de valencia",
+  "country": "ES",
+  "n": 2,
+  "n2_distinct": 1,
+  "members": [
+   [
+    31978338,
+    1,
+    "Organismo Autónomo Municipal de Parques,  Jardines y Biodiversidad Urbana del Ayuntamiento de València ()"
+   ],
+   [
+    31978388,
+    2,
+    "Organismo Autónomo Municipal de Parques, Jardines y Biodiversidad Urbana del Ayuntamiento de València"
+   ]
+  ]
+ },
+ {
+  "key": "panstwowe gospodarstwo wodne wody polskie al adama mickiewicza 15",
+  "country": "PL",
+  "n": 2,
+  "n2_distinct": 1,
+  "members": [
+   [
+    31977034,
+    3,
+    "Państwowe Gospodarstwo Wodne Wody Polskie, Al. Adama Mickiewicza 15"
+   ],
+   [
+    31977799,
+    1,
+    "Państwowe Gospodarstwo Wodne Wody Polskie Al. Adama Mickiewicza 15"
+   ]
+  ]
+ },
+ {
+  "key": "parque cementerio de malaga s a",
+  "country": "ES",
+  "n": 2,
+  "n2_distinct": 2,
+  "members": [
+   [
+    31974983,
+    2,
+    "PARQUE CEMENTERIO DE MALAGA S.A."
+   ],
+   [
+    31976958,
+    3,
+    "Parque Cementerio de Málaga, S.A."
+   ]
+  ]
+ },
+ {
+  "key": "plataforma electronica de contratacion de la autoridad portuaria de barcelona",
+  "country": "ES",
+  "n": 2,
+  "n2_distinct": 2,
+  "members": [
+   [
+    31975069,
+    46,
+    "Plataforma Electrónica de Contratación de la Autoridad Portuaria de Barcelona (PORT DE BARCELONA)"
+   ],
+   [
+    31977061,
+    3,
+    "PLATAFORMA ELECTRÓNICA DE CONTRATACIÓN de la Autoridad Portuaria de Barcelona"
+   ]
+  ]
+ },
+ {
+  "key": "procede recurso especial en materia de contratacion de acuerdo con lo establecido en los articulos 44 y siguientes de la ley 9 2017 de 8 de noviembre de contratos del sector publico asi como en el articulo 58 del real decreto ley 36 2020 de 30 de diciembre",
+  "country": "ES",
+  "n": 2,
+  "n2_distinct": 1,
+  "members": [
+   [
+    31977213,
+    3,
+    "Procede recurso especial en materia de contratación, de acuerdo con lo establecido en los artículos 44 y siguientes de la Ley 9/2017, de 8 de noviembre, de Contratos del Sector Público, así como en el artículo  58 del Real Decreto Ley 36/2020, de 30 de diciembre"
+   ],
+   [
+    31977501,
+    1,
+    "Procede recurso especial en materia de contratación, de acuerdo con lo establecido en los artículos 44 y siguientes de la Ley 9/2017, de 8 de noviembre, de Contratos del Sector Público , así como en el artículo 58 del Real Decreto Ley 36/2020, de 30 de diciembre"
+   ]
+  ]
+ },
+ {
+  "key": "rectorado de la universidad de cadiz servicio de contrataciones y patrimonio",
+  "country": "ES",
+  "n": 2,
+  "n2_distinct": 1,
+  "members": [
+   [
+    31975037,
+    12,
+    "Rectorado de la Universidad de Cádiz - Servicio de Contrataciones y Patrimonio"
+   ],
+   [
+    31976094,
+    41,
+    "Rectorado de la Universidad de Cádiz. Servicio de Contrataciones y Patrimonio."
+   ]
+  ]
+ },
+ {
+  "key": "red sara comision juridica de extremadura",
+  "country": "ES",
+  "n": 2,
+  "n2_distinct": 2,
+  "members": [
+   [
+    31977332,
+    7,
+    "RED SARA (DIR3 UEX: U00200115)/Comisión Jurídica de Extremadura (DIR3: A11024428)"
+   ],
+   [
+    31977354,
+    6,
+    "RED SARA/Comisión Jurídica de Extremadura (DIR3: A11024428)"
+   ]
+  ]
+ },
+ {
+  "key": "red sara y comision juridica de extremadura",
+  "country": "ES",
+  "n": 2,
+  "n2_distinct": 2,
+  "members": [
+   [
+    31975281,
+    5,
+    "RED SARA y Comisión jurídica de Extremadura"
+   ],
+   [
+    31977027,
+    9,
+    "RED SARA y Comisión jurídica de Extremadura (DIR3 A11024428)"
+   ]
+  ]
+ },
+ {
+  "key": "registro general",
+  "country": "ES",
+  "n": 2,
+  "n2_distinct": 2,
+  "members": [
+   [
+    31976934,
+    3,
+    "Registro General (Registro del TARCAS)"
+   ],
+   [
+    31978465,
+    1,
+    "Registro General (del TARCAS)"
+   ]
+  ]
+ },
+ {
+  "key": "registro general ayuntamiento de sevilla tarcas",
+  "country": "ES",
+  "n": 2,
+  "n2_distinct": 1,
+  "members": [
+   [
+    31974992,
+    8,
+    "Registro General Ayuntamiento de Sevilla- TARCAS"
+   ],
+   [
+    31977351,
+    33,
+    "Registro General Ayuntamiento de Sevilla - TARCAS"
+   ]
+  ]
+ },
+ {
+  "key": "s a de gestio sagunt mitja propi municipal s a",
+  "country": "ES",
+  "n": 2,
+  "n2_distinct": 1,
+  "members": [
+   [
+    31976653,
+    3,
+    "S.A DE GESTIO SAGUNT MITJA PROPI MUNICIPAL S.A"
+   ],
+   [
+    31976911,
+    13,
+    "S.A. DE GESTIO SAGUNT MITJA PROPI MUNICIPAL S.A"
+   ]
+  ]
+ },
+ {
+  "key": "service achats marches",
+  "country": "FR",
+  "n": 2,
+  "n2_distinct": 2,
+  "members": [
+   [
+    31975711,
+    2,
+    "Service Achats/Marchés"
+   ],
+   [
+    31976324,
+    2,
+    "Service achats marches"
+   ]
+  ]
+ },
+ {
+  "key": "servicio publico de empleo",
+  "country": "ES",
+  "n": 2,
+  "n2_distinct": 2,
+  "members": [
+   [
+    31976619,
+    5,
+    "SERVICIO PUBLICO DE EMPLEO"
+   ],
+   [
+    31977426,
+    4,
+    "servicio público de empleo"
+   ]
+  ]
+ },
+ {
+  "key": "sncf reseau sa",
+  "country": "FR",
+  "n": 2,
+  "n2_distinct": 2,
+  "members": [
+   [
+    31977555,
+    2,
+    "SNCF RESEAU SA"
+   ],
+   [
+    31978542,
+    1,
+    "SNCF Réseau SA"
+   ]
+  ]
+ },
+ {
+  "key": "societat valenciana d inspeccio tecnica de vehicles s a",
+  "country": "ES",
+  "n": 2,
+  "n2_distinct": 2,
+  "members": [
+   [
+    31975249,
+    1,
+    "SOCIETAT VALENCIANA D’INSPECCIÓ TÈCNICA DE VEHICLES, S.A. (SITVAL)"
+   ],
+   [
+    31975935,
+    1,
+    "Societat Valenciana d'Inspecció Técnica de Vehicles, S.A."
+   ]
+  ]
+ },
+ {
+  "key": "societat valenciana fira valencia sa",
+  "country": "ES",
+  "n": 2,
+  "n2_distinct": 2,
+  "members": [
+   [
+    31975781,
+    3,
+    "Societat Valenciana Fira València SA"
+   ],
+   [
+    31976733,
+    21,
+    "SOCIETAT VALENCIANA FIRA VALENCIA SA"
+   ]
+  ]
+ },
+ {
+  "key": "tacrc tribunal administrativo central de recursos contractuales",
+  "country": "ES",
+  "n": 2,
+  "n2_distinct": 1,
+  "members": [
+   [
+    31977956,
+    28,
+    "TACRC-Tribunal Administrativo Central de Recursos Contractuales"
+   ],
+   [
+    31978391,
+    1,
+    "TACRC “Tribunal Administrativo Central de Recursos Contractuales”"
+   ]
+  ]
+ },
+ {
+  "key": "tarcas ayuntamiento de sevilla",
+  "country": "ES",
+  "n": 2,
+  "n2_distinct": 1,
+  "members": [
+   [
+    31978595,
+    1,
+    "TARCAS.- Ayuntamiento de Sevilla"
+   ],
+   [
+    31978618,
+    1,
+    "TARCAS. AYUNTAMIENTO DE SEVILLA"
+   ]
+  ]
+ },
+ {
+  "key": "tribunal administratif de lyon 184 rue duguesclin 69433 lyon",
+  "country": "FR",
+  "n": 2,
+  "n2_distinct": 1,
+  "members": [
+   [
+    31975971,
+    2,
+    "Tribunal administratif de Lyon\n184, rue Duguesclin 69433 LYON"
+   ],
+   [
+    31977593,
+    1,
+    "Tribunal administratif de Lyon 184 rue Duguesclin 69433 Lyon"
+   ]
+  ]
+ },
+ {
+  "key": "tribunal administratif de poitiers instance chargee de l introduction des recours",
+  "country": "FR",
+  "n": 2,
+  "n2_distinct": 1,
+  "members": [
+   [
+    31975366,
+    38,
+    "Tribunal administratif de Poitiers\nInstance chargée de l'introduction des recours"
+   ],
+   [
+    31976203,
+    2,
+    "Tribunal administratif de Poitiers : Instance chargée de l'introduction des recours"
+   ]
+  ]
+ },
+ {
+  "key": "tribunal administratif de strasbourg 31 avenue de la paix 67070 strasbourg",
+  "country": "FR",
+  "n": 2,
+  "n2_distinct": 1,
+  "members": [
+   [
+    31976016,
+    1,
+    "Tribunal Administratif de Strasbourg\n31 avenue de la Paix \n67070 Strasbourg"
+   ],
+   [
+    31976116,
+    1,
+    "Tribunal administratif de Strasbourg\n31 avenue de la Paix - 67070 Strasbourg"
+   ]
+  ]
+ },
+ {
+  "key": "tribunal administrativo central de recursos contractuales",
+  "country": "ES",
+  "n": 2,
+  "n2_distinct": 2,
+  "members": [
+   [
+    31975284,
+    26,
+    "Tribunal Administrativo Central de Recursos Contractuales (TACRC"
+   ],
+   [
+    31975497,
+    1,
+    "Tribunal Administrativo Central de Recursos Contractuales( registro entrada OAC Sede Consell Insualr d'Eivissa)"
+   ]
+  ]
+ },
+ {
+  "key": "tribunal administrativo central de recursos contractuales recurso especial",
+  "country": "ES",
+  "n": 2,
+  "n2_distinct": 1,
+  "members": [
+   [
+    31976233,
+    76,
+    "Tribunal Administrativo Central de Recursos Contractuales - RECURSO ESPECIAL"
+   ],
+   [
+    31976243,
+    48,
+    "Tribunal Administrativo Central de Recursos Contractuales- RECURSO ESPECIAL"
+   ]
+  ]
+ },
+ {
+  "key": "tribunal administrativo central de recursos contractuales y art 16 de la ley 39 2015",
+  "country": "ES",
+  "n": 2,
+  "n2_distinct": 1,
+  "members": [
+   [
+    31975872,
+    17,
+    "Tribunal Administrativo Central de Recursos Contractuales y art. 16 de la Ley 39/2015"
+   ],
+   [
+    31976193,
+    2,
+    "Tribunal Administrativo Central de Recursos Contractuales y art. 16 de la Ley 39-2015"
+   ]
+  ]
+ },
+ {
+  "key": "tribunal administrativo central de recursos contractuales y art 16 ley 39 2015",
+  "country": "ES",
+  "n": 2,
+  "n2_distinct": 1,
+  "members": [
+   [
+    31976191,
+    2,
+    "Tribunal Administrativo Central de Recursos Contractuales y art. 16 Ley 39-2015"
+   ],
+   [
+    31976339,
+    2,
+    "Tribunal Administrativo Central de Recursos Contractuales y art. 16 Ley 39/2015"
+   ]
+  ]
+ },
+ {
+  "key": "tribunal administrativo de recursos contractuales de andalucia",
+  "country": "ES",
+  "n": 2,
+  "n2_distinct": 2,
+  "members": [
+   [
+    31977011,
+    3,
+    "Tribunal Administrativo de Recursos Contractuales de Andalucía (TARCA)."
+   ],
+   [
+    31977755,
+    2,
+    "Tribunal Administrativo de Recursos Contractuales de Andalucia (TARCA)"
+   ]
+  ]
+ },
+ {
+  "key": "tribunal administrativo de recursos contractuales del ayto de cordoba",
+  "country": "ES",
+  "n": 2,
+  "n2_distinct": 2,
+  "members": [
+   [
+    31975468,
+    4,
+    "TRIBUNAL ADMINISTRATIVO DE RECURSOS CONTRACTUALES DEL AYTO DE CORDOBA"
+   ],
+   [
+    31976737,
+    4,
+    "Tribunal Administrativo de Recursos Contractuales del Ayto de Córdoba"
+   ]
+  ]
+ },
+ {
+  "key": "tribunal administrativo de recursos contractuales del ayuntamiento de sevilla",
+  "country": "ES",
+  "n": 2,
+  "n2_distinct": 2,
+  "members": [
+   [
+    31975652,
+    2,
+    "Tribunal Administrativo de Recursos Contractuales del Ayuntamiento de Sevilla (TARCAS"
+   ],
+   [
+    31977003,
+    2,
+    "Tribunal Administrativo de Recursos Contractuales (TARCAS)del Ayuntamiento de Sevilla"
+   ]
+  ]
+ },
+ {
+  "key": "tribunal administrativo de recursos contractuales del excmo ayuntamiento de almeria",
+  "country": "ES",
+  "n": 2,
+  "n2_distinct": 1,
+  "members": [
+   [
+    31977887,
+    3,
+    "Tribunal  Administrativo de Recursos Contractuales del Excmo Ayuntamiento de Almería."
+   ],
+   [
+    31978267,
+    1,
+    "TRIBUNAL ADMINISTRATIVO DE RECURSOS CONTRACTUALES DEL EXCMO. AYUNTAMIENTO DE ALMERÍA"
+   ]
+  ]
+ },
+ {
+  "key": "tribunal administrativo de recursos contractuales del excmo ayuntamiento de malaga",
+  "country": "ES",
+  "n": 2,
+  "n2_distinct": 2,
+  "members": [
+   [
+    31978081,
+    2,
+    "Tribunal Administrativo de Recursos Contractuales del Excmo, Ayuntamiento de Málaga"
+   ],
+   [
+    31978621,
+    1,
+    "Tribunal Administrativo de Recursos Contractuales del Excmo. Ayuntamiento de Malaga"
+   ]
+  ]
+ },
+ {
+  "key": "tribunal administrativo de recursos de contratacion publica de la diputacion de granada",
+  "country": "ES",
+  "n": 2,
+  "n2_distinct": 2,
+  "members": [
+   [
+    31976280,
+    9,
+    "Tribunal Administrativo de Recursos de Contratación Pública de la Diputación de Granada"
+   ],
+   [
+    31976682,
+    1,
+    "Tribunal administrativo de recursos de contratacion publica de la diputacion de Granada"
+   ]
+  ]
+ },
+ {
+  "key": "tribunal central de recursos de contratacion administrativa",
+  "country": "ES",
+  "n": 2,
+  "n2_distinct": 2,
+  "members": [
+   [
+    31976321,
+    5,
+    "Tribunal Central de Recursos de Contratacion Administrativa"
+   ],
+   [
+    31978036,
+    2,
+    "Tribunal Central de Recursos de Contratación Administrativa"
+   ]
+  ]
+ },
+ {
+  "key": "tribunal recursos contractuales de andalucia",
+  "country": "ES",
+  "n": 2,
+  "n2_distinct": 2,
+  "members": [
+   [
+    31975621,
+    18,
+    "Tribunal recursos contractuales de Andalucía"
+   ],
+   [
+    31977443,
+    2,
+    "Tribunal Recursos Contractuales de Andalucia"
+   ]
+  ]
+ },
+ {
+  "key": "unidad de contratacion de la intendencia de cartagena",
+  "country": "ES",
+  "n": 2,
+  "n2_distinct": 2,
+  "members": [
+   [
+    31975128,
+    96,
+    "Unidad de Contratación de la Intendencia de Cartagena"
+   ],
+   [
+    31977542,
+    7,
+    "Unidad de contratacion de la intendencia de cartagena"
+   ]
+  ]
+ },
+ {
+  "key": "unidad de contratacion del arsenal de cartagena",
+  "country": "ES",
+  "n": 2,
+  "n2_distinct": 2,
+  "members": [
+   [
+    31976372,
+    114,
+    "UNIDAD DE CONTRATACIÓN DEL ARSENAL DE CARTAGENA"
+   ],
+   [
+    31976393,
+    2,
+    "UNIDAD DE CONTRATACION DEL ARSENAL DE CARTAGENA"
+   ]
+  ]
+ },
+ {
+  "key": "ver apartado 17 de la hrc rector de la universidad de vigo",
+  "country": "ES",
+  "n": 2,
+  "n2_distinct": 1,
+  "members": [
+   [
+    31976055,
+    25,
+    "Ver apartado 17 de la HRC - Rector de la Universidad de Vigo"
+   ],
+   [
+    31976056,
+    36,
+    "Ver apartado 17 de la HRC. Rector de la Universidad de Vigo"
+   ]
+  ]
+ },
+ {
+  "key": "ver apartado 17 de la hrc recurso de reposicion o alzada",
+  "country": "ES",
+  "n": 2,
+  "n2_distinct": 1,
+  "members": [
+   [
+    31977190,
+    1,
+    "Ver apartado 17 de la HRC - Recurso de reposición o alzada"
+   ],
+   [
+    31977191,
+    2,
+    "Ver apartado 17 de la HRC. Recurso de reposición o alzada"
+   ]
+  ]
+ },
+ {
+  "key": "ver apartado 17 de la hrc tribunal administrativo de contratacion publica de la comunidad autonoma de galicia",
+  "country": "ES",
+  "n": 2,
+  "n2_distinct": 1,
+  "members": [
+   [
+    31975984,
+    42,
+    "Ver apartado 17 de la HRC - Tribunal Administrativo de Contratación Pública de la Comunidad Autónoma de Galicia (Tacgal)"
+   ],
+   [
+    31976908,
+    5,
+    "Ver apartado 17 de la HRC. Tribunal Administrativo de Contratación Pública de la Comunidad Autónoma de Galicia (Tacgal)"
+   ]
+  ]
+ },
+ {
+  "key": "vergabeprufstelle",
+  "country": "DE",
+  "n": 2,
+  "n2_distinct": 2,
+  "members": [
+   [
+    31975627,
+    95,
+    "Vergabeprüfstelle (Emscher)"
+   ],
+   [
+    31975977,
+    15,
+    "Vergabeprüfstelle (Lippe)"
+   ]
+  ]
+ },
+ {
+  "key": "viceconsejeria de justicia y seguridad",
+  "country": "ES",
+  "n": 2,
+  "n2_distinct": 2,
+  "members": [
+   [
+    31978719,
+    1,
+    "VICECONSEJERÍA DE JUSTICIA Y SEGURIDAD"
+   ],
+   [
+    31978720,
+    1,
+    "VICECONSEJERIA DE JUSTICIA Y SEGURIDAD"
+   ]
+  ]
+ },
+ {
+  "key": "vicepresidencia y consejeria de presidencia coordinacion de la accion de gobierno interior y emergenc",
+  "country": "ES",
+  "n": 2,
+  "n2_distinct": 2,
+  "members": [
+   [
+    31978406,
+    2,
+    "VICEPRESIDENCIA Y CONSEJERÍA DE PRESIDENCIA, COORDINACIÓN DE LA ACCIÓN DE GOBIERNO, INTERIOR Y EMERGENC"
+   ],
+   [
+    31978602,
+    1,
+    "VICEPRESIDENCIA Y CONSEJERIA DE PRESIDENCIA, COORDINACIÓN DE LA ACCIÓN DE GOBIERNO, INTERIOR Y EMERGENC"
+   ]
+  ]
+ },
+ {
+  "key": "ενιαια αρχη δημοσιων συμβασεων",
+  "country": "GR",
+  "n": 2,
+  "n2_distinct": 2,
+  "members": [
+   [
+    31976142,
+    6,
+    "ΕΝΙΑΙΑ ΑΡΧΗ ΔΗΜΟΣΙΩΝ ΣΥΜΒΑΣΕΩΝ (Ε.Α.ΔΗ.ΣΥ. - ΦΟΡΕΑΣ ΠΡΟΣΦΥΓΩΝ)"
+   ],
+   [
+    31976178,
+    6,
+    "ΕΝΙΑΙΑ ΑΡΧΗ ΔΗΜΟΣΙΩΝ ΣΥΜΒΑΣΕΩΝ (ΕΑΔΗΣΥ / ΟΡΓΑΝΙΣΜΟΣ ΠΡΟΣΦΥΓΗΣ)"
+   ]
+  ]
+ }
+]
