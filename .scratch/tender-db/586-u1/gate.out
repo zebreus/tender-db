@@ -1,0 +1,207 @@
+## Hits per population (distinct names; weight = mentions, refs or rows as the population counts)
+pop     names  hits hit-weight      of verdict-list hits  weight
+NEW      3751    92       3491   24664                74    3304
+WIN-A    1164    14         27    2081                13      26
+WIN-B     533     8         15     904                 7      14
+R3         60     0          0     589                 0       0
+CLU       274    16        620    2801                16     620
+U4        217     0          0     336                 0       0
+U4m       113     0          0     113                 0       0
+PRE       161     5       1262   16312                 4    1261
+
+## New orgs (3,751) hit, by mechanism (an org can meet two)
+  HONORIFIC     8 orgs    11 mentions
+  LEGALREF     36 orgs   172 mentions
+  PLATFORM     12 orgs    74 mentions
+  PROSE        36 orgs   229 mentions
+  WHOLE        21 orgs  3104 mentions
+  ALL          92 orgs  3491 mentions   (verdict list only: 74 orgs, 3304 mentions)
+
+## Bar 1: R3 top 60 (576 unit 1)
+  row 21 refs   6 today=True new=[] 'De inschrijvingen dienen ingediend te worden via www.tenderned.nl'
+  row 34 refs   6 today=True new=[] 'Voor inlichtingen over de aanbesteding kunt u ons bereiken via de aanbesteding op www.tend'
+  row 45 refs   5 today=True new=[] 'Vragen kunt u stellen via TenderNed conform het gestelde in de aanbestedingsdocumenten'
+  row 47 refs   4 today=True new=[] 'Indiening Inschrijving of Aanvraag tot Deelneming in de digitale kluis van TenderNed'
+  row 55 refs   4 today=True new=[] 'ORG-0001'
+  new-stem hits: 0 of 60
+
+## Bar 2: refute clusters. Class N reconstructed: 18 clusters, 37 orgs, 853 mentions (verdict: 18 / 37 / 853).
+  Review-body pool (superset of class X): 28 clusters, 62 orgs, 582 mentions (verdict X: 23 / 50 / 340).
+  pool members hit: 0
+  every cluster with a hit (class):
+     51 N    'direccion principal' [(31974991, 420, 'Dirección Principal'), (31975075, 13, 'Direccion Principal')]
+     86 N    'plataforma electronica de contratacion de la autoridad portuaria de ba' [(31975069, 46, 'Plataforma Electrónica de Contratación de la Autoridad Portuaria de Barcelona (P'), (31977061, 3, 'PLATAFORMA ELECTRÓNICA DE CONTRATACIÓN de la Autoridad Portuaria de Barcelona')]
+     87 N    'procede recurso especial en materia de contratacion de acuerdo con lo ' [(31977213, 3, 'Procede recurso especial en materia de contratación, de acuerdo con lo estableci'), (31977501, 1, 'Procede recurso especial en materia de contratación, de acuerdo con lo estableci')]
+    106 N    'tribunal administrativo central de recursos contractuales y art 16 de ' [(31975872, 17, 'Tribunal Administrativo Central de Recursos Contractuales y art. 16 de la Ley 39'), (31976193, 2, 'Tribunal Administrativo Central de Recursos Contractuales y art. 16 de la Ley 39')]
+    107 N    'tribunal administrativo central de recursos contractuales y art 16 ley' [(31976191, 2, 'Tribunal Administrativo Central de Recursos Contractuales y art. 16 Ley 39-2015'), (31976339, 2, 'Tribunal Administrativo Central de Recursos Contractuales y art. 16 Ley 39/2015')]
+    118 N    'ver apartado 17 de la hrc rector de la universidad de vigo' [(31976055, 25, 'Ver apartado 17 de la HRC - Rector de la Universidad de Vigo'), (31976056, 36, 'Ver apartado 17 de la HRC. Rector de la Universidad de Vigo')]
+    119 N    'ver apartado 17 de la hrc recurso de reposicion o alzada' [(31977190, 1, 'Ver apartado 17 de la HRC - Recurso de reposición o alzada'), (31977191, 2, 'Ver apartado 17 de la HRC. Recurso de reposición o alzada')]
+    120 N    'ver apartado 17 de la hrc tribunal administrativo de contratacion publ' [(31975984, 42, 'Ver apartado 17 de la HRC - Tribunal Administrativo de Contratación Pública de l'), (31976908, 5, 'Ver apartado 17 de la HRC. Tribunal Administrativo de Contratación Pública de la')]
+
+## Bar 3: names that must keep / must drop
+  MUST_KEEP hit (want 0): 0 []
+  MUST_DROP missed (want 0): 0 []
+
+## Title-led names in every population (hit = dropped by HONORIFIC)
+  keep NEW   'Ing. Büro SoFah GmbH & Co. KG'
+  HIT  NEW   'DOTT. ANGELO GAMBARDELLA'
+  HIT  NEW   'M. Damien SIMON'
+  keep NEW   'D.G. de Contratación del Ayuntamiento de Logroño o Juzgado de lo Contencioso Administrativ'
+  HIT  NEW   'Monsieur Anthony LINTILHAC'
+  keep NEW   'D.G. de Contratación del Ayuntamiento de Logroño o Juzgado de lo Contencioso-Administrativ'
+  keep NEW   'D.G. Contratación del Ayuntamiento de Logroño'
+  keep NEW   'D.G. Contratación del Ayuntamiento de Logroño o Juzgado de lo Contencioso-Administrativo'
+  keep NEW   'D.G de Contratación del Ayuntamiento de Logroño o Juzgado de los Contencioso-Administrativ'
+  keep NEW   'D.G. de Contratación del Ayuntamiento de Logroño o Juzgado de lo Contencioso-Administrativ'
+  keep NEW   'M.I. AYUNTAMIENTO DE LLIRIA'
+  HIT  NEW   'Monsieur MAHE Michael'
+  HIT  NEW   'M. le Médiateur interne de l UGAP'
+  keep NEW   'Ing, Domenico Maiello'
+  keep NEW   'D.E. Blischke'
+  keep NEW   'D. Jose Ignacio García Alonso'
+  keep NEW   'M.I Ayuntamiento de Requena'
+  HIT  NEW   'M. Kuiper'
+  HIT  NEW   'ING. PAMELA COMI'
+  keep NEW   'D.G de Contratación del Ayuntamiento de Logroño o Juzgado de los Contencioso-Administrativ'
+  keep NEW   'D.G. Contratación del Ayuntamiento de Logroño o ante la Sección de lo Contencioso-Administ'
+  keep NEW   'M.I.AYUNTAMIENTO DE CASTALLA'
+  HIT  NEW   'dott marco lesto'
+  keep WIN-A 'Dr. Bauer & Partner'
+  keep WIN-B 'D.G. de Contratación del Ayuntamiento de Logroño'
+
+## Every hit (population, weight, orgs, mechanism:stem, today's gate, verdict-list?, name, parents)
+  CLU     420 orgs= 1 WHOLE:direccion principal                     today=0 v=1 'Dirección Principal' || []
+  CLU      46 orgs= 1 PLATFORM:plataforma electronica de contratacion today=0 v=1 'Plataforma Electrónica de Contratación de la Autoridad Portuaria de Barcelona (PORT DE BARCELONA)' || []
+  CLU      42 orgs= 1 PROSE:ver apartado                            today=0 v=1 'Ver apartado 17 de la HRC - Tribunal Administrativo de Contratación Pública de la Comunidad Autónoma' || []
+  CLU      36 orgs= 1 PROSE:ver apartado                            today=0 v=1 'Ver apartado 17 de la HRC. Rector de la Universidad de Vigo' || []
+  CLU      25 orgs= 1 PROSE:ver apartado                            today=0 v=1 'Ver apartado 17 de la HRC - Rector de la Universidad de Vigo' || []
+  CLU      17 orgs= 1 LEGALREF:art. 1                               today=0 v=1 'Tribunal Administrativo Central de Recursos Contractuales y art. 16 de la Ley 39/2015' || []
+  CLU      13 orgs= 1 WHOLE:direccion principal                     today=0 v=1 'Direccion Principal' || []
+  CLU       5 orgs= 1 PROSE:ver apartado                            today=0 v=1 'Ver apartado 17 de la HRC. Tribunal Administrativo de Contratación Pública de la Comunidad Autónoma ' || []
+  CLU       3 orgs= 1 PLATFORM:plataforma electronica de contratacion today=0 v=1 'PLATAFORMA ELECTRÓNICA DE CONTRATACIÓN de la Autoridad Portuaria de Barcelona' || []
+  CLU       3 orgs= 1 PROSE:procede recurso,LEGALREF:artículos 4    today=0 v=1 'Procede recurso especial en materia de contratación, de acuerdo con lo establecido en los artículos ' || []
+  CLU       2 orgs= 1 LEGALREF:art. 1                               today=0 v=1 'Tribunal Administrativo Central de Recursos Contractuales y art. 16 de la Ley 39-2015' || []
+  CLU       2 orgs= 1 LEGALREF:art. 1                               today=0 v=1 'Tribunal Administrativo Central de Recursos Contractuales y art. 16 Ley 39-2015' || []
+  CLU       2 orgs= 1 LEGALREF:art. 1                               today=0 v=1 'Tribunal Administrativo Central de Recursos Contractuales y art. 16 Ley 39/2015' || []
+  CLU       2 orgs= 1 PROSE:ver apartado                            today=0 v=1 'Ver apartado 17 de la HRC. Recurso de reposición o alzada' || []
+  CLU       1 orgs= 1 PROSE:procede recurso,LEGALREF:artículos 4    today=0 v=1 'Procede recurso especial en materia de contratación, de acuerdo con lo establecido en los artículos ' || []
+  CLU       1 orgs= 1 PROSE:ver apartado                            today=0 v=1 'Ver apartado 17 de la HRC - Recurso de reposición o alzada' || []
+  NEW     715 orgs= 1 WHOLE:principal                               today=0 v=1 'Principal' || ['Gerencia umivale Activa, Mutua Colaboradora con la Seguridad']
+  NEW     621 orgs= 1 WHOLE:sede tibidabo                           today=0 v=1 'Sede Tibidabo' || ['Mutua Universal Mugenat, Mutua Colaboradora con la Seguridad']
+  NEW     420 orgs= 1 WHOLE:direccion principal                     today=0 v=1 'Dirección Principal' || ['Distrito de Usera']
+  NEW     294 orgs= 1 WHOLE:info adicional                          today=0 v=1 'Info Adicional' || ['Empresa Municipal de Transportes de Madrid, S.A.']
+  NEW     268 orgs= 1 WHOLE:recursos                                today=0 v=1 'RECURSOS' || ["Consejo de Administración de EMAYA, Empresa Municipal d'Aigü"]
+  NEW     221 orgs= 1 WHOLE:direccion postal                        today=0 v=1 'Dirección Postal' || ['Consejo de Gobierno Insular del Cabildo de Gran Canaria']
+  NEW     143 orgs= 1 WHOLE:direccion recepcion de recursos         today=0 v=1 'Dirección Recepción de Recursos' || ['Rector de la Universidad Carlos III de Madrid']
+  NEW     139 orgs= 1 WHOLE:palacio provincial                      today=0 v=1 'Palacio Provincial' || ['Presidencia de la Diputación Provincial de Cáceres']
+  NEW     105 orgs= 1 WHOLE:direccion recurso                       today=0 v=1 'Dirección Recurso' || ['Gerencia de la Universidad de Alcalá']
+  NEW      53 orgs= 1 WHOLE:beschaffende stelle                     today=0 v=0 'Beschaffende Stelle' || ['DB Netz AG (Bukr 16)']
+  NEW      46 orgs= 1 PLATFORM:plataforma electronica de contratacion today=0 v=1 'Plataforma Electrónica de Contratación de la Autoridad Portuaria de Barcelona (PORT DE BARCELONA)' || ['Presidencia del Consejo de Administración de la Autoridad Po']
+  NEW      42 orgs= 1 PROSE:ver apartado                            today=0 v=1 'Ver apartado 17 de la HRC - Tribunal Administrativo de Contratación Pública de la Comunidad Autónoma' || ['Rectorado de la Universidad de Vigo']
+  NEW      36 orgs= 1 PROSE:ver apartado                            today=0 v=1 'Ver apartado 17 de la HRC. Rector de la Universidad de Vigo' || ['Rectorado de la Universidad de Vigo']
+  NEW      30 orgs= 1 WHOLE:presentacion de recursos                today=0 v=0 'Presentación de recursos' || ['Junta de Gobierno Local del Ayuntamiento de Valdemorillo']
+  NEW      28 orgs= 1 WHOLE:body responsible for mediation procedures today=0 v=0 'Body responsible for mediation procedures' || ['PHI Clinical Hopspital Shtip']
+  NEW      26 orgs= 1 WHOLE:service from which information about the review procedure may be obtained today=0 v=0 'Service from which information about the review procedure may be obtained' || ['PHI Clinical Hopspital Shtip']
+  NEW      25 orgs= 1 PROSE:ver apartado                            today=0 v=1 'Ver apartado 17 de la HRC - Rector de la Universidad de Vigo' || ['Rectorado de la Universidad de Vigo']
+  NEW      17 orgs= 1 LEGALREF:art. 1                               today=0 v=1 'Tribunal Administrativo Central de Recursos Contractuales y art. 16 de la Ley 39/2015' || ['Junta de Contratación del Ministerio de Industria, Comercio ']
+  NEW      15 orgs= 1 PROSE:en los lugares,PROSE:lugares indicados,LEGALREF:artículo 5 today=0 v=1 'En los lugares indicados en el artículo 51.3 del LCSP' || ['Dirección del Instituto Nacional de Gestión Sanitaria (INGES']
+  NEW      14 orgs= 1 PROSE:en los lugares,PROSE:lugares indicados,LEGALREF:artículo 5 today=0 v=1 'En los lugares indicados en el artículo 51.3 de la Ley 9/2017, de 8 de noviembre, de Contratos del S' || ['Dirección del Instituto Nacional de Gestión Sanitaria (INGES']
+  NEW      13 orgs= 1 WHOLE:direccion principal                     today=0 v=1 'Direccion Principal' || ['Junta de Gobierno del Ayuntamiento de Leganés']
+  NEW      13 orgs= 1 LEGALREF:el art 4                             today=0 v=1 'TRIBUNAL ADMINISTRATIVO CENTRAL DE RECURSOS CONTRACTUALES DE ACUERDO CON EL ART 44 DE LA LCSP, SALVO' || ['Junta de Gobierno Local del Ayuntamiento de Villanueva de la']
+  NEW      12 orgs= 1 LEGALREF:art. 1                               today=0 v=1 'Tribunal Administrativo Central de Recursos Contractuales y art. 16 Ley 39/2015 de 1 octubre' || ['Junta de Contratación del Ministerio de Industria y Turismo']
+  NEW      11 orgs= 1 PROSE:en los lugares,PROSE:lugares establecidos,LEGALREF:artículo 1 today=0 v=1 'En los lugares establecidos en el artículo 16.4 de la Ley 39/2015, de 1 de octubre, del Procedimient' || ['Alcaldia del Ayuntamiento de Muro de Alcoy']
+  NEW      10 orgs= 1 PROSE:lugares establecidos,LEGALREF:el art 1  today=0 v=1 'Tribunal Central Recursos Contractuales Madrid, Ayuntamiento de Manacor y lugares establecidos en el' || ['Alcaldía del Ayuntamiento de Manacor']
+  NEW       8 orgs= 1 WHOLE:contact                                 today=0 v=0 'Contact' || ['Energie Data Services Nederland (EDSN) B.V.']
+  NEW       8 orgs= 1 PROSE:en los lugares,PROSE:lugares establecidos,LEGALREF:artículo 1 today=0 v=1 'El escrito de interposición podrá presentarse en los lugares establecidos en el artículo 16.4 de la ' || ['Gerencia de Viviendas Sociales e Infraestructuras de Canaria']
+  NEW       7 orgs= 1 PLATFORM:platforma zakupowa                   today=0 v=0 'PLATFORMA ZAKUPOWA' || ['Krajowa Izba Odwoławcza']
+  NEW       7 orgs= 1 WHOLE:direcci n principal                     today=0 v=0 'Direcci¿n Principal' || ['Área de Gobierno de Vicealcaldía, Portavoz, Seguridad y Emer']
+  NEW       6 orgs= 1 PLATFORM:platforma zakupowa,PLATFORM:logintrade today=0 v=0 'Platforma Zakupowa Logintrade' || ['Wodociągi Miasta Krakowa S.A.']
+  NEW       6 orgs= 1 PROSE:lugares establecidos,LEGALREF:el art 1  today=0 v=1 'Ayuntamiento de Manacor y lugares establecidos en el art 16.4 ley 39/2015' || ["Consejo de Administración del Patronat Municipal d'Esports"]
+  NEW       5 orgs= 1 WHOLE:direccion de recursos                   today=0 v=0 'Dirección de Recursos' || ['Empresa Municipal de la Vivienda y Suelo de Madrid, S.A.']
+  NEW       5 orgs= 1 PROSE:ver apartado                            today=0 v=1 'Ver apartado 17 de la HRC. Tribunal Administrativo de Contratación Pública de la Comunidad Autónoma ' || ['Rectorado de la Universidad de Vigo']
+  NEW       5 orgs= 1 PROSE:en los lugares,PROSE:lugares establecidos,LEGALREF:artículo 1 today=0 v=1 'En los lugares establecidos en el artículo 16.4 de la Ley 39/2015 de procedimiento administrativo' || ['Departamento de Salud de Xàtiva-Ontinyent. Dirección Económi']
+  NEW       5 orgs= 1 PROSE:lugares previstos,LEGALREF:artículo 5   today=0 v=1 'Lugares previstos en el artículo 51.3 de la Ley 9/2017' || ['Junta de Gobierno del Ayuntamiento de Siero']
+  NEW       5 orgs= 1 PROSE:en los lugares,PROSE:lugares indicados,LEGALREF:artículo 5 today=0 v=1 'En los lugares indicados en el artículo 51.3 de la LCSP' || ['Dirección del Instituto Nacional de Gestión Sanitaria (INGES']
+  NEW       4 orgs= 1 HONORIFIC:Monsieur                            today=0 v=1 'Monsieur Anthony LINTILHAC' || ['LA CIOTAT SHIPYARDS']
+  NEW       4 orgs= 1 LEGALREF:artículo 4                           today=0 v=1 'Tribunal Administrativo de Contratación Pública de Galicia artículo 44' || ['Pleno del Ayuntamiento de Vilarmaior']
+  NEW       4 orgs= 1 LEGALREF:artículo 5                           today=0 v=1 'Tribunal Administrativo de Contratación Pública de Galicia artículo 51.3' || ['Pleno del Ayuntamiento de Vilarmaior']
+  NEW       4 orgs= 1 LEGALREF:art. 1                               today=0 v=1 'Tribunal Administrativo Central de Recursos Contractuales y el art. 16 de la Ley 39/2015' || ['Junta de Contratación del Ministerio de Industria, Comercio ']
+  NEW       4 orgs= 1 PROSE:procede recurso                         today=0 v=1 'Procede recurso de reposición y, en su caso, recurso contencioso administrativo' || ['Dirección del Instituto Nacional de Gestión Sanitaria (INGES']
+  NEW       3 orgs= 1 PROSE:lugares habilitados                     today=0 v=1 'Sede del Tribunal Administrativo Central de recursos contractuales o Registro General del Ayuntamien' || ['Junta de Gobierno del Ayuntamiento de Siero']
+  NEW       3 orgs= 1 PLATFORM:e zamowienia                         today=0 v=0 'Portal e-zamówienia' || ['Szpital Powiatowy im. Prałata J. Glowatzkiego']
+  NEW       3 orgs= 1 PROSE:lugares habilitados                     today=0 v=1 'Sede del Tribunal Administrativo Central de Recursos Contractuales o Registro General del Ayuntamien' || ['Junta de Gobierno del Ayuntamiento de Siero']
+  NEW       3 orgs= 1 PLATFORM:plataforma electronica de contratacion today=0 v=1 'PLATAFORMA ELECTRÓNICA DE CONTRATACIÓN de la Autoridad Portuaria de Barcelona' || ['Presidencia del Consejo de Administración de la Autoridad Po']
+  NEW       3 orgs= 1 LEGALREF:artículo 1                           today=0 v=1 'Cualquier lugar habilitado en el artículo 16 de la Ley 39/2015 o sede del Tribunal Administrativo Ce' || ['Alcaldía del Ayuntamiento de Siero']
+  NEW       3 orgs= 1 PROSE:procede recurso,LEGALREF:artículos 4    today=0 v=1 'Procede recurso especial en materia de contratación, de acuerdo con lo establecido en los artículos ' || ['Dirección del Instituto Nacional de Gestión Sanitaria (INGES']
+  NEW       3 orgs= 1 LEGALREF:art. 1                               today=0 v=1 "TAR territorialmente competente ai sensi dell'art. 120 del D. Lgs. n. 104/2010" || ['RAI - Radiotelevisione Italiana S.p.A. - A/TEI/TCL']
+  NEW       3 orgs= 1 PROSE:procede recurso,LEGALREF:artículos 4    today=0 v=1 'Procede recurso especial en materia de contratación, de acuerdo con lo indicado en los artículos 44 ' || ['Dirección del Instituto Nacional de Gestión Sanitaria (INGES']
+  NEW       3 orgs= 1 WHOLE:direccion informacion adicional         today=0 v=0 'Dirección información adicional' || ['Distrito de Retiro']
+  NEW       3 orgs= 1 PROSE:ver apartado                            today=0 v=1 'VER APARTADO CORRESPONDIENTE PCAP' || ['Servicio Murciano de Salud - Gerencia']
+  NEW       2 orgs= 1 PROSE:lugares habilitados                     today=0 v=1 'Sede del Tribunal Administrativo Central / Registro Órgano de Contratación / o lugares habilitados L' || ['Concejalía Delegada del Área de Hacienda, Contratación, Digi']
+  NEW       2 orgs= 1 LEGALREF:artículo 1                           today=0 v=1 'Tribunal administrativo central de recursos contractuales y artículo 16 Ley 39/2015' || ['Junta de Contratación del Ministerio de Industria, Comercio ']
+  NEW       2 orgs= 1 PLATFORM:ezamowienia                          today=0 v=0 'Platforma eZamówienia' || ['Gmina Miasto Tomaszów Maz.']
+  NEW       2 orgs= 1 LEGALREF:art. 1                               today=0 v=1 'Tribunal Administrativo Central de Recursos Contractuales y art. 16 Ley 39-2015' || ['Junta de Contratación del Ministerio de Industria, Comercio ']
+  NEW       2 orgs= 1 LEGALREF:art. 1                               today=0 v=1 'Tribunal Administrativo Central de Recursos Contractuales y art. 16 de la Ley 39-2015' || ['Junta de Contratación del Ministerio de Industria, Comercio ']
+  NEW       2 orgs= 1 LEGALREF:art. 1                               today=0 v=1 'Tribunal Administrativo Central de Recursos Contractuales y art. 16 Ley 39/2015' || ['Junta de Contratación del Ministerio de Industria, Comercio ']
+  NEW       2 orgs= 1 PROSE:en los lugares,PROSE:lugares indicados,LEGALREF:artículo 5 today=0 v=1 'El recurso se presentará en los lugares indicados en el artículo 51.3 de la LCSP' || ['Dirección del Instituto Nacional de Gestión Sanitaria (INGES']
+  NEW       2 orgs= 1 LEGALREF:art. 1                               today=0 v=1 'Tribunal Administrativo Central de Recurso Contractuales y art. 16 Ley 39/2015' || ['Junta de Contratación del Ministerio de Industria, Comercio ']
+  NEW       2 orgs= 1 PROSE:ver apartado                            today=0 v=1 'Ver apartado 17 de la HRC. Recurso de reposición o alzada' || ['Rectorado de la Universidad de Vigo']
+  NEW       2 orgs= 1 PROSE:en los lugares,PROSE:lugares indicados,LEGALREF:artículo 5 today=0 v=1 'En los lugares indicados en el artículo 51.3 de la Ley9/2017, de 8 de noviembre, de Contratos del Se' || ['Dirección del Instituto Nacional de Gestión Sanitaria (INGES']
+  NEW       2 orgs= 1 PROSE:procede recurso,LEGALREF:artículos 1    today=0 v=1 'Procede recurso potestativo de reposición, según lo dispuesto en los artículos 123 y 124 de la Ley 3' || ['Dirección del Instituto Nacional de Gestión Sanitaria (INGES']
+  NEW       2 orgs= 1 LEGALREF:artículo 1                           today=0 v=1 'Cualquier lugar previsto en el artículo 16 de la Ley 39/2015 o sede del Tribunal Central de Recursos' || ['Junta de Gobierno del Ayuntamiento de Siero']
+  NEW       2 orgs= 1 PLATFORM:achizitii md                         today=0 v=0 'Achiziții.md' || ['Serviciul Special pentru influenţe Active asupra Proceselor ']
+  NEW       2 orgs= 1 WHOLE:direccion para presentacion de recursos today=0 v=0 'Dirección para presentación de recursos' || ['Consejera Delegada de Asistencia Integral Tributaria, S.A (A']
+  NEW       2 orgs= 1 PROSE:en los lugares,LEGALREF:artículo 5      today=0 v=1 'En los lugares indicado en el artículo 51.3 de la Ley 9/2017, de 8 de noviembre, de Contratos del Se' || ['Dirección del Instituto Nacional de Gestión Sanitaria (INGES']
+  NEW       2 orgs= 1 WHOLE:organizacion que proporciona informacion adicional sobre el procedimiento de contratacion today=0 v=0 'Organización que proporciona información adicional sobre el procedimiento de contratación' || ['Ayuntamiento de Usurbil']
+  NEW       1 orgs= 1 HONORIFIC:DOTT.                               today=0 v=1 'DOTT. ANGELO GAMBARDELLA' || ["Agenzia Locale di Sviluppo dei Comuni dell'Area Nolana S.C.P"]
+  NEW       1 orgs= 1 PLATFORM:e zamowienia                         today=0 v=0 'PLATFORMA E ZAMÓWIENIA' || ['Miejski Zakład Komunikacyjny \nw Tomaszowie Mazowieckim Spółk']
+  NEW       1 orgs= 1 HONORIFIC:M.                                  today=0 v=1 'M. Damien SIMON' || ['APRR.']
+  NEW       1 orgs= 1 PLATFORM:platforma przetargowa,PLATFORM:logintrade today=0 v=0 'Platforma Przetargowa LOGINTRADE' || ['PARK NARODOWY GÓR STOŁOWYCH']
+  NEW       1 orgs= 1 HONORIFIC:Monsieur                            today=0 v=1 'Monsieur MAHE Michael' || ['Mairie de Mennecy']
+  NEW       1 orgs= 1 HONORIFIC:M.                                  today=0 v=1 'M. le Médiateur interne de l UGAP' || ['Union des groupements d achats publics  UGAP']
+  NEW       1 orgs= 1 PROSE:en los lugares,PROSE:lugares indicados,LEGALREF:artículo 5 today=0 v=1 'En los lugares indicados en el artículo 51.3 de la Ley de Contratos del Sector Público' || ['Dirección del Instituto Nacional de Gestión Sanitaria (INGES']
+  NEW       1 orgs= 1 PROSE:lugares establecidos,LEGALREF:art- 5    today=0 v=1 'Secretaría General del ISCIII o lugares establecidos según art- 51.3 de la LCSP' || ['Dirección del Instituto de Salud Carlos III']
+  NEW       1 orgs= 1 PLATFORM:plataforma electronica de contratacion today=0 v=1 'Plataforma electrónica de contratación de la Autoridad Portuari de Barcelona' || ['Presidencia del Consejo de Administración de la Autoridad Po']
+  NEW       1 orgs= 1 PROSE:en los lugares                          today=0 v=1 'En los lugares indicado en el artliculo 51.3 de la LCSP' || ['Dirección del Instituto Nacional de Gestión Sanitaria (INGES']
+  NEW       1 orgs= 1 PROSE:ver apartado                            today=0 v=1 'Ver apartado 17 de la HRC - Recurso de reposición o alzada' || ['Rectorado de la Universidad de Vigo']
+  NEW       1 orgs= 1 HONORIFIC:M.                                  today=0 v=1 'M. Kuiper' || ['Sportbedrijf Deventer N.V.']
+  NEW       1 orgs= 1 PROSE:procede recurso,LEGALREF:artículos 4    today=0 v=1 'Procede recurso especial en materia de contratación, de acuerdo con lo establecido en los artículos ' || ['Dirección del Instituto Nacional de Gestión Sanitaria (INGES']
+  NEW       1 orgs= 1 HONORIFIC:ING.                                today=0 v=1 'ING. PAMELA COMI' || ['COMUNE DI PRESICCE-ACQUARICA']
+  NEW       1 orgs= 1 PROSE:lugares habilitados,LEGALREF:el art 1   today=0 v=1 'Lugares habilitados en el el art 16 de la Ley 39/2015' || ['Junta de Gobierno del Ayuntamiento de Siero']
+  NEW       1 orgs= 1 PROSE:procede recurso,LEGALREF:artículos 1    today=0 v=1 'Procede recurso de reposición de acuerdo con lo establecido en los artículos 123 y 124 de la ley 39/' || ['Dirección del Instituto Nacional de Gestión Sanitaria (INGES']
+  NEW       1 orgs= 1 PROSE:procede recurso,LEGALREF:artículos 4    today=0 v=1 'Procede recurso especial en materia de contratación, según lo dispuesto en los artículos 44 y siguie' || ['Dirección del Instituto Nacional de Gestión Sanitaria (INGES']
+  NEW       1 orgs= 1 LEGALREF:artículo 5                           today=0 v=1 'En los ligares indicados en el artículo 51.3 de la LCSP' || ['Dirección del Instituto Nacional de Gestión Sanitaria (INGES']
+  NEW       1 orgs= 1 PLATFORM:platforma zakupowa                   today=0 v=0 'Platforma Zakupowa Zamawiającego' || ['Radomskie Przedsiębiorstwo Energetyki Cieplnej „RADPEC” Spół']
+  NEW       1 orgs= 1 PROSE:procede recurso                         today=0 v=1 'Procede recurso especial en materia de contratación (vigente lote 1). Procede recurso de reposicion ' || ['IGSS - Intervención General de la Seguridad Social']
+  NEW       1 orgs= 1 PLATFORM:tuttogare                            today=0 v=1 'TUTTOGARE RACCONIGI' || ['Comune di Racconigi']
+  NEW       1 orgs= 1 WHOLE:procurement department                  today=0 v=1 'Procurement Department' || ['Museros Town Council']
+  NEW       1 orgs= 1 PROSE:procede recurso                         today=0 v=1 'Procede recurso de reposicion o contencioso administrativo (lotes 1 y 2)' || ['IGSS - Intervención General de la Seguridad Social']
+  NEW       1 orgs= 1 PROSE:ver apartado                            today=0 v=1 'ver apartado PCAP' || ['Servicio Murciano de Salud - Gerencia']
+  NEW       1 orgs= 1 HONORIFIC:dott                                today=0 v=1 'dott marco lesto' || ['CUC UNIONE DEI COMUNI DI MONTEDORO']
+  PRE     715 orgs= 1 WHOLE:principal                               today=0 v=1 'Principal' || []
+  PRE     420 orgs= 1 WHOLE:direccion principal                     today=0 v=1 'Dirección Principal' || []
+  PRE     125 orgs= 1 WHOLE:ayuntamiento                            today=0 v=1 'Ayuntamiento' || []
+  PRE       1 orgs= 1 PROSE:en los lugares,PROSE:lugares indicados,LEGALREF:artículo 5 today=0 v=1 'En los lugares indicados en el artículo 51.3 de la Ley 9/2017, de 8 de noviembre, de Contratos del S' || []
+  PRE       1 orgs= 1 WHOLE:presentacion de recursos                today=0 v=0 'presentación de recursos' || []
+  WIN-A     4 orgs= 1 WHOLE:ayuntamiento                            today=0 v=1 'Ayuntamiento' || ['Alcaldía del Ayuntamiento de Valverde de Leganés']
+  WIN-A     4 orgs= 1 WHOLE:principal                               today=0 v=1 'Principal' || ['Gerencia umivale Activa, Mutua Colaboradora con la Seguridad', 'Rectorado de la Universidad Rey Juan Carlos']
+  WIN-A     4 orgs= 1 WHOLE:sede tibidabo                           today=0 v=1 'Sede Tibidabo' || ['Mutua Universal Mugenat, Mutua Colaboradora con la Seguridad']
+  WIN-A     2 orgs= 1 PROSE:en los lugares,PROSE:lugares establecidos,LEGALREF:artículo 1 today=0 v=1 'En los lugares establecidos en el artículo 16.4 de la LEY 39/2015 de Procedimiento Administrativo Co' || ['Departamento de Salud de Xàtiva-Ontinyent. Dirección Económi']
+  WIN-A     2 orgs= 1 WHOLE:direccion postal                        today=0 v=1 'Dirección Postal' || ['Consejería de Gobierno de Presidencia y Movilidad Sostenible', 'Consejo de Gobierno Insular del Cabildo de Gran Canaria']
+  WIN-A     2 orgs= 1 WHOLE:info adicional                          today=0 v=1 'Info Adicional' || ['Empresa Municipal de Transportes de Madrid, S.A.']
+  WIN-A     2 orgs= 1 LEGALREF:Art. 1                               today=0 v=1 'Tribunal Administrativo Central de Recursos Contractuales y Art. 16 de la Ley 39/2015' || ['Junta de Contratación del Ministerio de Industria, Comercio ']
+  WIN-A     1 orgs= 1 PROSE:procede recurso,LEGALREF:artículos 4    today=0 v=1 'Procede recurso especial en materia de contratación, de acuerdo con lo establecido en los artículos ' || ['Dirección del Instituto Nacional de Gestión Sanitaria (INGES']
+  WIN-A     1 orgs= 1 WHOLE:direccion principal                     today=0 v=1 'Dirección principal' || ['Presidencia de la Diputación de Badajoz']
+  WIN-A     1 orgs= 1 WHOLE:palacio provincial                      today=0 v=1 'Palacio Provincial' || ['Presidencia de la Diputación Provincial de Cáceres']
+  WIN-A     1 orgs= 1 PROSE:lugares habilitados                     today=0 v=1 'Sede del Tribunal Administrativo Central / Registro Órgano de Contratación / o lugares habilitados L' || ['Concejalía Delegada del Área de Hacienda, Contratación, Digi']
+  WIN-A     1 orgs= 1 PLATFORM:ezamowienia                          today=0 v=0 'Platforma eZamówienia' || ['Gmina Miasto Tomaszów Maz.']
+  WIN-A     1 orgs= 1 PROSE:ver apartado                            today=0 v=1 'Ver apartado 17 de la HRC - Rector de la Universidad de Vigo' || ['Rectorado de la Universidad de Vigo']
+  WIN-A     1 orgs= 1 PROSE:ver apartado                            today=0 v=1 'Ver apartado 17 de la HRC. Rector de la Universidad de Vigo' || ['Rectorado de la Universidad de Vigo']
+  WIN-B     5 orgs= 1 WHOLE:recursos                                today=0 v=1 'RECURSOS' || ["Consejo de Administración de EMAYA, Empresa Municipal d'Aigü"]
+  WIN-B     4 orgs= 1 WHOLE:principal                               today=0 v=1 'Principal' || ['Gerencia umivale Activa, Mutua Colaboradora con la Seguridad']
+  WIN-B     1 orgs= 1 PROSE:lugares habilitados,LEGALREF:artículo 1 today=0 v=1 'Sede del Tribunal Administrativo Central (TACRC) o Registro General del Ayuntamiento de Siero o Luga' || ['Junta de Gobierno del Ayuntamiento de Siero']
+  WIN-B     1 orgs= 1 WHOLE:sede tibidabo                           today=0 v=1 'Sede Tibidabo' || ['Mutua Universal Mugenat, Mutua Colaboradora con la Seguridad']
+  WIN-B     1 orgs= 1 WHOLE:palacio provincial                      today=0 v=1 'Palacio Provincial' || ['Pleno de la Diputación de Badajoz']
+  WIN-B     1 orgs= 1 WHOLE:presentacion de recursos                today=0 v=0 'Presentación de Recursos' || ['Ineco-Comité de Dirección']
+  WIN-B     1 orgs= 1 PROSE:lugares establecidos,LEGALREF:el art 1  today=0 v=1 'Tribunal Central Recursos Contractuales Madrid, Ayuntamiento de Manacor y lugares establecidos en el' || ['Alcaldía del Ayuntamiento de Manacor']
+  WIN-B     1 orgs= 1 PROSE:en los lugares,PROSE:lugares establecidos,LEGALREF:artículo 1 today=0 v=1 'El escrito de interposición podrá presentarse en los lugares establecidos en el artículo 16.4 de la ' || ['Gerencia de Viviendas Sociales e Infraestructuras de Canaria']

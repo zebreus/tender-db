@@ -1,0 +1,104 @@
+P1: 3,751 new orgs, by tier (orgs / their touchpoint mentions)
+  A       182 orgs    743 mentions
+  C0        9 orgs     46 mentions
+  C1      455 orgs   1778 mentions
+  C2       71 orgs    258 mentions
+  C3      145 orgs    526 mentions
+  C3r       4 orgs      5 mentions
+  None   2885 orgs  21308 mentions
+  tier A  182 orgs / 743 mentions; tier C 684 / 2613
+  of 3751 orgs / 24664 mentions
+second-look class x tier:
+  SELF-overlap    {'A': 76, 'None': 276, 'C': 104}
+  SELF-part       {'C': 465, 'None': 173, 'A': 8}
+  SELF-plus       {'None': 161, 'C': 3, 'A': 8}
+  SELF-spelling   {'A': 88, 'None': 17, 'C': 2}
+  dept-of-buyer?  {'None': 115}
+  other           {'None': 1414, 'C': 110}
+  review-body     {'None': 729, 'A': 2}
+P2 03-t3_window_a.json: 2081 touchpoint mentions; would alias (mentions): {('old', 'A'): 3, ('old', 'C'): 140, ('new', 'C'): 16, ('new', 'A'): 7}
+P2 05-t5_window_b.json: 904 touchpoint mentions; would alias (mentions): {('old', 'C'): 55, ('old', 'A'): 4, ('new', 'C'): 9, ('new', 'A'): 3}
+
+== salted A (586-u1-tierA), 40 of 182
+   1 31976215 A      1 parent 'Consejo de Administración de la Empresa Municipal de la Vivienda de Coslada S.A.U' -> tp 'Consejo de Administración de la Empresa Municipal de la Vivienda de Coslada'
+   2 31976370 A      1 parent 'Asamblea de Representantes de la Mancomunidad Norte Duero' -> tp 'Asamblea de Representantes de la Mancomunidad Norte-Duero'
+   3 31975754 A      1 parent 'Espaço Municipal - Renovação Urbana e Gestão do Patrimonio, E. M., S. A.' -> tp 'ESPAÇO MUNICIPAL RENOVAÇÃO URBANA E GESTÃO DO PATRIMÓNIO, EM.SA'
+   4 31978151 A      1 parent 'Patronato Provincial Turismo de Castellón' -> tp 'O.A.L. PATRONATO PROVINCIAL DE TURISMO DE CASTELLÓN'
+   5 31975704 A      3 parent 'Dirección de Gestión Económica de la Jefatura de Apoyo Logístico de la Armada' -> tp 'Dirección Gestión Económica de la Jefatura de Apoyo Logístico de la Armada'
+   6 31977531 A      6 parent "Fundació per a l'Esport Balear" -> tp "Fundacio per a l'Esport Balear"
+   7 31977224 A      1 parent 'Gestión de Medio Rural de Canarias S.A.U. (GMR Canarias)' -> tp 'Gestión de Medio Rural de Canarias S.A.U.'
+   8 31978214 A      4 parent 'Comandancia Guardia Civil de Castellón' -> tp 'Comandancia de la Guardia Civil de Castellón.'
+   9 31975289 A      1 parent 'Dirección General de Relaciones con la Administración de Justicia' -> tp 'DIRECCION GENERAL RELACIONES ADMINISTRACION DE JUSTICIA'
+  10 31978249 A      4 parent 'Instituto Nacional de Seguridad y Salud en el Trabajo O.A. M.P. (INSST)' -> tp 'Instituto Nacional de Seguridad y Salud en el Trabajo, OA, MP'
+  11 31976985 A      1 parent 'Gerencia de Atención Primaria de León' -> tp 'Gerencia de Atencion Primaria de León'
+  12 31976673 A      3 parent 'Instituto de Fomento de la Región de Murcia (INFO)' -> tp 'Instituto de Fomento de la Región de Murcia'
+  13 31978334 A      1 parent 'AGENCIA DE VIVIENDA Y REHABILITACIÓN DE ANDALUCÍA' -> tp 'AGENCIA DE VIVIENDA Y REHABILITACIÓN DE ANDALUCIA'
+  14 31976426 A      1 parent 'CUC - Comune di Fano' -> tp 'CUC -Comune di Fano'
+  15 31976204 A      1 parent 'C.U.C. tra i Comuni di Arcevia, Barbara, Ostra, Ostra Vetere, Serra de’ Conti e Senigallia c/o il Co' -> tp "C.U.C. tra i Comuni di Arcevia, Barbara, Ostra, Ostra Vetere, Serra de' Conti e Senigallia c/o il Co"
+  16 31976263 A     61 parent 'Consejería de Infraestructuras, Transporte y Vivienda' -> tp 'CONSEJERIA DE INFRAESTRUCTURAS, TRANSPORTE Y VIVIENDA'
+  17 31978315 A      1 parent 'Agencia de Contratación Sanitaria de la Comunidad de Madrid' -> tp 'Agencia de Contratación Sanitaria de la Comunidad de Madrid (TPO)'
+  18 31977373 A      7 parent 'TRIBUNAL ADMINISTRATIVO DE RECURSOS CONTRACTUALES DE LA JUNTA DE ANDALUCIA' -> tp 'PUNTO DE CONTACTO TRIBUNAL ADMINISTRATIVO DE RECURSOS CONTRACTUALES DE LA JUNTA DE ANDALUCIA'
+  19 31977325 A      1 parent 'Ayuntamiento Premia de Mar' -> tp 'Ayuntamiento de Premiá de Mar'
+  20 31977775 A      2 parent 'Pleno del Ayuntamiento de Sevilla la Nueva' -> tp 'Pleno Ayuntamiento Sevilla la Nueva'
+  21 31978166 A      5 parent 'INSS-Dirección provincial de Granada' -> tp 'INSS - Dirección Provincial de Granada'
+  22 31977666 A      3 parent 'Agencia Tributaria de la Región de Murcia (ATRM)' -> tp 'Agencia Tributaria de la Region de Murcia'
+  23 31978218 A      2 parent 'Empresa de Transformación Agraria S.A.,S.M.E., M.P., (TRAGSA)' -> tp 'Empresa de Transformación Agraria SA'
+  24 31978189 A      3 parent 'Comandancia Guardia Civil de Lugo' -> tp 'Comandancia Guardia Civil Lugo'
+  25 31977096 A      2 parent 'Coöperatie KIEN UA' -> tp 'Cooperatie KIEN UA'
+  26 31977081 A      2 parent 'Universitatea "Vasile Alecsandri" din Bacau' -> tp 'Universitatea Vasile Alecsandri din Bacau'
+  27 31978450 A      1 parent "ASL1 AVEZZANO-SULMONA-L'AQUILA" -> tp "ASL1 Avezzano, Sulmona L'Aquila"
+  28 31978284 A      2 parent 'Alcaldia del Ayuntamiento de Tías' -> tp 'Alcaldía Ayuntamiento de Tías'
+  29 31975768 A      4 parent 'Tribunal Administrativo de los Recursos Contractuales de la Junta de Andalucía' -> tp 'TRIBUNAL ADMINISTRATIVO DE RECURSOS CONTRACTUALES DE LA JUNTA DE ANDALUCÍA (Punto de contacto)'
+  30 31975819 A      2 parent 'COMMUNE DE SERRES CASTET' -> tp 'COMMUNE DE SERRES-CASTET'
+  31 31978542 A      1 parent 'SNCF RESEAU' -> tp 'SNCF Réseau SA'
+  32 31976997 A      3 parent 'AGENCIA DE VIVIENDA Y REHABILITACIÓN DE ANDALUCÍA' -> tp 'AGENCIA DE VIVIENDA DE REHABILITACION DE ANDALUCIA (punto de contacto)'
+  33 31977282 A      1 parent 'Alcaldía del Ayuntamiento de Alhaurín de la Torre' -> tp 'Alcaldia de Ayuntamiento de Alhaurin de la Torre'
+  34 31978281 A      2 parent 'Gerencia del Área de Salud de Mérida' -> tp 'GERENCIA AREA DE SALUD DE MERIDA'
+  35 31976518 A      5 parent 'Alcaldía del Ayuntamiento de Yaiza' -> tp 'Alcaldía Ayuntamiento de Yaiza'
+  36 31975870 A      1 parent 'C.U.C. COMUNI DI TORRE DEL GRECO E TRECASE' -> tp 'CUC DEI COMUNI DI TORRE DEL GRECO E TRECASE'
+  37 31975150 A      1 parent 'JUNTA DE ANDALUCÍA, CONSEJERÍA DE DESARROLLO EDUCATIVO Y FORMACIÓN \nPROFESIONAL' -> tp 'JUNTA DE ANDALUCÍA. CONSEJERÍA DE DESARROLLO EDUCATIVO Y FORMACIÓN \nPROFESIONAL'
+  38 31975115 A      1 parent 'Zentrum für Psychiatrie Weinsberg, AöR' -> tp 'Zentrum für Psychiatrie Weinsberg'
+  39 31975406 A      7 parent 'ÁREA SANITARIA DE PONTEVEDRA E O SALNÉS' -> tp 'Área Sanitaria de Pontevedra y O Salnés'
+  40 31975899 A     12 parent 'Consejería de Agricultura, Ganadería y Desarrollo Sostenible' -> tp 'Consejería Agricultura, Ganadería y Desarrollo Sostenible'
+
+== salted C (586-u1-tierC), 40 of 684
+   1 31975893 C1     7 parent 'Asamblea del Consorcio para el Desarrollo de la Vega Sierra Elvira' -> tp 'Consorcio para el Desarrollo de la Vega Sierra Elvira'
+   2 31976706 C1     8 parent 'Alcaldía del Ayuntamiento de Villanueva del Duque' -> tp 'Ayuntamiento de Villanueva del Duque'
+   3 31976323 C1     5 parent "Junta de Gobierno Local de l'Ajuntament d'Artà" -> tp "Ajuntament d'Artà"
+   4 31976292 C3     3 parent 'Pleno del Ayuntamiento de Vilaboa' -> tp 'vilaboa'
+   5 31977872 C1     2 parent 'Presidencia de la Mancomunidad de Recogida y Tratamiento de Basuras de Colmenar del Arroyo, Fresnedi' -> tp 'Mancomunidad de Recogida y Tratamiento de Basuras de Colmenar del Arroyo, Fresnedillas de la Oliva, '
+   6 31975292 C0     8 parent 'Junta de Gobierno del Ayuntamiento de Altea' -> tp 'Junta de Gobierno Local del Ayuntamiento de Altea'
+   7 31976075 C1     1 parent 'Alcaldía del Ayuntamiento de Almodóvar del Río' -> tp 'Ayuntamiento de Almodovar del Rio'
+   8 31978541 C1     1 parent 'Alcaldía del Ayuntamiento de Chinchón' -> tp 'Ayuntamiento de Chinchon'
+   9 31975684 C3     2 parent 'Junta de Gobierno Local del Ayuntamiento de Yuncler' -> tp 'Yuncler'
+  10 31978263 C3     2 parent 'Junta de Gobierno del Ayuntamiento de Lardero' -> tp 'Lardero'
+  11 31976703 C1     3 parent 'Alcaldía del Ayuntamiento de Canals' -> tp 'Ayuntamiento de Canals'
+  12 31975007 C1     3 parent 'Junta de Gobierno Local del Ayuntamiento de Ezcaray' -> tp 'Ayuntamiento de Ezcaray'
+  13 31977595 C1     2 parent 'Junta General de la Mancomunidad de Servicios Los Olmos' -> tp 'Mancomunidad de Servicios Los Olmos'
+  14 31975649 C2     1 parent 'Pleno del Ayuntamiento de Daimús' -> tp 'ajuntament daimus'
+  15 31975679 C2     4 parent 'Junta de Gobierno del Ayuntamiento de Els Poblets' -> tp 'Ajuntament Els Poblets'
+  16 31977053 C2     1 parent 'Pleno del Ayuntamiento des Migjorn Gran' -> tp 'Ajuntament des Migjorn Gran'
+  17 31977324 C1     2 parent 'Pleno del Ayuntamiento de Tuéjar' -> tp 'Ayuntamiento de Tuéjar'
+  18 31976066 C1     1 parent 'Dirección de la Fundación General de la Universidad de León y de la Empresa' -> tp 'FUNDACIÓN GENERAL DE LA UNIVERSIDAD DE LEON Y DE LA EMPRESA'
+  19 31978287 C1     3 parent 'Pleno del del Ayuntamiento de Herencia' -> tp 'Excmo. Ayuntamiento de Herencia'
+  20 31976992 C1    18 parent 'Presidencia del Consejo de Administración de Guaguas Municipales S.A.' -> tp 'Guaguas Municipales S.A.'
+  21 31978184 C1     1 parent 'Gerencia de la Fundación para la Investigación Biomédica de Córdoba (FIBICO)' -> tp 'Fundacion para la investigacion biomedica de Córdoba (FIBICO)'
+  22 31976571 C1     3 parent 'Presidencia del Consejo de Administración de Aparcamientos Municipales y Gestíon Vial de Ceuta, S.A.' -> tp 'APARCAMIENTOS MUNICIPALES Y GESTIÓN VIAL DE CEUTA SA'
+  23 31976903 C1     3 parent 'Pleno del Ayuntamiento de Caso' -> tp 'ayuntamiento de caso'
+  24 31975195 C1     1 parent 'Pleno de la Mancomunidad Puente la Unión' -> tp 'Mancomunidad Puente la Unión'
+  25 31977553 C1     1 parent 'Consejo Comarcal de la Comarca de Andorra-Sierra de Arcos' -> tp 'Comarca de Andorra Sierra de Arcos'
+  26 31976767 C3     2 parent 'Pleno del Ayuntamiento de Valdeavero' -> tp 'Valdeavero'
+  27 31977031 C1     2 parent 'Gerencia de Benissa Impuls S.A.' -> tp 'BENISSA IMPULS S.A'
+  28 31976391 C1     4 parent 'Pleno del Ayuntamiento de Villatobas' -> tp 'Ayuntamiento de Villatobas'
+  29 31976402 C3     1 parent 'Junta de Gobierno Local del Ayuntamiento de As Neves' -> tp 'Neves'
+  30 31977172 C1     1 parent 'Pleno del Ayuntamiento de Torrecillas de la Tiesa' -> tp 'Ayuntamiento de Torrecillas de la Tiesa'
+  31 31978481 C1     1 parent 'Asamblea de Concejales de la Mancomunidad Pueblos de la Vecindad de Burgos' -> tp 'Mancomunidad de Pueblos de la Vecindad de Burgos'
+  32 31977016 C3     2 parent 'Alcaldía del Ayuntamiento de El Campillo' -> tp 'El Campillo'
+  33 31978702 C2     2 parent 'Junta de Gobierno del Ayuntamiento de Galapagar' -> tp 'ayto galapagar'
+  34 31976407 C3r    1 parent 'Castilenti' -> tp 'Comune di Castilenti'
+  35 31976406 C1     1 parent 'Gerencia de Viviendas Sociales e Infraestructuras de Canarias S.A.U.' -> tp 'VIVIENDAS SOCIALES E INFRAESTRUCTURAS DE CANARIAS, SAU'
+  36 31978436 C1     1 parent 'Alcaldía del Ayuntamiento de Santa Cruz de Mudela' -> tp 'Ayuntamiento Santa Cruz de Mudela'
+  37 31977007 C1     1 parent 'Pleno del Ayuntamiento de Belinchón' -> tp 'Ayuntamiento de Belinchón'
+  38 31976561 C2     1 parent 'Alcaldía del Ayuntamiento de Casarrubuelos' -> tp 'ayto de Casarrubuelos'
+  39 31977502 C1     1 parent 'Gerencia de Móstoles Desarrollo Promoción Económica S.A.' -> tp 'MÓSTOLES DESARROLLO PROMOCIÓN ECONÓMICA, S.A.'
+  40 31978333 C3     1 parent 'Pleno del Ayuntamiento de La Almunia de Doña Godina' -> tp 'Almunia de Doña Godina'
