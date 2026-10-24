@@ -3,6 +3,12 @@
 Status: blocked — filed 2026-10-17 as unit 7 of issue 561's decision (workflow wf_3176baf8-d14). Blocked by: 561 unit 4
 (the stored per-version elected value `tender_versions.value_eur_cents`). Next, once that lands: pick a non-head
 version's served value by `v.value_eur_cents`, and decide whether 551's derivation marker also goes per version.
+Note from 561 unit 4 (2026-10-24, D561-10): 561 stores `value_eur_cents` per version but NOT 551's derivation marker
+(`value_derivation`, `value_cents`, `value_currency`, detail): those stay on `tenders`, head only. So a derived
+(lot-sum) superseded version has no amount row carrying its sum, and picking by `v.value_eur_cents` still serves it
+`value: null` with no derivation. A per-version marker needs its own epoch bump (6) plus quiet columns; 561's quiet
+compare rule (ADR-0017 D1.4/D3 as amended, `canonical::QUIET_VERSION_COLUMN`) makes that fill a verify-and-UPDATE on
+the next fold of each Tender, not a replay.
 Kind: correctness (served `value` of non-head versions: SSE catch-up payloads with `include_data`, version reads)
 Relates to:
 - 561 (stores the elected value per version; its decision names this follow-up);

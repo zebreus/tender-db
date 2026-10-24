@@ -1,6 +1,6 @@
 # 561 — an earlier version's elected value is not stored, so the SSE value bound reads a superset and `max_value` (and at times `min_value`) hears `changed` where `added` was due
 
-Status: ready-for-agent — DECIDED 2026-10-17 (wf_3176baf8-d14, judge + adversarial check, amendments adopted): A — store each version's elected value (`tender_versions.value_eur_cents`, PROJECTION_EPOCH 4→5, lazy fill by later folds, quiet single-column compare rule) and read it in the At probe behind an epoch gate with the superset as fallback; `v` pinned to its PK seek; a `reset` for value-bounded resumes from before the migration. Unit 7 filed as issue 566. NEXT: unit 3 (CHANGELOG/Verify wording, markdown only), then unit 4 (build) after 551 closes.
+Status: in-progress — unit 4 BUILT with unit 3 folded in (2026-10-24, focused tests green on the tree of deployed 6cb4408; gate pending, run by the orchestrator before the commit); NEXT: gate, then unit 5 (deploy with #3/#4, canary, close). DECIDED 2026-10-17 (wf_3176baf8-d14, judge + adversarial check, amendments adopted): A — store each version's elected value (`tender_versions.value_eur_cents`, PROJECTION_EPOCH 4→5, lazy fill by later folds, quiet single-column compare rule) and read it in the At probe behind an epoch gate with the superset as fallback; `v` pinned to its PK seek; a `reset` for value-bounded resumes from before the migration. Unit 7 filed as issue 566.
 Tender value per version (as 490 stores the lots'), which needs a refold, or keep the documented one-sided superset.
 Kind: correctness (SSE `added`/`changed` under `min_value`/`max_value`)
 Relates to:
@@ -13,11 +13,39 @@ Relates to:
 
 ## Verify
 
-    grep -c 'ELSE EXISTS (SELECT 1 FROM tender_version_amounts va' crates/store/src/read.rs
+    grep -c 'tender_versions ADD COLUMN value_eur_cents' crates/store/src/lib.rs; grep -c 'fn an_earlier_versions_unelected_figure_reads_outside_a_value_bound' crates/app/tests/api.rs
 
-- **done**: 0 (the At probe reads a stored per-version elected value), OR a `## Decision` below keeps the superset
-  with its reason.
-- **open (2026-10-16)**: 1 (the superset leg in `version_predicates`' `ValueBy::Version` arm).
+- **done**: prints `1` and `1`, the build is deployed, and unit 5's canary has read `corrected` 0 (or explained by a
+  non-`tender_versions` table), `values_refreshed` > 0, `verified + corrected == stamped`, and 0 epoch-5 heads where
+  `v.value_eur_cents` at `current_seq` IS NOT `current_value_eur_cents` in a 100k window. From then on the At probe
+  reads each version's stored elected value; the superset is left only as the epoch-gated fallback.
+- **open (2026-10-24, main 6ce2974)**: prints `0` and `0`. (The previous grep, `ELSE EXISTS (SELECT 1 FROM
+  tender_version_amounts va`, printed 0 while the superset was live: 551 re-spelled the leg `ELSE (EXISTS (…`, a
+  false done.)
+- **built (2026-10-24, unit 4 working tree)**: prints `1` and `1`; not yet deployed.
+
+## Unit 4 build (2026-10-24)
+
+Built on the main tree (code = deployed 6cb4408) by spec `.scratch/tender-db/build-specs/561.md` with its `## Check`
+fixes; unit 3's docs folded in. Focused tests green (canonical, read, version_value, satellite_column_migration,
+head_election_agreement, api, docs, project_golden, project_incremental, fold_writer_golden, sse); 3 goldens
+re-blessed with their documented capture knobs (diff = epoch 4→5 plus the trailing `value_eur_cents` field only).
+Gate pending (orchestrator).
+- D561-1: unit 3 folded into unit 4 (CHANGELOG 547 bullet in its final form; Verify re-pinned above).
+- D561-2: the "after 551 closes" hold is void (owner ruling); one writer, a green gate, the 551 twin re-gated after.
+- D561-3: the quiet column is one const (`QUIET_VERSION_COLUMN`) on `Leaf::Versions`, not a `LeafTable` field.
+- D561-4: the head UPDATE keeps its own election (identical by construction; 551's one-writer pin stays green).
+- D561-5: a shrunk chain (keep == len < stored) restates the kept head's stored value at today's rates.
+- D561-6: migration through `add_column` (with the horizon from `sqlite_sequence`, O(1)), in one transaction with it.
+- D561-7: `projection_state.value_probe_cursor` + SSE `reset` `value_probe_changed` (diffs on from the head, check 1;
+  `clear_changes` resets it to 0, check 2).
+- D561-8: the head gate checks the head version's value (hard `Corrupt`), quiet-only Tenders returned for it.
+- D561-9: roll-forward after a rollback is not automated: banner (operations.md).
+- D561-10: 551's marker stays head-only; 566 carries the note.
+- D561-11: the column keeps `value_eur_cents`, with an exact `(tender_versions, value_eur_cents)` column note.
+- D561-12: the api reproductions use 560's R2.0.9 helpers; the BT-709 case is pinned store-side (fixture 1024214).
+- D561-13: the golden wall-time measurement is replaced by the canary's `us per version`.
+- D561-14: the runtime timing pin runs in the gate (gated <= 3x head, fallback >= 5x gated).
 
 ## What was found
 

@@ -1737,3 +1737,21 @@ Full record: `551-lot-sum/b6/decision-b6.md` (three judges — risk-first, value
   576 U5, 586 U2, plus the review fixes. Posted: refold-notices 2766/2767 [12400937] (576 U5 buyer cohort) and refold-sections
   Touchpoint 2768/2769 (576 U5 + 586 U3). Twin-5 (hold/551-switchoff-5 = 9622bd0, +/- lines exact vs twin-3) gating.
 - **17:39Z: twin-5 gated green** (hold/551-switchoff-5 = 9622bd0 on deploy #3's eac7067; 153 suites, marker gate-v2 9622bd0). C7 holds for deployed 6cb4408. Switch-off = `./deploy.sh 9622bd0` (by sha).
+
+- **2026-10-24, deploy #4 build review (d4-ops-perf-2): twin-5 is deploy #3's switch-off only.** Twin-5 (9622bd0) sits on
+  eac7067, without 561 and without 546's caveat retirement. Once deploy #4 is live, **do not deploy 9622bd0**:
+  `deploy.sh` only checks that a gate marker covers the shipped tree, so it would re-gate green and silently roll back
+  561 and 546 as well. The twin recipe (revert e718684 minus CHANGELOG, `git apply --3way`) no longer applies
+  mechanically on the deploy #4 base. 561 rewrote the same lines of `crates/store/tests/head_election_agreement.rs`, so
+  2 of the reverse diff's 12 hunks conflict: hunk 4, the derived-at-w asserts that 561 wrapped in `for epoch in [5, 4]`,
+  and hunk 11, the zero-euro test's doc. The "+/- lines equal twin-3's" check no longer holds for that file. **Twin-6 is
+  hand-authored on the deploy #4 sha:**
+  1. Resolve the two hunks.
+  2. Split the derived-at-w and zero-euro expectations by epoch. At epoch 4, v1 reads inside (the superset, lot legs
+     included). At epoch 5 with path W off, v1 reads its exact stored value, which is outside the bound: the EUR 1.2 m
+     copy in derived-at-w, NULL in the zero-euro case. The stored value is the W-off election
+     (`head_value_eur_cents_with` over `LOT_SUM_AWARDS_PATH`).
+  3. Fix both tests' docs to match, then gate twin-6.
+
+  The derived-at-v leg (path V) and the rest of 561's tests do not depend on path W. Until twin-6 gates green, 551 has
+  no switch-off artifact for the deploy #4 base, and C7 is open for it.
