@@ -1,5 +1,15 @@
 # tender-db
 
+## Velocity first (owner ruling, 2026-10-24)
+
+Development velocity is the #1 priority. Waiting days, or even hours, is never acceptable: there is no
+reason to delay things in general, and a protocol, a watch or a calendar slot never blocks work. There are no
+active users yet, so prod may carry a known issue for a while as long as the operator notice (the banner) says
+so. Checks (read-backs, probes, gd5, verifies) run alongside the work and inform it; a failed check means a
+banner and a fix, not a freeze. What still binds: one writer on the box at a time (the job queue serializes),
+a green gate on the tree you deploy (`deploy.sh` enforces it), no edits outside `.scratch` while a gate runs,
+and the `/v1/sql` budget.
+
 ## Agent skills
 
 ### Structuring long-running work
