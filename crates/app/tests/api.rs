@@ -4849,6 +4849,7 @@ async fn stream_answer(server: &Server, path: &str, ip: usize) -> (u16, String, 
 async fn a_tenders_stream_takes_id_order_whatever_its_date_bounds() {
     let server = Server::start("sse-sort-rule").await;
     server.ingest(CHAIN[0]).await;
+    let free = server.isolated.available();
     const STREAM_REFUSAL: &str = "sort does not apply to event streams";
     const BOTH_BOUNDS: &str = "both published and deadline bounds given";
     let both = "published_after=2025-01-01&deadline_after=2025-01-01";
@@ -4886,6 +4887,16 @@ async fn a_tenders_stream_takes_id_order_whatever_its_date_bounds() {
         assert_eq!(status, 400, "the stream {path} is refused");
         assert_eq!(content_type, "application/json", "{path}");
         assert!(message.contains(STREAM_REFUSAL), "{path} gets the stream refusal, not {message:?}");
+    }
+
+    // Each accepted stream was dropped unread, and its server-side snapshot keeps its isolated
+    // slot until it notices; under a loaded gate the pages below then met a full pool and were
+    // shed with a 503 (deploy #4's gate, 2026-10-24). Wait for the slots to come back, so the
+    // pages are asserted on their own rule, not on the streams' teardown.
+    let settled = tokio::time::Instant::now() + Duration::from_secs(60);
+    while server.isolated.available() < free {
+        assert!(tokio::time::Instant::now() < settled, "the dropped streams' isolated slots never came back");
+        tokio::time::sleep(Duration::from_millis(20)).await;
     }
 
     // Pages, unchanged: both bounds still need a sort (with or without `order=asc`), descending
