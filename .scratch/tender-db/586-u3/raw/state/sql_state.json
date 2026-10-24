@@ -1,0 +1,187 @@
+{
+ "used": 18,
+ "stop": null,
+ "last": 1792865822.5532367,
+ "log": [
+  {
+   "n": 1,
+   "name": "v01_labels",
+   "sha256": "ebe12445bcf484370b7b698c689c8053592fd3a1f08e08cff94eb60db3e23f27",
+   "sent_at": "2026-10-24T18:11:51Z",
+   "secs": 0.4,
+   "ok": true,
+   "rows": 2,
+   "truncated": false
+  },
+  {
+   "n": 2,
+   "name": "m0",
+   "sha256": "eedf62c9c8202941efd584bd34bf0877f9d1a141bf3de051cde295d4282d0c6c",
+   "sent_at": "2026-10-24T18:13:33Z",
+   "secs": 0.43,
+   "ok": true,
+   "rows": 0,
+   "truncated": false
+  },
+  {
+   "n": 3,
+   "name": "m1",
+   "sha256": "2c4cbf4374ee4196af8108c02314ade40f383e8e1e6f5d262939f62f3a239d62",
+   "sent_at": "2026-10-24T18:13:37Z",
+   "secs": 0.63,
+   "ok": true,
+   "rows": 40,
+   "truncated": false
+  },
+  {
+   "n": 4,
+   "name": "m2",
+   "sha256": "72d86af89c296d9a94b69ebf5de07848590cafc5acdb8c5a4dd9b7e670f60ab6",
+   "sent_at": "2026-10-24T18:13:41Z",
+   "secs": 0.65,
+   "ok": true,
+   "rows": 40,
+   "truncated": false
+  },
+  {
+   "n": 5,
+   "name": "m3",
+   "sha256": "22a747ed4573df53125579209395aaae9477349c06592c10e4e3f03f00fda432",
+   "sent_at": "2026-10-24T18:13:45Z",
+   "secs": 0.85,
+   "ok": true,
+   "rows": 40,
+   "truncated": false
+  },
+  {
+   "n": 6,
+   "name": "m4",
+   "sha256": "b876237a7c628e5b61f36d484006f754d70000112d08a0f69f2777da37570fe3",
+   "sent_at": "2026-10-24T18:13:49Z",
+   "secs": 0.68,
+   "ok": true,
+   "rows": 40,
+   "truncated": false
+  },
+  {
+   "n": 7,
+   "name": "m5",
+   "sha256": "00b3648a5b7ef4a23d67033d9d3b19758f2b46085a0ed7f9c43f7065721be2ff",
+   "sent_at": "2026-10-24T18:13:54Z",
+   "secs": 0.41,
+   "ok": true,
+   "rows": 0,
+   "truncated": false
+  },
+  {
+   "n": 8,
+   "name": "n6",
+   "sha256": "afaa39ccae64f040fcb343496212f9cec2f6c995d59d6d864c31b17d6d64f5c7",
+   "sent_at": "2026-10-24T18:14:23Z",
+   "secs": 1.44,
+   "ok": true,
+   "rows": 17,
+   "truncated": false
+  },
+  {
+   "n": 9,
+   "name": "o8",
+   "sha256": "20b086dee2d66d69c880e96b19e51eb1d0e0d3991452f207d06fff17cdc5defc",
+   "sent_at": "2026-10-24T18:14:28Z",
+   "secs": 1.5,
+   "ok": true,
+   "rows": 40,
+   "truncated": false
+  },
+  {
+   "n": 10,
+   "name": "a0",
+   "sha256": "184e2f9e005e1dd90ca4189c78bb366fbaf4372ce407f54045c849dfddbc7949",
+   "sent_at": "2026-10-24T18:14:34Z",
+   "secs": 2.03,
+   "ok": true,
+   "rows": 29,
+   "truncated": false
+  },
+  {
+   "n": 11,
+   "name": "a1",
+   "sha256": "8499dad41a7b53ddfe40c3dbee105d3e9bfec4d99bc26c31586e045738261b4f",
+   "sent_at": "2026-10-24T18:14:40Z",
+   "secs": 0.43,
+   "ok": true,
+   "rows": 0,
+   "truncated": false
+  },
+  {
+   "n": 12,
+   "name": "a2",
+   "sha256": "b044079b4bcc687be91b7ea4fd41cb6a0fdc89fc9502636defffd2933dc853eb",
+   "sent_at": "2026-10-24T18:14:44Z",
+   "secs": 1.78,
+   "ok": true,
+   "rows": 20,
+   "truncated": false
+  },
+  {
+   "n": 13,
+   "name": "a3",
+   "sha256": "063b307708afcf48d104b92cb1f90e489335df7d77cf73b274a2c74fbae22d0b",
+   "sent_at": "2026-10-24T18:14:49Z",
+   "secs": 1.7,
+   "ok": true,
+   "rows": 38,
+   "truncated": false
+  },
+  {
+   "n": 14,
+   "name": "a5",
+   "sha256": "dd68072fd7e046c69518f7fccd2854477de5ec587ea192f2d71064d2650dff29",
+   "sent_at": "2026-10-24T18:15:12Z",
+   "secs": 1.73,
+   "ok": true,
+   "rows": 35,
+   "truncated": false
+  },
+  {
+   "n": 15,
+   "name": "a6",
+   "sha256": "2354c4b2bd17247af5b00ed4b7d5a5ce4837793ee1a7a222d8c31ad2acdae478",
+   "sent_at": "2026-10-24T18:15:17Z",
+   "secs": 1.61,
+   "ok": true,
+   "rows": 19,
+   "truncated": false
+  },
+  {
+   "n": 16,
+   "name": "x540072",
+   "sha256": "b9febc948a1840964ec67ffbaed32c02a5a24e2f94172ea0900aebe3ab47e0da",
+   "sent_at": "2026-10-24T18:15:33Z",
+   "secs": 0.38,
+   "ok": true,
+   "rows": 4,
+   "truncated": false
+  },
+  {
+   "n": 17,
+   "name": "s_mentions_b",
+   "sha256": "0342a6192b5c355fbdecdafe36733d7f46ac289158a112ddf406ca256f33affc",
+   "sent_at": "2026-10-24T18:16:58Z",
+   "secs": 0.37,
+   "ok": true,
+   "rows": 110,
+   "truncated": false
+  },
+  {
+   "n": 18,
+   "name": "s_mentions_c",
+   "sha256": "2c4608fddda02aac3da74f15f4e3b218788c0b9bff7a9e5eeb5052456cddec30",
+   "sent_at": "2026-10-24T18:17:02Z",
+   "secs": 0.39,
+   "ok": true,
+   "rows": 55,
+   "truncated": false
+  }
+ ]
+}

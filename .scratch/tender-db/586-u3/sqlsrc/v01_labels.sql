@@ -1,0 +1,7 @@
+SELECT p.organization_id AS org_id, p.role AS role, count(*) AS n_rows, sum(p.seq = t.current_seq) AS n_current_rows,
+  min(p.tender_id) AS min_tender, max(p.tender_id) AS max_tender, min(p.mention_section_id) AS min_section, max(p.mention_section_id) AS max_section
+FROM tender_version_parties p CROSS JOIN tenders t ON t.id = p.tender_id WHERE p.organization_id = 18044191 GROUP BY p.role
+UNION ALL
+SELECT p.organization_id AS org_id, p.role AS role, count(*) AS n_rows, sum(p.seq = t.current_seq) AS n_current_rows,
+  min(p.tender_id) AS min_tender, max(p.tender_id) AS max_tender, min(p.mention_section_id) AS min_section, max(p.mention_section_id) AS max_section
+FROM tender_version_parties p CROSS JOIN tenders t ON t.id = p.tender_id WHERE p.organization_id = 18044192 GROUP BY p.role

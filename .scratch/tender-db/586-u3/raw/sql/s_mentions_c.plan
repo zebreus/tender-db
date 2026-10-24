@@ -1,0 +1,120 @@
+# plan-copy
+COMPOUND QUERY
+  LEFT-MOST SUBQUERY
+    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+# plan-idx
+COMPOUND QUERY
+  LEFT-MOST SUBQUERY
+    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)

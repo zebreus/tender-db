@@ -1,0 +1,325 @@
+{
+ "generated": "see fetch-notes.md",
+ "A1_540072": {
+  "check": "GET /v1/tenders/540072: unique organization_id over Procedure-Buyer and Lot-ReviewOrg",
+  "expected": [
+   22198704
+  ],
+  "got": [
+   22198704
+  ],
+  "pass": true,
+  "fetched_at": "2026-10-24T18:11:07Z",
+  "version": 4,
+  "parties": [
+   [
+    "Procedure-Buyer",
+    null,
+    22198704,
+    "Sociedad Aragonesa de Gestión Agroambiental, S.L.U. (SARGA)"
+   ],
+   [
+    "Lot-ReviewOrg",
+    "LOT-0001",
+    22198704,
+    "Sociedad Aragonesa de Gestión Agroambiental, S.L.U. (SARGA)"
+   ],
+   [
+    "Lot-ReviewOrg",
+    "LOT-0002",
+    22198704,
+    "Sociedad Aragonesa de Gestión Agroambiental, S.L.U. (SARGA)"
+   ],
+   [
+    "Lot-ReviewOrg",
+    "LOT-0003",
+    22198704,
+    "Sociedad Aragonesa de Gestión Agroambiental, S.L.U. (SARGA)"
+   ],
+   [
+    "Lot-ReviewOrg",
+    "LOT-0004",
+    22198704,
+    "Sociedad Aragonesa de Gestión Agroambiental, S.L.U. (SARGA)"
+   ]
+  ],
+  "sql_x540072": "the 4 Lot-ReviewOrg rows are anchored at ORG-0001 of notices 23563650 / 23576127 / 23589619 / 23658810 (one per lot); each lot names TPO-0001 \"Sociedad Aragonesa de Gestión Agroambiental S.L.U\" under ORG-0001 \"Sociedad Aragonesa de Gestión Agroambiental, S.L.U. (SARGA)\"; final.py tier A; s_mentions_c: notice 23563650 has no TPO-0001 mention (ORG-0001 -> 22198704)"
+ },
+ "A2_31974991": {
+  "check": "GET /v1/organizations/31974991 (\"Dirección Principal\", 420 mentions while open)",
+  "expected": "mentions 0 or 404",
+  "got": {
+   "error": {
+    "message": "no such organization",
+    "status": 404
+   }
+  },
+  "http": "404",
+  "pass": true,
+  "fetched_at": "2026-10-24T18:11:09Z",
+  "sweep_2772": "has run: the organization row is gone (404). retire_mentions never deletes an organization (586-u1/decision.md, Unit 3), so a 404 means the orphan sweep removed it."
+ },
+ "A2_extra_hub_orgs_from_decision_unit4_list": {
+  "31975096": {
+   "http": "404",
+   "body": {
+    "error": {
+     "message": "no such organization",
+     "status": 404
+    }
+   }
+  },
+  "31975008": {
+   "http": "404",
+   "body": {
+    "error": {
+     "message": "no such organization",
+     "status": 404
+    }
+   }
+  },
+  "31975059": {
+   "http": "404",
+   "body": {
+    "error": {
+     "message": "no such organization",
+     "status": 404
+    }
+   }
+  },
+  "31975006": {
+   "http": "404",
+   "body": {
+    "error": {
+     "message": "no such organization",
+     "status": 404
+    }
+   }
+  },
+  "31975019": {
+   "http": "404",
+   "body": {
+    "error": {
+     "message": "no such organization",
+     "status": 404
+    }
+   }
+  },
+  "31975180": {
+   "http": "404",
+   "body": {
+    "error": {
+     "message": "no such organization",
+     "status": 404
+    }
+   }
+  },
+  "31975009": {
+   "http": "404",
+   "body": {
+    "error": {
+     "message": "no such organization",
+     "status": 404
+    }
+   }
+  },
+  "31975004": {
+   "http": "404",
+   "body": {
+    "error": {
+     "message": "no such organization",
+     "status": 404
+    }
+   }
+  },
+  "31975568": {
+   "http": "404",
+   "body": {
+    "error": {
+     "message": "no such organization",
+     "status": 404
+    }
+   }
+  },
+  "31975060": {
+   "http": "404",
+   "body": {
+    "error": {
+     "message": "no such organization",
+     "status": 404
+    }
+   }
+  },
+  "31975949": {
+   "http": "404",
+   "body": {
+    "error": {
+     "message": "no such organization",
+     "status": 404
+    }
+   }
+  }
+ },
+ "A3_tenderned_label_tenders": {
+  "346591": {
+   "version": 1,
+   "fetched_at": "2026-10-24T18:11:12Z",
+   "parties_on_18044191_or_18044192": [],
+   "lot_role_hits": [],
+   "pass": true,
+   "parties": [
+    [
+     "Procedure-Buyer",
+     null,
+     9003,
+     "Rijksvastgoedbedrijf"
+    ],
+    [
+     "Contract-Signatory",
+     "LOT-0000",
+     9003,
+     "Rijksvastgoedbedrijf"
+    ],
+    [
+     "Lot-Mediator",
+     "LOT-0000",
+     20882145,
+     "Klachtenmeldpunt Rijksvastgoedbedrijf"
+    ],
+    [
+     "Lot-ReviewInfo",
+     "LOT-0000",
+     1209767,
+     "Burgerlijke Rechter te 's-Gravenhage"
+    ],
+    [
+     "Lot-ReviewOrg",
+     "LOT-0000",
+     1209767,
+     "Burgerlijke Rechter te 's-Gravenhage"
+    ],
+    [
+     "Tenderer",
+     "LOT-0000",
+     20493966,
+     "PHB Elst B.V."
+    ]
+   ]
+  },
+  "361790": {
+   "version": 5,
+   "fetched_at": "2026-10-24T18:11:15Z",
+   "parties_on_18044191_or_18044192": [],
+   "lot_role_hits": [],
+   "pass": true,
+   "parties": [
+    [
+     "Procedure-Buyer",
+     null,
+     9003,
+     "Rijksvastgoedbedrijf"
+    ],
+    [
+     "Contract-Signatory",
+     "LOT-0000",
+     9003,
+     "Rijksvastgoedbedrijf"
+    ],
+    [
+     "Lot-Mediator",
+     "LOT-0000",
+     20882145,
+     "Klachtenmeldpunt Rijksvastgoedbedrijf"
+    ],
+    [
+     "Lot-ReviewInfo",
+     "LOT-0000",
+     1209767,
+     "Burgerlijke Rechter te 's-Gravenhage"
+    ],
+    [
+     "Lot-ReviewOrg",
+     "LOT-0000",
+     1209767,
+     "Burgerlijke Rechter te 's-Gravenhage"
+    ],
+    [
+     "Tenderer",
+     "LOT-0000",
+     8297644,
+     "Veolia Gebouwenbeheer B.V."
+    ]
+   ]
+  }
+ },
+ "A4_label_org_roles": {
+  "check": "tender_version_parties by organization_id = 18044191 / 18044192 (all versions), roles",
+  "statement": "v01_labels",
+  "expected": "only legacy further-information / tender-receipt rows, no Lot-*",
+  "rows": [
+   {
+    "org_id": 18044191,
+    "role": "further-information",
+    "n_rows": 193,
+    "n_current_rows": 101,
+    "min_tender": 7226068,
+    "max_tender": 8529842,
+    "min_section": "ORG-2",
+    "max_section": "ORG-3"
+   },
+   {
+    "org_id": 18044192,
+    "role": "tender-receipt",
+    "n_rows": 175,
+    "n_current_rows": 83,
+    "min_tender": 7226068,
+    "max_tender": 8529842,
+    "min_section": "ORG-3",
+    "max_section": "ORG-3"
+   }
+  ],
+  "lot_rows": [],
+  "pass": true,
+  "before_U5_refold": "576-u4/u5_buyer_cohort.json (16:45Z): 18044191 1,032 Lot-AddInfo + 193 further-information; 18044192 1,076 Lot-TenderReceipt + 175 tender-receipt"
+ },
+ "A5_org_18044191_now": {
+  "country": "NL",
+  "id": 18044191,
+  "identifier": null,
+  "identifier_kind": null,
+  "identifier_status": null,
+  "mentions": 101,
+  "merged_identifiers": [],
+  "name": "Vraag- en antwoordmodule in het dashboard van deze aanbesteding",
+  "provisional": true
+ },
+ "A5_org_18044192_now": {
+  "country": "NL",
+  "id": 18044192,
+  "identifier": null,
+  "identifier_kind": null,
+  "identifier_status": null,
+  "mentions": 83,
+  "merged_identifiers": [],
+  "name": "Dashboard van deze aanbesteding",
+  "provisional": true
+ },
+ "A6_tender_4592524_buyer": {
+  "version": 3,
+  "buyer_parties": [
+   [
+    "buyer",
+    null,
+    31484168,
+    "Raad van State, Algemene Rekenkamer en het Kabinet der Koningin p/a Het NIC BV"
+   ]
+  ],
+  "org_31431409_served": [
+   [
+    "further-information",
+    null,
+    31431409
+   ]
+  ]
+ }
+}

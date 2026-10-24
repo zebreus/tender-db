@@ -1,0 +1,20 @@
+# plan-copy
+COMPOUND QUERY
+  LEFT-MOST SUBQUERY
+    SEARCH p USING INDEX tender_version_parties_org (organization_id=?)
+    SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+    USE SORTER FOR GROUP BY
+  UNION ALL
+    SEARCH p USING INDEX tender_version_parties_org (organization_id=?)
+    SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+    USE SORTER FOR GROUP BY
+# plan-idx
+COMPOUND QUERY
+  LEFT-MOST SUBQUERY
+    SEARCH p USING INDEX tender_version_parties_org (organization_id=?)
+    SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+    USE SORTER FOR GROUP BY
+  UNION ALL
+    SEARCH p USING INDEX tender_version_parties_org (organization_id=?)
+    SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+    USE SORTER FOR GROUP BY

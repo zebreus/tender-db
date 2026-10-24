@@ -1,0 +1,18 @@
+# plan-copy
+SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+SEARCH p USING INDEX tender_version_parties_version (tender_id=? AND seq=?)
+SEARCH l USING INTEGER PRIMARY KEY (rowid=?)
+SEARCH i USING INDEX sqlite_autoindex_notice_ids_1 (notice_id=? AND section_id=? AND field_id=?)
+SEARCH s USING INDEX sqlite_autoindex_notice_sections_1 (notice_id=? AND section_id=?)
+SEARCH tn USING INDEX sqlite_autoindex_notice_texts_1 (notice_id=? AND section_id=? AND field_id=? AND ordinal=?)
+SEARCH pn USING INDEX sqlite_autoindex_notice_texts_1 (notice_id=? AND section_id=? AND field_id=? AND ordinal=?)
+USE SORTER FOR GROUP BY
+# plan-idx
+SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+SEARCH p USING INDEX tender_version_parties_version (tender_id=? AND seq=?)
+SEARCH l USING INTEGER PRIMARY KEY (rowid=?)
+SEARCH i USING INDEX sqlite_autoindex_notice_ids_1 (notice_id=? AND section_id=? AND field_id=?)
+SEARCH s USING INDEX sqlite_autoindex_notice_sections_1 (notice_id=? AND section_id=?)
+SEARCH tn USING INDEX sqlite_autoindex_notice_texts_1 (notice_id=? AND section_id=? AND field_id=? AND ordinal=?)
+SEARCH pn USING INDEX sqlite_autoindex_notice_texts_1 (notice_id=? AND section_id=? AND field_id=? AND ordinal=?)
+USE SORTER FOR GROUP BY
