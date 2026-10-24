@@ -1,0 +1,144 @@
+{
+ "url": "https://tenders.zebreus.click/v1/organizations?name_prefix=great%20western%20hospitals&limit=20",
+ "http": "200",
+ "fetched": "2026-10-24T18:30:38Z",
+ "body": {
+  "ignored_filters": [],
+  "items": [
+   {
+    "country": "GB",
+    "id": 31371015,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "GREAT WESTERN HOSPITALS - NHS FOUNDATION TRUST",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 30902061,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "Great Western Hospitals Foundation Trust",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 13759183,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "Great Western Hospitals NHS Founcation Trust",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31331416,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 2,
+    "merged_identifiers": [],
+    "name": "GREAT WESTERN HOSPITALS NHS FOUNDATION TRSUT",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 1731772,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 123,
+    "merged_identifiers": [],
+    "name": "Great Western Hospitals NHS Foundation Trust",
+    "provisional": true
+   },
+   {
+    "country": null,
+    "id": 7863876,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 4,
+    "merged_identifiers": [],
+    "name": "Great Western Hospitals NHS Foundation Trust",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31535854,
+    "identifier": "GBPPONPRZJ5573LWLP",
+    "identifier_kind": "national",
+    "identifier_status": null,
+    "mentions": 83,
+    "merged_identifiers": [],
+    "name": "Great Western Hospitals NHS Foundation Trust",
+    "provisional": false
+   },
+   {
+    "country": "GB",
+    "id": 31599323,
+    "identifier": "GBNHSRN3",
+    "identifier_kind": "national",
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "Great Western Hospitals NHS Foundation Trust",
+    "provisional": false
+   },
+   {
+    "country": "GB",
+    "id": 31336469,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "GREAT WESTERN HOSPITALS NHS FOUNDATION TRUST (FORMERLY KNOWN AS SWINDON & MARLBOROUGH NHS TRUST)",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 1243459,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "Great Western Hospitals NHS Foundation Trust on behalf of: NHS Bath And North East Somerset",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31592494,
+    "identifier": "GBNHS110044",
+    "identifier_kind": "national",
+    "identifier_status": null,
+    "mentions": 5,
+    "merged_identifiers": [],
+    "name": "Great Western Hospitals NHS Foundation Trust Swindon",
+    "provisional": false
+   },
+   {
+    "country": "GB",
+    "id": 10629844,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "Great Western Hospitals NHS Trust",
+    "provisional": true
+   }
+  ],
+  "more": false,
+  "next_cursor": null
+ }
+}

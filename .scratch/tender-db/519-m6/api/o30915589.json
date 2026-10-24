@@ -1,0 +1,16 @@
+{
+ "url": "https://tenders.zebreus.click/v1/organizations/30915589",
+ "http": "200",
+ "fetched": "2026-10-24T18:22:02Z",
+ "body": {
+  "country": "GB",
+  "id": 30915589,
+  "identifier": "GBPPONPBND1678TCRM",
+  "identifier_kind": "national",
+  "identifier_status": null,
+  "mentions": 100,
+  "merged_identifiers": [],
+  "name": "NHS Buckinghamshire Oxfordshire & Berkshire West Integrated Care Board",
+  "provisional": false
+ }
+}

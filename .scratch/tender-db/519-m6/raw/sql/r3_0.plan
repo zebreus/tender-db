@@ -1,0 +1,4 @@
+# plan-copy
+SEARCH organizations USING INTEGER PRIMARY KEY (rowid=?)
+# plan-idx
+SEARCH organizations USING INTEGER PRIMARY KEY (rowid=?)

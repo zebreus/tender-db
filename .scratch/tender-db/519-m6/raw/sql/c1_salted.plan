@@ -1,0 +1,12 @@
+# plan-copy
+COMPOUND QUERY
+  LEFT-MOST SUBQUERY
+    SEARCH organizations USING INTEGER PRIMARY KEY (rowid=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX organization_mentions_org (organization_id=?)
+# plan-idx
+COMPOUND QUERY
+  LEFT-MOST SUBQUERY
+    SEARCH organizations USING INTEGER PRIMARY KEY (rowid=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX organization_mentions_org (organization_id=?)

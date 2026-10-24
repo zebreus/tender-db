@@ -1,0 +1,238 @@
+{
+ "url": "https://tenders.zebreus.click/v1/organizations?name_prefix=north%20bristol&limit=20",
+ "http": "200",
+ "fetched": "2026-10-24T18:22:12Z",
+ "body": {
+  "ignored_filters": [],
+  "items": [
+   {
+    "country": "GB",
+    "id": 31285362,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "NORTH BRISTOL CATERING CLUSTER",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 14871583,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "North Bristol National Health Service Trust",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 1268048,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 328,
+    "merged_identifiers": [
+     {
+      "country": "GB",
+      "identifier": "GBNHSRVJ",
+      "identifier_kind": "national"
+     }
+    ],
+    "name": "North Bristol NHS Trust",
+    "provisional": true
+   },
+   {
+    "country": null,
+    "id": 7463659,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 9,
+    "merged_identifiers": [],
+    "name": "North Bristol NHS Trust",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31550549,
+    "identifier": "GBNHSPHPY3425XCGD",
+    "identifier_kind": "national",
+    "identifier_status": null,
+    "mentions": 2,
+    "merged_identifiers": [],
+    "name": "North Bristol NHS Trust",
+    "provisional": false
+   },
+   {
+    "country": "GB",
+    "id": 31592497,
+    "identifier": "GBNHS400038",
+    "identifier_kind": "national",
+    "identifier_status": null,
+    "mentions": 5,
+    "merged_identifiers": [],
+    "name": "North Bristol NHS Trust",
+    "provisional": false
+   },
+   {
+    "country": null,
+    "id": 30570202,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "North Bristol NHS Trust (in-house bid team)",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31599660,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "North Bristol NHS Trust (RVJ)",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31116538,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 9,
+    "merged_identifiers": [],
+    "name": "NORTH BRISTOL NHS TRUST HQ",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31153730,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "NORTH BRISTOL NHS TRUST ON BEHALF OF NORTH BRISTOL NHS TRUST, UNITED BRISTOL HEALTHCARE NHS TRUST AND ROYAL UNITED HOSPITAL, BATH",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31164577,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "NORTH BRISTOL NHS TRUST ON BEHALF OF PAN AVON TRUSTS, INCLUDING UNITED BRISTOL, NORTH BRISTOL AND ROYAL UNITED BATH, EXECUTIVE TEAM BASE",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31163334,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 2,
+    "merged_identifiers": [],
+    "name": "NORTH BRISTOL NHS TRUST ON BEHALF OF TRUSTS WITHIN AVON, GLOUCESTER, WILTSHIRE SUPPLIER MANAGEMENT CONFEDERATION",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31168560,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "NORTH BRISTOL NHS TRUST ON BEHALF OF TRUSTS WITHIN THE AVON, GLOUCESTERSHIRE & WILTSHIRE SUPPLIER MANAGEMENT CONFEDERATION",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31157828,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "NORTH BRISTOL NHS TRUST TRUST HEADQUARTERS, FRENCHAY HOSPITAL",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31260585,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 19,
+    "merged_identifiers": [],
+    "name": "NORTH BRISTOL NHS TRUST, BRISTOL & WESTON NHS PURCHASING CONSORTIUM",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31260584,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 9,
+    "merged_identifiers": [],
+    "name": "NORTH BRISTOL NHS TRUST, BRISTOL AND WESTON NHS PURCHASING CONSORTIUM",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31165634,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "NORTH BRISTOL NHS TRUST, EXECUTIVE TEAM BASE",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31184681,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 3,
+    "merged_identifiers": [],
+    "name": "NORTH BRISTOL NHS TRUST, FRENCHAY HOSPITAL",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31207427,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "NORTH BRISTOL NHS TRUST, FRENCHAY HOSPITAL TRUST HEADQUARTERS",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31219700,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "NORTH BRISTOL NHS TRUST, FRENCHAY HOSPITAL, TRUST HEADQUARTERS",
+    "provisional": true
+   }
+  ],
+  "more": true,
+  "next_cursor": "31219700~north bristol nhs trust, frenchay hospital, trust headquarters"
+ }
+}

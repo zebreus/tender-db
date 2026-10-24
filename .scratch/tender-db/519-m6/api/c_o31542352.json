@@ -1,0 +1,16 @@
+{
+ "url": "https://tenders.zebreus.click/v1/organizations/31542352",
+ "http": "200",
+ "fetched": "2026-10-24T18:53:59Z",
+ "body": {
+  "country": "GB",
+  "id": 31542352,
+  "identifier": "GBPPONPCLY6219YPTV",
+  "identifier_kind": "national",
+  "identifier_status": null,
+  "mentions": 10,
+  "merged_identifiers": [],
+  "name": "NHS Leicester, Leicestershire and Rutland Integrated Care Board",
+  "provisional": false
+ }
+}

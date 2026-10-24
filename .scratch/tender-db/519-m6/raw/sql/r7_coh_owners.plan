@@ -1,0 +1,556 @@
+# plan-copy
+COMPOUND QUERY
+  LEFT-MOST SUBQUERY
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+  UNION ALL
+    SCAN organizations
+# plan-idx
+COMPOUND QUERY
+  LEFT-MOST SUBQUERY
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)
+  UNION ALL
+    SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier=?)

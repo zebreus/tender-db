@@ -1,0 +1,16 @@
+{
+ "url": "https://tenders.zebreus.click/v1/organizations/30916889",
+ "http": "200",
+ "fetched": "2026-10-24T18:53:54Z",
+ "body": {
+  "country": "GB",
+  "id": 30916889,
+  "identifier": "GBCOH01202866",
+  "identifier_kind": "national",
+  "identifier_status": null,
+  "mentions": 12,
+  "merged_identifiers": [],
+  "name": "Day Lewis PLC",
+  "provisional": false
+ }
+}

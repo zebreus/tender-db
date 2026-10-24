@@ -1,0 +1,155 @@
+{
+ "url": "https://tenders.zebreus.click/v1/organizations?name_prefix=bridgewater%20community&limit=20",
+ "http": "200",
+ "fetched": "2026-10-24T18:30:41Z",
+ "body": {
+  "ignored_filters": [],
+  "items": [
+   {
+    "country": "GB",
+    "id": 8369923,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "Bridgewater Community Health Care NHS Foundation Trust",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 8174076,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 3,
+    "merged_identifiers": [],
+    "name": "Bridgewater Community Healthcare",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 9280983,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "Bridgewater Community Healthcare NHS Foundation",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 10989616,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "Bridgewater Community Healthcare NHS Foundation Bevan House",
+    "provisional": true
+   },
+   {
+    "country": null,
+    "id": 6409320,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "Bridgewater Community Healthcare NHS Foundation Trust",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 7772425,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 39,
+    "merged_identifiers": [],
+    "name": "Bridgewater Community Healthcare NHS Foundation Trust",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31543388,
+    "identifier": "GBNHSRY2",
+    "identifier_kind": "national",
+    "identifier_status": null,
+    "mentions": 17,
+    "merged_identifiers": [],
+    "name": "Bridgewater Community Healthcare NHS Foundation Trust",
+    "provisional": false
+   },
+   {
+    "country": "GB",
+    "id": 31567523,
+    "identifier": "GBNHS174343",
+    "identifier_kind": "national",
+    "identifier_status": null,
+    "mentions": 2,
+    "merged_identifiers": [],
+    "name": "Bridgewater Community Healthcare NHS Foundation Trust",
+    "provisional": false
+   },
+   {
+    "country": "GB",
+    "id": 31593802,
+    "identifier": "GBNHSNHSTRUSTBRIDGEWATERCOMMUNITYHEALTHCARENHSFOUNDATIONTRUSTRY2",
+    "identifier_kind": "national",
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "Bridgewater Community Healthcare NHS Foundation Trust",
+    "provisional": false
+   },
+   {
+    "country": null,
+    "id": 6996401,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "Bridgewater Community Healthcare NHS Foundation Trust and Greater Manchester West Mental Health NHS Foundation Trust",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 3490284,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 8,
+    "merged_identifiers": [],
+    "name": "Bridgewater Community Healthcare nhs Trust",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 8610158,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 4,
+    "merged_identifiers": [],
+    "name": "Bridgewater Community NHS Foundation Trust",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31606744,
+    "identifier": "GBNHSR2Y",
+    "identifier_kind": "national",
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "Bridgewater Community NHS Foundation Trust",
+    "provisional": false
+   }
+  ],
+  "more": false,
+  "next_cursor": null
+ }
+}

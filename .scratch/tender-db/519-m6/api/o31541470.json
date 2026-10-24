@@ -1,0 +1,16 @@
+{
+ "url": "https://tenders.zebreus.click/v1/organizations/31541470",
+ "http": "200",
+ "fetched": "2026-10-24T18:22:07Z",
+ "body": {
+  "country": "GB",
+  "id": 31541470,
+  "identifier": "GBPPONPQBL2761HHXG",
+  "identifier_kind": "national",
+  "identifier_status": null,
+  "mentions": 7,
+  "merged_identifiers": [],
+  "name": "The Newcastle Hospitals NHS Foundation Trust",
+  "provisional": false
+ }
+}

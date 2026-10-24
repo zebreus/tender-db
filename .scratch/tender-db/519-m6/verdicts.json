@@ -1,0 +1,1965 @@
+{
+ "cohort": "519-m6-2026-10-24",
+ "verdicts": [
+  {
+   "org_id": 30913729,
+   "identifier": "GBNHSA3HOT",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 nhse-523/high] A3HOT is no NHS England code (ODS 404); all 3 mentions name NHS England North East and Yorkshire. NHS England (issue 523): wrong, no correction, never a PPON. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 30913869,
+   "identifier": "GBNHS110100",
+   "verdict": "wrong",
+   "correct_identifier": "GBPPONPNWR4212QWHQ",
+   "rationale": "[519 M6 body-ppon/high] 110100 is a local number, ODS 404; the 7 mentions name Somerset NHS FT (one with the location suffix Yeovil), whose same-name PPON row is 30913999. Every mention name is the body's and the PPON org stands under that literal (R3/r8). | challenger: rule-based challenger: merge GBPPONPNWR4212QWHQ 30913999 - unique live owner 30913999 'Somerset NHS Foundation Trust'; every mention name scores >= 0.50",
+   "confidence": "high"
+  },
+  {
+   "org_id": 30914099,
+   "identifier": "GBNHSY62NORTHWESTCOMMISSIONINGREGION",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 body-no-ppon/high] Y62 NORTH WEST COMMISSIONING REGION is NHS England North West's typed label on a row whose 17 mentions name L&SC ICB, GM ICB, C&M ICB and NHS England North West, several bodies. Wrong with no correction: withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 30915329,
+   "identifier": "GBNHSUKN06",
+   "verdict": "wrong",
+   "correct_identifier": "GBPPONPTNY7183GXBY",
+   "rationale": "[519 M6 body-ppon/high] ukn06 is a NUTS code (ODS 404); all 11 mentions name Northern Ireland Blood Transfusion Service, whose same-name PPON row is 31559449. Every mention name is the body's and the PPON org stands under that literal (R3/r8). | challenger: rule-based challenger: merge GBPPONPTNY7183GXBY 31559449 - unique live owner 31559449 'Northern Ireland Blood Transfusion Service'; every mention name scores >= 1.00",
+   "confidence": "high"
+  },
+  {
+   "org_id": 30916411,
+   "identifier": "GBNHSPHNT9958NGDZ",
+   "verdict": "wrong",
+   "correct_identifier": "GBPPONPHNT9958NGDZ",
+   "rationale": "[519 M6 ppon-value/high] The GB-NHS value is a PPON serial, not an ODS code. The mention names Hull University Teaching Hospitals NHS Trust; the PPON is carried by 30915216, the RWA survivor of that name. | challenger: rule-based challenger: merge GBPPONPHNT9958NGDZ 30915216 - unique live owner 30915216 'Hull University Teaching Hospitals NHS Trust'; every mention name scores >= 1.00",
+   "confidence": "high"
+  },
+  {
+   "org_id": 30953773,
+   "identifier": "GBNHSPWNJ1991NGDW",
+   "verdict": "wrong",
+   "correct_identifier": "GBPPONPWNJ1991NGDW",
+   "rationale": "[519 M6 ppon-value/medium] The PPON is carried by 30914040 \"Business Services Organisation, Procurement and Logistics Service\"; the 44 mentions name BSO ITS (23), BSO PaLS (20) and BSO (1), two directorates of one NI body. Held at medium: the owner heads as one directorate and half the mentions name another, so the merge is not plain; the prior expected no owner. | challenger: rule-based challenger: hold GBPPONPWNJ1991NGDW 30914040 - a mention name scores 0.43 against the owner head 'Business Services Organisation, Procurement and Logistics Service'",
+   "confidence": "medium"
+  },
+  {
+   "org_id": 30971947,
+   "identifier": "GBNHSW248289",
+   "verdict": "wrong",
+   "correct_identifier": "GBPPONPZDC7131GJTH",
+   "rationale": "[519 M6 body-ppon/high] W248289 is no ODS code; the mention names South Tees Hospitals NHS FT, whose PPON row is the RTR survivor 31556601. Every mention name is the body's and the PPON org stands under that literal (R3/r8). | challenger: rule-based challenger: merge GBPPONPZDC7131GJTH 31556601 - unique live owner 31556601 'South Tees Hospitals NHS Foundation Trust'; every mention name scores >= 1.00",
+   "confidence": "high"
+  },
+  {
+   "org_id": 30974733,
+   "identifier": "GBNHSUKF2",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 body-no-ppon/medium] UKF2 is a NUTS code; the mention names \"University Hospitals of Leicester NHS Trust  Leicester Royal Infirmary\", the trust plus a site, and the RWE survivor 30930117 is its PPON row. Held at medium: a site-qualified name (D2 exclusion) is not plain enough for a merge. | challenger: rule-based challenger: hold GBPPONPWXN8614MPHH 30930117 - a mention names a site/place/network ('University Hospitals of Leicester NHS Trust  Leicester Royal Infirmary'): never high | agent challenger C4: a site/place takes no PPON (spec); correction dropped so a later re-POST of the holds at high can never promote it.",
+   "confidence": "medium"
+  },
+  {
+   "org_id": 30974734,
+   "identifier": "GBNHSUKF22",
+   "verdict": "wrong",
+   "correct_identifier": "GBPPONPPBC2775WXPX",
+   "rationale": "[519 M6 body-ppon/high] ukf22 is a NUTS code (ODS 404); the mention names Leicestershire Partnership NHS Trust, whose same-name PPON row is 31537637. Every mention name is the body's and the PPON org stands under that literal (R3/r8). | challenger: rule-based challenger: merge GBPPONPPBC2775WXPX 31537637 - unique live owner 31537637 'Leicestershire Partnership NHS Trust'; every mention name scores >= 1.00",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31534478,
+   "identifier": "GBNHSGBNHSRY3",
+   "verdict": "wrong",
+   "correct_identifier": "RY3",
+   "rationale": "[519 M6 body-no-ppon/high] GB-NHS-GB-NHS-RY3 is code RY3 with the scheme glued twice; the mention names East of England Community Health and Care NHS Trust, the name the standing GBNHSRY3 row 31572008 carries, and no PPON row stands for it (API search). Ruling 8: a mistyped or glued code whose body has no standing PPON org gets the right ODS code, which keys nothing (withheld and flagged only). | challenger: rule-based challenger: unkeyed RY3  - RY3 is an ODS/NHS England code: keys nothing",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31534565,
+   "identifier": "GBNHS11911171",
+   "verdict": "wrong",
+   "correct_identifier": "GBPPONPHHT9556BWJJ",
+   "rationale": "[519 M6 body-ppon/medium] 11911171 is Care City Innovation C.I.C., a NELFT-linked CIC; the mention names North East London NHS FT (PPON row 31535216, RAT survivor). Held at medium: the value names a related body that may itself have been the party. | challenger: rule-based challenger: merge GBPPONPHHT9556BWJJ 31535216 - unique live owner 31535216 'North East London NHS Foundation Trust'; every mention name scores >= 1.00 | the reader held it at medium; on disagreement the row posts at medium anyway",
+   "confidence": "medium"
+  },
+  {
+   "org_id": 31536288,
+   "identifier": "GBNHS86101",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 site-or-hosted/high] 86101 is no ODS code (404); the mention names Newcastle Hospitals NHS FT (Newcastle Advanced Therapies), a hosted unit. 513 HOSTED_OR_SITE precedent (D2): wrong, no correction. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31536836,
+   "identifier": "GBNHSPYZV3517VQCJ",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 ppon-value/high] The value is the PPON of Sheffield Teaching Hospitals NHS FT (owner 30916153), the host trust, while the mention names South Yorkshire Bassetlaw Pathology, a pathology network. Rubric: a PPON of a different entity (a host trust) gets no correction, and a network never takes a PPON (D2). | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31537283,
+   "identifier": "GBNHSQ75Q83Q84",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 nhse-523/high] The value lists three codes (Q75, Q83, Q84); the 5 mentions name NHS England - North West or NHS England, so no single code is the right one. NHS England (issue 523): wrong, no correction, never a PPON. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31537796,
+   "identifier": "GBNHSA03P",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value A03P is no ODS code (other, ODS not-ods-shaped); the mention names \"Look Ahead Care and Support Service\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31538079,
+   "identifier": "GBNHSGBNHS32T",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 nhse-523/high] GB-NHS-GB-NHS-32T spells 32T, no NHS England code; the mention names NHS England North West - Health and Justice. NHS England (issue 523): wrong, no correction, never a PPON. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31542386,
+   "identifier": "GBNHSOCDSH6VHTK05091A",
+   "verdict": "wrong",
+   "correct_identifier": "GBPPONPGCG2135TXWL",
+   "rationale": "[519 M6 body-ppon/high] ocds-h6vhtk-05091a is an OCDS release id; the mention names Countess of Chester Hospital NHS FT, whose PPON row is the RJR survivor 31581032. Every mention name is the body's and the PPON org stands under that literal (R3/r8). | challenger: rule-based challenger: merge GBPPONPGCG2135TXWL 31581032 - unique live owner 31581032 'Countess of Chester Hospital NHS Foundation Trust'; every mention name scores >= 1.00",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31542548,
+   "identifier": "GBNHSC346",
+   "verdict": "wrong",
+   "correct_identifier": "13119584",
+   "rationale": "[519 M6 company-coh/high] The value C346 is no ODS code or register number of this org; the same-name standing org 31535346 carries GBCOH13119584, which the register names SEVEN CARE SERVICES LTD. Every mention names \"Seven Care Services Ltd\", so that number is the correction and the arm merges into 31535346. | challenger: rule-based challenger: merge 13119584 31535346 - register 'SEVEN CARE SERVICES LTD' matches (>= 1.00); unique owner 31535346",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31544072,
+   "identifier": "GBNHSOCDSH6VHTK058FFD",
+   "verdict": "wrong",
+   "correct_identifier": "GBPPONPGCG2135TXWL",
+   "rationale": "[519 M6 body-ppon/high] ocds-h6vhtk-058ffd is an OCDS release id; the mention names Countess of Chester Hospital NHS FT, whose PPON row is the RJR survivor 31581032. Every mention name is the body's and the PPON org stands under that literal (R3/r8). | challenger: rule-based challenger: merge GBPPONPGCG2135TXWL 31581032 - unique live owner 31581032 'Countess of Chester Hospital NHS Foundation Trust'; every mention name scores >= 1.00",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31544155,
+   "identifier": "GBNHSPTPB4248VJQT",
+   "verdict": "wrong",
+   "correct_identifier": "GBPPONPTPB4248VJQT",
+   "rationale": "[519 M6 ppon-value/high] The GB-NHS value is a PPON serial, not an ODS code. The mention names Mid Yorkshire Teaching NHS Trust; the PPON is carried by 30917291, the RXF survivor, under the trust's former name Mid Yorkshire Hospitals NHS Trust. | challenger: rule-based challenger: merge GBPPONPTPB4248VJQT 30917291 - unique live owner 30917291 'Mid Yorkshire Hospitals NHS Trust'; every mention name scores >= 0.50",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31544177,
+   "identifier": "GBNHSPHQR1485BDJQ",
+   "verdict": "wrong",
+   "correct_identifier": "GBPPONPHQR1485BDJQ",
+   "rationale": "[519 M6 ppon-value/medium] The PPON is carried by 31557115 Cambridgeshire Community Services NHS Trust (RYV survivor), but 1 of 3 mentions names Queen Elizabeth Hospital King's Lynn NHS Trust. Held at medium: mixed mention names are never high for a merge. | challenger: rule-based challenger: hold GBPPONPHQR1485BDJQ 31557115 - a mention name scores 0.00 against the owner head 'Cambridgeshire Community Services NHS Trust'",
+   "confidence": "medium"
+  },
+  {
+   "org_id": 31544639,
+   "identifier": "GBNHSQM8",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 body-no-ppon/medium] QM8 is the ICB code QM7 mistyped (ODS 404); both mentions name \"NHS Herts Valley and West Essex ICB\", and a PPON row 31554399 \"NHS Hertfordshire and West Essex ICB\" stands with 1 mention. Held at medium: the names differ and the PPON row is thin, so the merge is not plain. | challenger: rule-based challenger: hold GBPPONPDQL2869XVHY 31554399 - a mention name scores 0.40 against the owner head 'NHS Hertfordshire and West Essex ICB' | agent challenger C4: a site/place takes no PPON (spec); correction dropped so a later re-POST of the holds at high can never promote it.",
+   "confidence": "medium"
+  },
+  {
+   "org_id": 31545892,
+   "identifier": "GBNHS400022",
+   "verdict": "wrong",
+   "correct_identifier": "GBPPONPTTC1488WBVZ",
+   "rationale": "[519 M6 body-ppon/high] 400022 is a local number, ODS 404; the mention names Hertfordshire Community NHS Trust, whose same-name PPON row is 30916237. Every mention name is the body's and the PPON org stands under that literal (R3/r8). | challenger: rule-based challenger: merge GBPPONPTTC1488WBVZ 30916237 - unique live owner 30916237 'Hertfordshire Community NHS Trust'; every mention name scores >= 1.00",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31546699,
+   "identifier": "GBNHSM90005",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value M90005 is no ODS code (other, ODS 404); the mention names \"St Margaret's Medical Practice\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31547215,
+   "identifier": "GBNHS9213634E",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value 9213634E is no ODS code (other, ODS not-ods-shaped); the mention names \"Open Door\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31547404,
+   "identifier": "GBNHSPVQC921WGRM",
+   "verdict": "wrong",
+   "correct_identifier": "GBPPONPVQC9261WGRM",
+   "rationale": "[519 M6 body-no-ppon/high] PVQC-921-WGRM is PPON PVQC-9261-WGRM with one digit dropped, carried by 30913873 Nottingham University Hospital NHS Trust (97 mentions); both mentions name Nottingham University Hospitals NHS Trust. Every mention name is the body's. | challenger: rule-based challenger: merge GBPPONPVQC9261WGRM 30913873 - unique live owner 30913873 'Nottingham University Hospital NHS Trust'; every mention name scores >= 0.50",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31547562,
+   "identifier": "GBNHSA3Q8",
+   "verdict": "wrong",
+   "correct_identifier": "02611510",
+   "rationale": "[519 M6 company-coh/high] The value A3Q8 is no ODS code or register number of this org; the same-name standing org 31570814 carries GBCOH02611510, which the register names SUFFOLK MIND. Every mention names \"Suffolk Mind\", so that number is the correction and the arm merges into 31570814. | challenger: rule-based challenger: merge 02611510 31570814 - register 'SUFFOLK MIND' matches (>= 1.00); unique owner 31570814",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31547563,
+   "identifier": "GBNHS8KE0",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] 8KE0 is no ODS code; the mention names Access Community Trust, a charity and not an NHS body (the prior's body test matched only the word Trust). Wrong with no correction: withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31549058,
+   "identifier": "GBNHSQE1000",
+   "verdict": "wrong",
+   "correct_identifier": "GBPPONPBWM8336DJRG",
+   "rationale": "[519 M6 body-no-ppon/high] QE1000 is the ICB code QE1 with 000 glued, ODS 404; all 4 mentions name NHS Lancashire & South Cumbria ICB, whose PPON org is 31569664 (M5; code_survivors QE1). Every mention name is the body's (Check item 14: the route stands). | challenger: rule-based challenger: merge GBPPONPBWM8336DJRG 31569664 - unique live owner 31569664 'NHS Lancashire and South Cumbria Integrated Care Board'; every mention name scores >= 1.00",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31549692,
+   "identifier": "GBNHSQK1000",
+   "verdict": "wrong",
+   "correct_identifier": "GBPPONPCLY6219YPTV",
+   "rationale": "[519 M6 body-ppon/high] QK1000 is LLR ICB code QK1 with 000 glued, ODS 404; all 16 mentions name NHS Leicester, Leicestershire and Rutland ICB, whose same-name PPON row is 31542352. Every mention name is the body's and the PPON org stands under that literal (R3/r8). | challenger: rule-based challenger: merge GBPPONPCLY6219YPTV 31542352 - unique live owner 31542352 'NHS Leicester, Leicestershire and Rutland Integrated Care Board'; every mention name scores >= 0.60",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31550549,
+   "identifier": "GBNHSPHPY3425XCGD",
+   "verdict": "wrong",
+   "correct_identifier": "GBPPONPHPY3425XCGD",
+   "rationale": "[519 M6 ppon-value/medium] The value is PPON PHPY-3425-XCGD; its owner 30928165 carries 36 North Bristol NHS Trust mentions of 41 (r6), but heads as \"Bristol NHS Foundation Trust.\". Held at medium: the target head names a different-sounding body, so the merge is not plain; the prior expected no owner. | challenger: rule-based challenger: merge GBPPONPHPY3425XCGD 30928165 - unique live owner 30928165 'Bristol NHS Foundation Trust.'; every mention name scores >= 0.50 | the reader held it at medium; on disagreement the row posts at medium anyway",
+   "confidence": "medium"
+  },
+  {
+   "org_id": 31550843,
+   "identifier": "GBNHSPHHT9556BWJJ",
+   "verdict": "wrong",
+   "correct_identifier": "GBPPONPHHT9556BWJJ",
+   "rationale": "[519 M6 ppon-value/high] The GB-NHS value is a PPON serial, not an ODS code. All 3 mentions name North East London NHS FT; the PPON is carried by 31535216, the RAT survivor of that name. | challenger: rule-based challenger: merge GBPPONPHHT9556BWJJ 31535216 - unique live owner 31535216 'North East London NHS Foundation Trust'; every mention name scores >= 1.00",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31550891,
+   "identifier": "GBNHSFGP21",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value FGP21 is no ODS code (other, ODS 404); the mention names \"Croasdales Pharmacy\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31551020,
+   "identifier": "GBNHSOCDSH6VHTK05A9BE",
+   "verdict": "wrong",
+   "correct_identifier": "GBPPONPDXN7482RVVM",
+   "rationale": "[519 M6 body-ppon/high] ocds-h6vhtk-05a9be is an OCDS release id; the mention names North Cumbria Integrated Care NHS FT, whose PPON row is the RNN survivor 30969250. Every mention name is the body's and the PPON org stands under that literal (R3/r8). | challenger: rule-based challenger: merge GBPPONPDXN7482RVVM 30969250 - unique live owner 30969250 'North Cumbria Integrated Care NHS Foundation Trust'; every mention name scores >= 1.00",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31552295,
+   "identifier": "GBNHS15229502",
+   "verdict": "wrong",
+   "correct_identifier": "15229502",
+   "rationale": "[519 M6 coh-value/high] The value is company number 15229502; the register names it WELL LIFE LIMITED, which is this org (\"Well Life Ltd\"). No standing org carries it (r7), so the arm moves the row onto the bare number. | challenger: rule-based challenger: move 15229502  - register 'WELL LIFE LIMITED' matches (>= 1.00); no owner, so a move",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31554288,
+   "identifier": "GBNHSPXDB2967MWLG",
+   "verdict": "wrong",
+   "correct_identifier": "GBPPONPXDB2967MWLG",
+   "rationale": "[519 M6 ppon-value/high] The GB-NHS value is a PPON serial, not an ODS code. Both mentions name Alder Hey Children's NHS FT; the PPON is carried by 31545296, the RBS survivor of that name. | challenger: rule-based challenger: merge GBPPONPXDB2967MWLG 31545296 - unique live owner 31545296 \"Alder Hey Children's NHS Foundation Trust\"; every mention name scores >= 1.00",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31554523,
+   "identifier": "GBNHSG81032ODS",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value G81032ODS is no ODS code (other, ODS not-ods-shaped); the mention names \"Victoria Medical Centre\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31555861,
+   "identifier": "GBNHST1F0",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value T1F0 is no ODS code (other, ODS not-ods-shaped); the mention names \"Prince and Bates Optician\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31559361,
+   "identifier": "GBNHS83049",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value 83049 is no ODS code (numeric, ODS 404); the mention names \"The existing provider is satisfying the original contract and will likely satisfy the proposed contract to a sufficient standard\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31559453,
+   "identifier": "GBNHSMCH8A1",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value MCH8A1 is no ODS code (other, ODS 404); the mention names \"Medway Community Health (MCH)\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31560007,
+   "identifier": "GBNHS01721624",
+   "verdict": "wrong",
+   "correct_identifier": "01721624",
+   "rationale": "[519 M6 coh-value/high] The value is company number 01721624; the register names it SPECSAVERS OPTICAL SUPERSTORES LIMITED, which is this org (\"Specsavers Optical Superstores Limited\"). A standing org carries it (16087363 01721624 \"Specsavers Optical Superstores Ltd\"), so the arm merges into it. | challenger: rule-based challenger: merge 01721624 16087363 - register 'SPECSAVERS OPTICAL SUPERSTORES LIMITED' matches (>= 1.00); unique owner 16087363",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31562109,
+   "identifier": "GBNHS133078",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 body-no-ppon/high] 133078 is a local number, ODS 404; the mention names Northumbria Healthcare NHS FT, whose RTF survivor is provisional and which has no PPON row of its own (only its subsidiary NHFM, API search). Wrong with no correction: withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31562834,
+   "identifier": "GBNHSD218G",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value D218G is no ODS code (other, ODS 404); the mention names \"Mill Road Surgery\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31563736,
+   "identifier": "GBNHSODS322",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value ODS322 is no ODS code (other, ODS 404); the mention names \"Warrington Borough Council (LiveWire)\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31564001,
+   "identifier": "GBNHSOCDSH6VHTK05029B",
+   "verdict": "wrong",
+   "correct_identifier": "GBPPONPRVB1661VNRY",
+   "rationale": "[519 M6 body-ppon/high] ocds-h6vhtk-05029b is an OCDS release id, no ODS code; both mentions name Calderdale and Huddersfield NHS FT, whose PPON row is the RWY survivor 31535615. Every mention name is the body's and the PPON org stands under that literal (R3/r8). | challenger: rule-based challenger: merge GBPPONPRVB1661VNRY 31535615 - unique live owner 31535615 'Calderdale and Huddersfield NHS Foundation Trust'; every mention name scores >= 1.00",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31564748,
+   "identifier": "GBNHSOCDSH6VHTK05D28A",
+   "verdict": "wrong",
+   "correct_identifier": "GBPPONPCLY6219YPTV",
+   "rationale": "[519 M6 body-ppon/high] ocds-h6vhtk-05d28a is an OCDS release id; the mention names NHS Leicester, Leicestershire and Rutland ICB, whose same-name PPON row is 31542352. Every mention name is the body's and the PPON org stands under that literal (R3/r8). | challenger: rule-based challenger: merge GBPPONPCLY6219YPTV 31542352 - unique live owner 31542352 'NHS Leicester, Leicestershire and Rutland Integrated Care Board'; every mention name scores >= 1.00",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31565687,
+   "identifier": "GBNHSODS8GK24",
+   "verdict": "wrong",
+   "correct_identifier": "00507597",
+   "rationale": "[519 M6 company-coh/high] The value ODS8GK24 is no ODS code or register number of this org; the same-name standing org 30917690 carries GBCOH00507597, which the register names MARIE CURIE. Every mention names \"Marie Curie\", so that number is the correction and the arm merges into 30917690. | challenger: rule-based challenger: merge 00507597 30917690 - register 'MARIE CURIE' matches (>= 1.00); unique owner 30917690",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31565689,
+   "identifier": "GBNHSODS8HC63",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value ODS8HC63 is no ODS code (ods-glued, ODS not-ods-shaped); the mention names \"Opcare Ltd\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31566370,
+   "identifier": "GBNHSP2L9",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value P2L9 is no ODS code (other, ODS not-ods-shaped); the mention names \"Market Harborough Medical Centre\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31566382,
+   "identifier": "GBNHSP9T54",
+   "verdict": "wrong",
+   "correct_identifier": "07314767",
+   "rationale": "[519 M6 company-coh/high] The value P9T54 is no ODS code or register number of this org; the same-name standing org 31545671 carries GBCOH07314767, which the register names KOALA NORTH WEST LTD. Every mention names \"Koala North West Ltd\", so that number is the correction and the arm merges into 31545671. | challenger: rule-based challenger: merge 07314767 31545671 - register 'KOALA NORTH WEST LTD' matches (>= 1.00); unique owner 31545671",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31566436,
+   "identifier": "GBNHS15M5B",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value 15M5B is no ODS code (other, ODS 404); the mention names \"Positive Futures Wellbeing Services\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31566459,
+   "identifier": "GBNHSRV09",
+   "verdict": "wrong",
+   "correct_identifier": "GBPPONPLYP5457LQCD",
+   "rationale": "[519 M6 body-ppon/high] RV09 is the trust code RV9 with a 0 inserted; the mention names Humber Teaching NHS FT, whose same-name PPON row is 31544250. Every mention name is the body's and the PPON org stands under that literal (R3/r8). | challenger: rule-based challenger: merge GBPPONPLYP5457LQCD 31544250 - unique live owner 31544250 'Humber Teaching NHS Foundation Trust'; every mention name scores >= 1.00",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31566899,
+   "identifier": "GBNHSODSVNAA1",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value ODSVNAA1 is no ODS code (ods-glued, ODS not-ods-shaped); the mention names \"Cambrian Supported Living Limited\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31567498,
+   "identifier": "GBNHSPNWR4212QWHQ",
+   "verdict": "wrong",
+   "correct_identifier": "GBPPONPNWR4212QWHQ",
+   "rationale": "[519 M6 ppon-value/high] The GB-NHS value is a PPON serial, not an ODS code. The mention names Somerset NHS FT; the PPON is carried by the same-name org 30913999. | challenger: rule-based challenger: merge GBPPONPNWR4212QWHQ 30913999 - unique live owner 30913999 'Somerset NHS Foundation Trust'; every mention name scores >= 1.00",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31567523,
+   "identifier": "GBNHS174343",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 body-no-ppon/high] 174343 is a local number, ODS 404; the mention names Bridgewater Community Healthcare NHS FT, which has no PPON row (API search) and the value spells no code. Wrong with no correction: withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31567746,
+   "identifier": "GBNHSPGCG2135TXWL",
+   "verdict": "wrong",
+   "correct_identifier": "GBPPONPGCG2135TXWL",
+   "rationale": "[519 M6 ppon-value/high] The GB-NHS value is a PPON serial, not an ODS code. All 5 mentions name Countess of Chester Hospital NHS FT; the PPON is carried by 31581032, the RJR survivor of that name. | challenger: rule-based challenger: merge GBPPONPGCG2135TXWL 31581032 - unique live owner 31581032 'Countess of Chester Hospital NHS Foundation Trust'; every mention name scores >= 1.00",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31569876,
+   "identifier": "GBNHSOC389166",
+   "verdict": "wrong",
+   "correct_identifier": "GBPPONPYRL5371BNMH",
+   "rationale": "[519 M6 coh-value/medium] OC389166 is HEALTH SERVICES LABORATORIES LLP, a pathology partnership UCLH belongs to; the mention names University College London Hospitals NHS FT (UCLH), whose PPON row is the RRV survivor 30916969. Held at medium: the value names a related body that may itself have been the party. | challenger: rule-based challenger: merge GBPPONPYRL5371BNMH 30916969 - unique live owner 30916969 'University College London Hospitals NHS FT'; every mention name scores >= 0.80 | the reader held it at medium; on disagreement the row posts at medium anyway",
+   "confidence": "medium"
+  },
+  {
+   "org_id": 31570115,
+   "identifier": "GBNHSODS8JM43",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value ODS8JM43 is no ODS code (ods-glued, ODS not-ods-shaped); the mention names \"getUBetter\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31570685,
+   "identifier": "GBNHSOC313437",
+   "verdict": "wrong",
+   "correct_identifier": "06927650",
+   "rationale": "[519 M6 coh-value/medium] OC313437 is DORKING HEALTHCARE LLP, dissolved, a different legal entity; the mention names \"Dorking Healthcare Ltd (NNE)\", whose own number 06927650 (DORKING HEALTHCARE LIMITED) 31538765 carries. Held at medium: the value names the dissolved LLP and the (NNE) suffix is unexplained. | challenger: rule-based challenger: merge 06927650 31538765 - register 'DORKING HEALTHCARE LIMITED' matches (>= 0.67); unique owner 31538765 | the reader held it at medium; on disagreement the row posts at medium anyway",
+   "confidence": "medium"
+  },
+  {
+   "org_id": 31570955,
+   "identifier": "GBNHSGBCHC1053767",
+   "verdict": "wrong",
+   "correct_identifier": "GBPPONPDWV5543BPQJ",
+   "rationale": "[519 M6 body-ppon/medium] GB-CHC-1053767 is a charity number (a separate legal body; the Charity Commission page refused the fetch, HTTP 403); the mention names Hertfordshire Partnership University NHS FT (PPON row 30916559). Held at medium: the value names a charity, likely the trust's own charity, not the trust. | challenger: rule-based challenger: merge GBPPONPDWV5543BPQJ 30916559 - unique live owner 30916559 'Hertfordshire Partnership University NHS Foundation Trust'; every mention name scores >= 1.00 | the reader held it at medium; on disagreement the row posts at medium anyway",
+   "confidence": "medium"
+  },
+  {
+   "org_id": 31571832,
+   "identifier": "GBNHSFAP24FWK18FA428FA226FAX36",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value FAP24FWK18FA428FA226FAX36 is no ODS code (glued-pharmacy, ODS not-ods-shaped); the mention names \"RB Healthcare Ltd\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31571838,
+   "identifier": "GBNHSFFN74FR433",
+   "verdict": "wrong",
+   "correct_identifier": "01202866",
+   "rationale": "[519 M6 company-coh/high] The value FFN74FR433 is no ODS code or register number of this org; the same-name standing org 30916889 carries GBCOH01202866, which the register names DAY LEWIS PLC. Every mention names \"Day Lewis Plc\", so that number is the correction and the arm merges into 30916889. | challenger: rule-based challenger: merge 01202866 30916889 - register 'DAY LEWIS PLC' matches (>= 1.00); unique owner 30916889",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31571839,
+   "identifier": "GBNHSFG199FQK58",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value FG199FQK58 is no ODS code (glued-pharmacy, ODS not-ods-shaped); the mention names \"PA McKeever Ltd\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31571841,
+   "identifier": "GBNHSFG850FJW44FCN91FM859FW001",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value FG850FJW44FCN91FM859FW001 is no ODS code (glued-pharmacy, ODS not-ods-shaped); the mention names \"Asda Stores\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31571842,
+   "identifier": "GBNHSFGH61FL713FTM09",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value FGH61FL713FTM09 is no ODS code (glued-pharmacy, ODS not-ods-shaped); the mention names \"JH Williams Ltd\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31571844,
+   "identifier": "GBNHSFGL64FHV61FHD28FWV49FTJ26FLA68",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value FGL64FHV61FHD28FWV49FTJ26FLA68 is no ODS code (glued-pharmacy, ODS not-ods-shaped); the mention names \"Rowland & Co (Retail) Ltd\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31571845,
+   "identifier": "GBNHSFH658FKQ07FA083",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value FH658FKQ07FA083 is no ODS code (glued-pharmacy, ODS not-ods-shaped); the mention names \"Bounce Healthcare Ltd\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31571849,
+   "identifier": "GBNHSFJ489FJJ20",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value FJ489FJJ20 is no ODS code (glued-pharmacy, ODS not-ods-shaped); the mention names \"OptiChem UK Ltd\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31571850,
+   "identifier": "GBNHSFJH50FAC06",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value FJH50FAC06 is no ODS code (glued-pharmacy, ODS not-ods-shaped); the mention names \"Imaan Ltd\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31571855,
+   "identifier": "GBNHSFL317FET63FG058FJH18FKE41FAF48FXK83",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value FL317FET63FG058FJH18FKE41FAF48FXK83 is no ODS code (glued-pharmacy, ODS not-ods-shaped); the mention names \"Gorgemead Ltd\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31571857,
+   "identifier": "GBNHSFLP04FVP39",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value FLP04FVP39 is no ODS code (glued-pharmacy, ODS not-ods-shaped); the mention names \"Care Pharmacy Ltd\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31571858,
+   "identifier": "GBNHSFLT32FYM17FNR77FWX94FJD74FC339",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value FLT32FYM17FNR77FWX94FJD74FC339 is no ODS code (glued-pharmacy, ODS not-ods-shaped); the mention names \"Sedem Pharmacy Ltd\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31571860,
+   "identifier": "GBNHSFMJ13FK792FD864FXN75",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value FMJ13FK792FD864FXN75 is no ODS code (glued-pharmacy, ODS not-ods-shaped); the mention names \"Tesco Stores Ltd\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31571862,
+   "identifier": "GBNHSFNF73FN768FKW38",
+   "verdict": "wrong",
+   "correct_identifier": "07974901",
+   "rationale": "[519 M6 company-coh/high] The value FNF73FN768FKW38 is no ODS code or register number of this org; the same-name standing org 31596839 carries GBCOH07974901, which the register names SHARIEF HEALTHCARE LIMITED. Every mention names \"Sharief Healthcare Ltd\", so that number is the correction and the arm merges into 31596839. | challenger: rule-based challenger: merge 07974901 31596839 - register 'SHARIEF HEALTHCARE LIMITED' matches (>= 1.00); unique owner 31596839",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31571863,
+   "identifier": "GBNHSFPA31FGA31FRH55",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value FPA31FGA31FRH55 is no ODS code (glued-pharmacy, ODS not-ods-shaped); the mention names \"Kays Medical\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31571868,
+   "identifier": "GBNHSFRG94FK172",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value FRG94FK172 is no ODS code (glued-pharmacy, ODS not-ods-shaped); the mention names \"Daveys Ltd\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31571871,
+   "identifier": "GBNHSFVQ70FW374",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value FVQ70FW374 is no ODS code (glued-pharmacy, ODS not-ods-shaped); the mention names \"Seth's Healthcare Ltd\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31571876,
+   "identifier": "GBNHSFXV39FYL72FAQ22FEV79FF987FL048FWG19FJJ30FF015",
+   "verdict": "wrong",
+   "correct_identifier": "00928555",
+   "rationale": "[519 M6 company-coh/high] The value FXV39FYL72FAQ22FEV79FF987FL048FWG19FJJ30FF015 is no ODS code or register number of this org; the same-name standing org 14842878 carries 00928555, which the register names BOOTS UK LIMITED. Every mention names \"Boots UK Ltd\", so that number is the correction and the arm merges into 14842878. | challenger: rule-based challenger: merge 00928555 14842878 - register 'BOOTS UK LIMITED' matches (>= 1.00); unique owner 14842878",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31571901,
+   "identifier": "GBNHSFC084FJ225FV823FP729FVV96",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value FC084FJ225FV823FP729FVV96 is no ODS code (glued-pharmacy, ODS not-ods-shaped); the mention names \"Hollowood Chemists Ltd\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31571902,
+   "identifier": "GBNHSFCR74FX195",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value FCR74FX195 is no ODS code (glued-pharmacy, ODS not-ods-shaped); the mention names \"AIM RX LTD T/A Heath Pharmacy, Jolley's Pharmacy\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31571907,
+   "identifier": "GBNHSFHA50FAH10FLM86FLQ60FMK89FNN55",
+   "verdict": "wrong",
+   "correct_identifier": "09225457",
+   "rationale": "[519 M6 company-coh/high] The value is glued pharmacy codes; both mentions name Bestway National Chemists Ltd T/A Well Pharmacy, and 14842867 \"Bestway National Chemists Ltd\" carries 09225457, which the register names BESTWAY NATIONAL CHEMISTS LIMITED. D5 exception: reclassified from junk; the arm merges into 14842867. | challenger: rule-based challenger: hold 09225457  - a mention name scores 0.43 against the register names",
+   "confidence": "medium"
+  },
+  {
+   "org_id": 31571908,
+   "identifier": "GBNHSFK182FNL49FF360",
+   "verdict": "wrong",
+   "correct_identifier": "00928555",
+   "rationale": "[519 M6 company-coh/high] The value is glued Boots pharmacy codes (FK182/FNL49/FF360); both mentions name Boots UK Limited, and 14842878 \"Boots UK Ltd\" carries 00928555, which the register names BOOTS UK LIMITED. D5 exception: reclassified from junk; the arm merges into 14842878. | challenger: rule-based challenger: merge 00928555 14842878 - register 'BOOTS UK LIMITED' matches (>= 1.00); unique owner 14842878",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31571912,
+   "identifier": "GBNHSFNC54FK851",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value FNC54FK851 is no ODS code (glued-pharmacy, ODS not-ods-shaped); the mention names \"Tomlinsons of Lytham T/A Ashtons Pharmacy, Four Acre Pharmacy\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31571914,
+   "identifier": "GBNHSFPR30FGJ47FRR24FAF84FKH72FGJ61",
+   "verdict": "wrong",
+   "correct_identifier": "08714511",
+   "rationale": "[519 M6 company-coh/high] The value FPR30FGJ47FRR24FAF84FKH72FGJ61 is no ODS code or register number of this org; the same-name standing org 31597495 carries GBCOH08714511, which the register names ST HELENS PHARMACY LIMITED. Every mention names \"St Helens Pharmacy LTD\", so that number is the correction and the arm merges into 31597495. | challenger: rule-based challenger: merge 08714511 31597495 - register 'ST HELENS PHARMACY LIMITED' matches (>= 1.00); unique owner 31597495",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31571926,
+   "identifier": "GBNHSFPR30FGJ47",
+   "verdict": "wrong",
+   "correct_identifier": "08714511",
+   "rationale": "[519 M6 company-coh/high] The value FPR30FGJ47 is no ODS code or register number of this org; the same-name standing org 31597495 carries GBCOH08714511, which the register names ST HELENS PHARMACY LIMITED. Every mention names \"St Helens Pharmacy LTD\", so that number is the correction and the arm merges into 31597495. | challenger: rule-based challenger: merge 08714511 31597495 - register 'ST HELENS PHARMACY LIMITED' matches (>= 1.00); unique owner 31597495",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31572041,
+   "identifier": "GBNHSFTJ26FLA68",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value FTJ26FLA68 is no ODS code (glued-pharmacy, ODS not-ods-shaped); the mention names \"Rowland & Co (Retail) Ltd\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31572050,
+   "identifier": "GBNHSFMJ67FWD06",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 company-coh/high] The same-name row 14842856 \"Asda Stores Ltd\" carries 03918551, but the register names 03918551 ASDA HOLDINGS UK LIMITED, not Asda Stores. The glued pharmacy codes are no identifier of this org, so wrong with no correction (withheld and flagged). | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31572058,
+   "identifier": "GBNHSFA414FVM74",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value FA414FVM74 is no ODS code (glued-pharmacy, ODS not-ods-shaped); the mention names \"Cooke's Ltd\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31572059,
+   "identifier": "GBNHSFCL67FH435FAG38",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value FCL67FH435FAG38 is no ODS code (glued-pharmacy, ODS not-ods-shaped); the mention names \"Wise Pharmacies Ltd\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31572061,
+   "identifier": "GBNHSFEK41FHT09",
+   "verdict": "wrong",
+   "correct_identifier": "01768840",
+   "rationale": "[519 M6 company-coh/high] The value FEK41FHT09 is no ODS code or register number of this org; the same-name standing org 12335686 carries 01768840, which the register names PCT HEALTHCARE LIMITED. Every mention names \"PCT Healthcare ltd\", so that number is the correction and the arm merges into 12335686. | challenger: rule-based challenger: merge 01768840 12335686 - register 'PCT HEALTHCARE LIMITED' matches (>= 1.00); unique owner 12335686",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31572062,
+   "identifier": "GBNHSFEX76FMJ48",
+   "verdict": "wrong",
+   "correct_identifier": "09225457",
+   "rationale": "[519 M6 company-coh/high] The value FEX76FMJ48 is no ODS code or register number of this org; the same-name standing org 14842867 carries 09225457, which the register names BESTWAY NATIONAL CHEMISTS LIMITED. Every mention names \"Bestway National Chemists Ltd\", so that number is the correction and the arm merges into 14842867. | challenger: rule-based challenger: merge 09225457 14842867 - register 'BESTWAY NATIONAL CHEMISTS LIMITED' matches (>= 1.00); unique owner 14842867",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31572070,
+   "identifier": "GBNHSFXD72FEH76",
+   "verdict": "wrong",
+   "correct_identifier": "00928555",
+   "rationale": "[519 M6 company-coh/medium] The value is glued pharmacy codes; the mention names \"Boot UK Ltd\", a likely misspelling of Boots UK Ltd (14842878, 00928555 BOOTS UK LIMITED). Held at medium: a misspelt name is not plain. | challenger: rule-based challenger: hold 00928555  - a mention name scores 0.00 against the register names",
+   "confidence": "medium"
+  },
+  {
+   "org_id": 31574468,
+   "identifier": "GBNHSPZCJ1964YNTQ",
+   "verdict": "wrong",
+   "correct_identifier": "GBPPONPZCJ1964YNTQ",
+   "rationale": "[519 M6 ppon-value/high] The GB-NHS value is a PPON serial, not an ODS code. The mention names Avon and Wiltshire Mental Health Partnership NHS Trust; the PPON is carried by the same-name org 31555080. | challenger: rule-based challenger: merge GBPPONPZCJ1964YNTQ 31555080 - unique live owner 31555080 'Avon and Wiltshire Mental Health Partnership NHS trust'; every mention name scores >= 1.00",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31575223,
+   "identifier": "GBNHSM86034THECONTRACTOR",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value M86034THECONTRACTOR is no ODS code (typed-name, ODS not-ods-shaped); the mention names \"Woodside Medical Centre\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31575414,
+   "identifier": "GBNHSYL02356",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value YL02356 is no ODS code (other, ODS not-ods-shaped); the mention names \"Community Pharmacy Kent (Kent LPC)\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31575689,
+   "identifier": "GBNHST6YOW",
+   "verdict": "wrong",
+   "correct_identifier": "GBPPONPQNZ4473TCJQ",
+   "rationale": "[519 M6 body-ppon/high] T6YOW is T6Y0W with O for 0, ODS 404; the mention names NHS Norfolk and Suffolk ICB, whose same-name PPON row is 31580764 (D2 names this route). Every mention name is the body's and the PPON org stands under that literal (R3/r8). | challenger: rule-based challenger: merge GBPPONPQNZ4473TCJQ 31580764 - unique live owner 31580764 'NHS NORFOLK AND SUFFOLK INTEGRATED CARE BOARD'; every mention name scores >= 1.00",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31575959,
+   "identifier": "GBNHSA2WD",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value A2WD is no ODS code (other, ODS not-ods-shaped); the mention names \"Southdown Housing Association Ltd\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31577998,
+   "identifier": "GBNHSPGZM4323VGQT",
+   "verdict": "wrong",
+   "correct_identifier": "GBPPONPGZM4323VGQT",
+   "rationale": "[519 M6 ppon-value/high] The GB-NHS value is a PPON serial, not an ODS code. The mention names North West Anglia NHS FT; the PPON is carried by 30929970, the RGN survivor of that name. | challenger: rule-based challenger: merge GBPPONPGZM4323VGQT 30929970 - unique live owner 30929970 'North West Anglia NHS Foundation Trust'; every mention name scores >= 1.00",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31579940,
+   "identifier": "GBNHSEE133835",
+   "verdict": "wrong",
+   "correct_identifier": "11963500",
+   "rationale": "[519 M6 coh-value/high] EE133835 answers 404 on the register; the same-name standing org 31552066 carries GBCOH11963500, which the register names LINCOLN BISHOP UNIVERSITY (formerly Bishop Grosseteste University). Both mentions name Lincoln Bishop University, so its own number is the correction and the arm merges into 31552066. | challenger: rule-based challenger: merge 11963500 31552066 - register 'LINCOLN BISHOP UNIVERSITY' matches (>= 1.00); unique owner 31552066",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31587823,
+   "identifier": "GBNHS35965",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value 35965 is no ODS code (numeric, ODS 404); the mention names \"Specsavers Hearcare Group Ltd\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31588045,
+   "identifier": "GBNHS06927650",
+   "verdict": "wrong",
+   "correct_identifier": "06927650",
+   "rationale": "[519 M6 coh-value/high] The value is company number 06927650; the register names it DORKING HEALTHCARE LIMITED, which is this org (\"Dorking Healthcare Ltd\"). A standing org carries it (31538765 GBCOH06927650 \"Dorking Healthcare Limited\"), so the arm merges into it. | challenger: rule-based challenger: merge 06927650 31538765 - register 'DORKING HEALTHCARE LIMITED' matches (>= 1.00); unique owner 31538765",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31589609,
+   "identifier": "GBNHSPQBL2761HHXGB",
+   "verdict": "wrong",
+   "correct_identifier": "GBPPONPDCY5582YRHQ",
+   "rationale": "[519 M6 body-ppon/medium] The value is PPON PQBL-2761-HHXG with a stray B; that PPON is carried by 31541470 \"The Newcastle Hospitals NHS FT\" (7 Newcastle mentions), while the RTD survivor is the PPON row 30917018. Held at medium: two standing PPON orgs of one body (a split for a later unit), so the reader picks the survivor (D2) and a challenger could pick 31541470. | challenger: rule-based challenger: merge GBPPONPDCY5582YRHQ 30917018 - unique live owner 30917018 'The Newcastle Upon Tyne Hospitals NHS Foundation Trust'; every mention name scores >= 1.00 | the reader held it at medium; on disagreement the row posts at medium anyway",
+   "confidence": "medium"
+  },
+  {
+   "org_id": 31592494,
+   "identifier": "GBNHS110044",
+   "verdict": "wrong",
+   "correct_identifier": "GBPPONPRZJ5573LWLP",
+   "rationale": "[519 M6 body-no-ppon/high] 110044 is a local number, ODS 404; all 5 mentions name Great Western Hospitals NHS FT (2 with the location Swindon), whose same-name PPON row is 31535854 (83 mentions). Every mention name is the body's; the 10-12 twin read missed the row because the head carried Swindon. | challenger: rule-based challenger: merge GBPPONPRZJ5573LWLP 31535854 - unique live owner 31535854 'Great Western Hospitals NHS Foundation Trust'; every mention name scores >= 0.75",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31592495,
+   "identifier": "GBNHS110095",
+   "verdict": "wrong",
+   "correct_identifier": "GBPPONPHNB6299PVMY",
+   "rationale": "[519 M6 body-ppon/high] 110095 is a local number, ODS 404; all 5 mentions name Salisbury NHS FT, whose PPON row is the RNZ survivor 30972038. Every mention name is the body's and the PPON org stands under that literal (R3/r8). | challenger: rule-based challenger: merge GBPPONPHNB6299PVMY 30972038 - unique live owner 30972038 'Salisbury NHS Foundation Trust'; every mention name scores >= 1.00",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31592496,
+   "identifier": "GBNHS110149",
+   "verdict": "wrong",
+   "correct_identifier": "GBPPONPXRL3879BBGR",
+   "rationale": "[519 M6 body-ppon/high] 110149 is a local number, ODS 404; all 5 mentions name Royal United Hospitals Bath NHS FT, whose same-name PPON row is 30915634. Every mention name is the body's and the PPON org stands under that literal (R3/r8). | challenger: rule-based challenger: merge GBPPONPXRL3879BBGR 30915634 - unique live owner 30915634 'Royal United Hospitals Bath NHS Foundation Trust'; every mention name scores >= 1.00",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31592497,
+   "identifier": "GBNHS400038",
+   "verdict": "wrong",
+   "correct_identifier": "GBPPONPHPY3425XCGD",
+   "rationale": "[519 M6 body-no-ppon/medium] 400038 is a local number, ODS 404; all 5 mentions name North Bristol NHS Trust, and PPON row 30928165 is North Bristol by 36 of 41 mention names (r6), but it heads as \"Bristol NHS Foundation Trust.\". Held at medium: the target head names a different-sounding body. | challenger: rule-based challenger: merge GBPPONPHPY3425XCGD 30928165 - unique live owner 30928165 'Bristol NHS Foundation Trust.'; every mention name scores >= 0.50 | the reader held it at medium; on disagreement the row posts at medium anyway",
+   "confidence": "medium"
+  },
+  {
+   "org_id": 31592906,
+   "identifier": "GBNHSG6771643",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value G6771643 is no ODS code (g-number, ODS not-ods-shaped); the mention names \"Barnet Federated GPs CIC\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31592975,
+   "identifier": "GBNHS1059467",
+   "verdict": "wrong",
+   "correct_identifier": "GBPPONPCXW3895DYVX",
+   "rationale": "[519 M6 body-no-ppon/medium] 1059467 is the charity number GB-CHC-1059467 that 31601629 carries for The Royal Wolverhampton NHS Trust (its charity); the mention names Royal Wolverhampton Trust, whose PPON row is 30917610. Held at medium: the value names the trust's charity, a separate body. | challenger: rule-based challenger: merge GBPPONPCXW3895DYVX 30917610 - unique live owner 30917610 'The Royal Wolverhampton NHS Trust'; every mention name scores >= 1.00 | the reader held it at medium; on disagreement the row posts at medium anyway",
+   "confidence": "medium"
+  },
+  {
+   "org_id": 31593622,
+   "identifier": "GBNHS9086757",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value 9086757 is no ODS code (numeric, ODS not-ods-shaped); the mention names \"Hinckley & Bosworth Medical Alliance\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31593802,
+   "identifier": "GBNHSNHSTRUSTBRIDGEWATERCOMMUNITYHEALTHCARENHSFOUNDATIONTRUSTRY2",
+   "verdict": "wrong",
+   "correct_identifier": "RY2",
+   "rationale": "[519 M6 body-no-ppon/high] The value is the typed label of RY2; the mention names Bridgewater Community Healthcare NHS FT, which stands as GBNHSRY2 31543388 and has no PPON row (API search). Ruling 8: a mistyped or glued code whose body has no standing PPON org gets the right ODS code, which keys nothing (withheld and flagged only). | challenger: rule-based challenger: unkeyed RY2  - RY2 is an ODS/NHS England code: keys nothing",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31593803,
+   "identifier": "GBNHSNHSTRUSTMERSEYCARENHSFOUNDATIONTRUSTRW4",
+   "verdict": "wrong",
+   "correct_identifier": "RW4",
+   "rationale": "[519 M6 body-no-ppon/high] The value is the typed label of RW4; the mention names Mersey Care NHS FT, which stands as GBNHSRW4 30915592 and has no PPON row (API search). Ruling 8: a mistyped or glued code whose body has no standing PPON org gets the right ODS code, which keys nothing (withheld and flagged only). | challenger: rule-based challenger: unkeyed RW4  - RW4 is an ODS/NHS England code: keys nothing",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31593804,
+   "identifier": "GBNHSNHSTRUSTWIRRALCOMMUNITYHEALTHANDCARENHSFOUNDATIONTRUSTRY7",
+   "verdict": "wrong",
+   "correct_identifier": "RY7",
+   "rationale": "[519 M6 body-no-ppon/high] The value is the typed label of RY7; the mention names Wirral Community Health and Care NHS FT, which stands as GBNHSRY7 31539451 and has no PPON row (API search). Ruling 8: a mistyped or glued code whose body has no standing PPON org gets the right ODS code, which keys nothing (withheld and flagged only). | challenger: rule-based challenger: unkeyed RY7  - RY7 is an ODS/NHS England code: keys nothing",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31593954,
+   "identifier": "GBNHSN01",
+   "verdict": "wrong",
+   "correct_identifier": "01786914",
+   "rationale": "[519 M6 company-coh/high] The value N01 is no ODS code or register number of this org; the same-name standing org 31537833 carries GBCOH01786914, which the register names MENTAL HEALTH MATTERS. Every mention names \"Mental Health Matters\", so that number is the correction and the arm merges into 31537833. | challenger: rule-based challenger: merge 01786914 31537833 - register 'MENTAL HEALTH MATTERS' matches (>= 1.00); unique owner 31537833",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31594293,
+   "identifier": "GBNHS1111",
+   "verdict": "wrong",
+   "correct_identifier": "GBPPONPGZV5874HRZD",
+   "rationale": "[519 M6 body-ppon/high] 1111 is no ODS code; the mention names Cheshire and Wirral Partnership NHS FT, whose PPON row is the RXA survivor 31552751. Every mention name is the body's and the PPON org stands under that literal (R3/r8). | challenger: rule-based challenger: merge GBPPONPGZV5874HRZD 31552751 - unique live owner 31552751 'Cheshire and Wirral Partnership NHS Foundation Trust'; every mention name scores >= 1.00",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31594381,
+   "identifier": "GBNHSAQ3E",
+   "verdict": "wrong",
+   "correct_identifier": "05597217",
+   "rationale": "[519 M6 company-coh/high] The value AQ3E is no ODS code or register number of this org; the same-name standing org 30916290 carries GBCOH05597217, which the register names ABICARE SERVICES LIMITED. Every mention names \"Abicare Services Ltd\", so that number is the correction and the arm merges into 30916290. | challenger: rule-based challenger: merge 05597217 30916290 - register 'ABICARE SERVICES LIMITED' matches (>= 1.00); unique owner 30916290",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31594582,
+   "identifier": "GBNHSC38N",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value C38N is no ODS code (other, ODS not-ods-shaped); the mention names \"Bromley Healthcare\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31594979,
+   "identifier": "GBNHSFQN48",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value FQN48 is no ODS code (other, ODS 404); the mention names \"Tatari Realty Company Ltd\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31595790,
+   "identifier": "GBNHSG6V25",
+   "verdict": "wrong",
+   "correct_identifier": "GBPPONPMBT7532HJYG",
+   "rationale": "[519 M6 body-ppon/high] G6V25 is G6V2S (North London NHS FT) mistyped; the mention names North London NHS FT, whose same-name PPON row is 31596679. Every mention name is the body's and the PPON org stands under that literal (R3/r8). | challenger: rule-based challenger: merge GBPPONPMBT7532HJYG 31596679 - unique live owner 31596679 'North London NHS Foundation Trust'; every mention name scores >= 1.00",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31596144,
+   "identifier": "GBNHSPBND1678TCRM",
+   "verdict": "wrong",
+   "correct_identifier": "GBPPONPBND1678TCRM",
+   "rationale": "[519 M6 ppon-value/medium] The value is PPON PBND-1678-TCRM; its owner 30915589 carries 96 Royal Surrey County Hospital NHS FT mentions of 100 (r6), so it is this trust, but its head reads NHS Buckinghamshire Oxfordshire & Berkshire West ICB. Held at medium: the target heads as another body (524 head refresh), so the merge is not plain; the prior expected no owner. | challenger: rule-based challenger: hold GBPPONPBND1678TCRM 30915589 - a mention name scores 0.00 against the owner head 'NHS Buckinghamshire Oxfordshire & Berkshire West Integrated Care Board'",
+   "confidence": "medium"
+  },
+  {
+   "org_id": 31596487,
+   "identifier": "GBNHS10991987",
+   "verdict": "wrong",
+   "correct_identifier": "10991987",
+   "rationale": "[519 M6 coh-value/high] The value is company number 10991987; the register names it PRIMARY CARE 24 LIMITED, which is this org (\"Primary Care 24\"). A standing org carries it (31572323 GBCOH10991987 \"Primary Care 24 (PC24)\"), so the arm merges into it. | challenger: rule-based challenger: merge 10991987 31572323 - register 'PRIMARY CARE 24 LIMITED' matches (>= 1.00); unique owner 31572323",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31596501,
+   "identifier": "GBNHSQ75Q84",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 nhse-523/high] The value lists two codes (Q75 & Q84); the mention names NHS England - North West, so no single code is the right one. NHS England (issue 523): wrong, no correction, never a PPON. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31597028,
+   "identifier": "GBNHSPRVB1661VNRY",
+   "verdict": "wrong",
+   "correct_identifier": "GBPPONPRVB1661VNRY",
+   "rationale": "[519 M6 ppon-value/high] The GB-NHS value is a PPON serial, not an ODS code. The mention names Calderdale and Huddersfield NHS FT; the PPON is carried by 31535615, the RWY survivor of that name. | challenger: rule-based challenger: merge GBPPONPRVB1661VNRY 31535615 - unique live owner 31535615 'Calderdale and Huddersfield NHS Foundation Trust'; every mention name scores >= 1.00",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31597249,
+   "identifier": "GBNHSAR4D",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value AR4D is no ODS code (other, ODS not-ods-shaped); the mention names \"DomCare\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31597313,
+   "identifier": "GBNHSZ2576474",
+   "verdict": "wrong",
+   "correct_identifier": "GBPPONPDVQ1486BNXY",
+   "rationale": "[519 M6 body-ppon/high] Z2576474 is no ODS code; the mention names Derbyshire Community Health Services NHS FT, whose same-name PPON row is 31554134. Every mention name is the body's and the PPON org stands under that literal (R3/r8). | challenger: rule-based challenger: merge GBPPONPDVQ1486BNXY 31554134 - unique live owner 31554134 'Derbyshire Community Health Services NHS Foundation Trust'; every mention name scores >= 1.00",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31597984,
+   "identifier": "GBNHS1051858",
+   "verdict": "wrong",
+   "correct_identifier": "GBPPONPBMJ3394DBQQ",
+   "rationale": "[519 M6 body-ppon/high] 1051858 is a bare number, no ODS code; the one mention names Warrington and Halton Teaching Hospitals NHS FT, whose same-name PPON row (RWW survivor) is 31564277. Every mention name is the body's and the PPON org stands under that literal (R3/r8). | challenger: rule-based challenger: merge GBPPONPBMJ3394DBQQ 31564277 - unique live owner 31564277 'Warrington and Halton Teaching Hospitals NHS Foundation Trust'; every mention name scores >= 1.00",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31598170,
+   "identifier": "GBNHSFAC06FNH07",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value FAC06FNH07 is no ODS code (glued-pharmacy, ODS not-ods-shaped); the mention names \"Imaan Ltd\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31598171,
+   "identifier": "GBNHSFAP24FWK18FA428FC765FAX36",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value FAP24FWK18FA428FC765FAX36 is no ODS code (glued-pharmacy, ODS not-ods-shaped); the mention names \"RB Healthcare Ltd\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31598173,
+   "identifier": "GBNHSFGL64FHV61FTJ26FHD28FLA68FWV49",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value FGL64FHV61FTJ26FHD28FLA68FWV49 is no ODS code (glued-pharmacy, ODS not-ods-shaped); the mention names \"Rowland & Co (Retail) Ltd\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31598175,
+   "identifier": "GBNHSFL317FEN74FG058FJH18FKE41FAF48FXK83",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value FL317FEN74FG058FJH18FKE41FAF48FXK83 is no ODS code (glued-pharmacy, ODS not-ods-shaped); the mention names \"Gorgemead Ltd\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31598177,
+   "identifier": "GBNHSFQA29FLC08",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value FQA29FLC08 is no ODS code (glued-pharmacy, ODS not-ods-shaped); the mention names \"Greencross Pharmacy Ltd\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31598262,
+   "identifier": "GBNHS10334174",
+   "verdict": "wrong",
+   "correct_identifier": "10334174",
+   "rationale": "[519 M6 coh-value/high] The value is company number 10334174; the register names it GP HEALTH CONNECT LTD, which is this org (\"GP Health Connect Ltd\"). A standing org carries it (31565478 GBCOH10334174 \"GP Health Connect\"), so the arm merges into it. | challenger: rule-based challenger: merge 10334174 31565478 - register 'GP HEALTH CONNECT LTD' matches (>= 1.00); unique owner 31565478",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31598268,
+   "identifier": "GBNHSFH878",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value FH878 is no ODS code (other, ODS 404); the mention names \"Norwood Healthcare Ltd Part of Sharief Healthcare\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31598387,
+   "identifier": "GBNHSFKQ07FH658FA083",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value FKQ07FH658FA083 is no ODS code (glued-pharmacy, ODS not-ods-shaped); the mention names \"Bounce Healthcare Ltd\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31598390,
+   "identifier": "GBNHSFV880FEM99",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value FV880FEM99 is no ODS code (glued-pharmacy, ODS not-ods-shaped); the mention names \"LP SD Forty Six Ltd\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31598399,
+   "identifier": "GBNHSFG850FJW44FCN91FM859",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 company-coh/high] The same-name row 14842856 \"Asda Stores Ltd\" carries 03918551, but the register names 03918551 ASDA HOLDINGS UK LIMITED, not Asda Stores. The glued pharmacy codes are no identifier of this org, so wrong with no correction (withheld and flagged). | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31598400,
+   "identifier": "GBNHSFKQ07FH658",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value FKQ07FH658 is no ODS code (glued-pharmacy, ODS not-ods-shaped); the mention names \"Bounce Healthcare Ltd\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31598406,
+   "identifier": "GBNHSFMJ13FK792FD864",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value FMJ13FK792FD864 is no ODS code (glued-pharmacy, ODS not-ods-shaped); the mention names \"Tesco Stores Ltd\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31598411,
+   "identifier": "GBNHSFFJ15FDL01",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value FFJ15FDL01 is no ODS code (glued-pharmacy, ODS not-ods-shaped); the mention names \"Tesco Instore Pharmacy\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31598682,
+   "identifier": "GBNHSNHSENGLANDNORTHEASTANDYORKSHIREYORKSHIREANDHUMBERQ72",
+   "verdict": "wrong",
+   "correct_identifier": "Q72",
+   "rationale": "[519 M6 nhse-523/high] The value is the typed label NHS ENGLAND NORTH EAST AND YORKSHIRE (YORKSHIRE AND HUMBER) (Q72); all 3 mentions name NHS England North East and Yorkshire. NHS England (issue 523): wrong with the NHS England code the value spells, which keys nothing; never a PPON. | challenger: rule-based challenger: unkeyed Q72  - Q72 is an ODS/NHS England code: keys nothing",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31599268,
+   "identifier": "GBNHSFF360FNL49FK182",
+   "verdict": "wrong",
+   "correct_identifier": "00928555",
+   "rationale": "[519 M6 company-coh/high] The value is glued Boots pharmacy codes (FF360/FNL49/FK182); the mention names Boots The Chemist Ltd, the register's previous name of 00928555 (BOOTS THE CHEMISTS LIMITED until 2007), which 14842878 carries. D5 exception: reclassified from junk; the arm merges into 14842878 (its name gate may deny it, a residue). | challenger: rule-based challenger: merge 00928555 14842878 - register 'BOOTS UK LIMITED' matches (>= 0.50); unique owner 14842878",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31599269,
+   "identifier": "GBNHSFKJ71FHA50FAH10FLM86FLQ60FMK89FNN55",
+   "verdict": "wrong",
+   "correct_identifier": "09225457",
+   "rationale": "[519 M6 company-coh/high] The value FKJ71FHA50FAH10FLM86FLQ60FMK89FNN55 is no ODS code or register number of this org; the same-name standing org 14842867 carries 09225457, which the register names BESTWAY NATIONAL CHEMISTS LIMITED. Every mention names \"Bestway National Chemists Ltd\", so that number is the correction and the arm merges into 14842867. | challenger: rule-based challenger: merge 09225457 14842867 - register 'BESTWAY NATIONAL CHEMISTS LIMITED' matches (>= 1.00); unique owner 14842867",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31599270,
+   "identifier": "GBNHSFNC54FGJ61",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value FNC54FGJ61 is no ODS code (glued-pharmacy, ODS not-ods-shaped); the mention names \"Tomlinsons of Lytham Ltd\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31599272,
+   "identifier": "GBNHSFTC36FX746",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value FTC36FX746 is no ODS code (glued-pharmacy, ODS not-ods-shaped); the mention names \"LP SD One Ltd\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31599273,
+   "identifier": "GBNHSFVA65FKH72FAF84FRR24FGJ47",
+   "verdict": "wrong",
+   "correct_identifier": "08714511",
+   "rationale": "[519 M6 company-coh/high] The value FVA65FKH72FAF84FRR24FGJ47 is no ODS code or register number of this org; the same-name standing org 31597495 carries GBCOH08714511, which the register names ST HELENS PHARMACY LIMITED. Every mention names \"St Helens Pharmacy Ltd\", so that number is the correction and the arm merges into 31597495. | challenger: rule-based challenger: merge 08714511 31597495 - register 'ST HELENS PHARMACY LIMITED' matches (>= 1.00); unique owner 31597495",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31599276,
+   "identifier": "GBNHSFVA65FGJ47",
+   "verdict": "wrong",
+   "correct_identifier": "08714511",
+   "rationale": "[519 M6 company-coh/high] The value FVA65FGJ47 is no ODS code or register number of this org; the same-name standing org 31597495 carries GBCOH08714511, which the register names ST HELENS PHARMACY LIMITED. Every mention names \"St Helens Pharmacy Ltd\", so that number is the correction and the arm merges into 31597495. | challenger: rule-based challenger: merge 08714511 31597495 - register 'ST HELENS PHARMACY LIMITED' matches (>= 1.00); unique owner 31597495",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31599301,
+   "identifier": "GBNHSF462",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value F462 is no ODS code (other, ODS not-ods-shaped); the mention names \"L Rowland & Co (Retail) Ltd\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31600190,
+   "identifier": "GBNHSPHGM8136GWTX",
+   "verdict": "wrong",
+   "correct_identifier": "GBPPONPHGM8136GWTX",
+   "rationale": "[519 M6 ppon-value/high] The GB-NHS value is a PPON serial, not an ODS code. The mention names NHS Kent and Medway ICB; the PPON is carried by the same-name org 31535091. | challenger: rule-based challenger: merge GBPPONPHGM8136GWTX 31535091 - unique live owner 31535091 'NHS Kent and Medway Integrated Care Board'; every mention name scores >= 1.00",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31601033,
+   "identifier": "GBNHSQHL15E",
+   "verdict": "wrong",
+   "correct_identifier": "GBPPONPWQY9673JBYN",
+   "rationale": "[519 M6 body-ppon/high] QHL15E is two codes glued (QHL + 15E) and answers ODS 404; all 10 live mentions name NHS Birmingham and Solihull ICB. Decision §4 and the U3 panel route it to QHL survivor 30916123, the standing PPON org GBPPONPWQY9673JBYN. | challenger: rule-based challenger: merge GBPPONPWQY9673JBYN 30916123 - unique live owner 30916123 'NHS Birmingham and Solihull Integrated Care Board'; every mention name scores >= 1.00",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31601064,
+   "identifier": "GBNHS130110",
+   "verdict": "wrong",
+   "correct_identifier": "GBPPONPXRJ1463RVVN",
+   "rationale": "[519 M6 body-ppon/high] 130110 is a local number, ODS 404; the mention names South West Yorkshire Partnership NHS FT, whose same-name PPON row is 31567287. Every mention name is the body's and the PPON org stands under that literal (R3/r8). | challenger: rule-based challenger: merge GBPPONPXRJ1463RVVN 31567287 - unique live owner 31567287 'South West Yorkshire Partnership NHS Foundation Trust'; every mention name scores >= 1.00",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31601787,
+   "identifier": "GBNHS222656143",
+   "verdict": "wrong",
+   "correct_identifier": "GBPPONPNXM2771CPCW",
+   "rationale": "[519 M6 body-no-ppon/high] 222656143 is a 9-digit number, no ODS code; the mention names Birmingham Womens and Childrens NHS FT, whose PPON row 30914076 carries the same name with apostrophes (281 mentions). Every mention name is the body's; the twin read missed it on the apostrophes. | challenger: rule-based challenger: hold GBPPONPNXM2771CPCW 30914076 - a mention name scores 0.17 against the owner head \"Birmingham Women's and Children's NHS Foundation Trust\"",
+   "confidence": "medium"
+  },
+  {
+   "org_id": 31603349,
+   "identifier": "GBNHS7816931",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value 7816931 is no ODS code (numeric, ODS not-ods-shaped); the mention names \"Kesson Physiotherapy Service\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31603350,
+   "identifier": "GBNHS8325113",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value 8325113 is no ODS code (numeric, ODS not-ods-shaped); the mention names \"Physiologic Hythe Ltd\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31603351,
+   "identifier": "GBNHS8GV14",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value 8GV14 is no ODS code (other, ODS 404); the mention names \"East Kent Medical Services Ltd\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31603352,
+   "identifier": "GBNHSA91066",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value A91066 is no ODS code (other, ODS 404); the mention names \"Canterbury Medical Centre\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31603357,
+   "identifier": "GBNHSG7108297",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value G7108297 is no ODS code (g-number, ODS not-ods-shaped); the mention names \"City Way Surgery\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31603358,
+   "identifier": "GBNHSG7110234",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value G7110234 is no ODS code (g-number, ODS not-ods-shaped); the mention names \"Newton Place Surgery\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31603359,
+   "identifier": "GBNHSG7119903",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value G7119903 is no ODS code (g-number, ODS not-ods-shaped); the mention names \"Kingsnorth Medical Practice\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31603364,
+   "identifier": "GBNHSG82116",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value G82116 is no ODS code (other, ODS 404); the mention names \"East Cliff Practice\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31603370,
+   "identifier": "GBNHS13685497",
+   "verdict": "wrong",
+   "correct_identifier": "13685497",
+   "rationale": "[519 M6 coh-value/medium] The register names 13685497 WHITE CLIFFS MEDICAL SERVICES LTD; the mention names \"White Cliff Medical\", a near but not exact name (token score 0.4). Held at medium: the register match is not plain; with no owner it would move. | challenger: rule-based challenger: hold 13685497  - a mention name scores 0.40 against the register names",
+   "confidence": "medium"
+  },
+  {
+   "org_id": 31603371,
+   "identifier": "GBNHS8159149",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value 8159149 is no ODS code (numeric, ODS not-ods-shaped); the mention names \"Southeast Ultrasound\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31603376,
+   "identifier": "GBNHSG7106051",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value G7106051 is no ODS code (g-number, ODS not-ods-shaped); the mention names \"The Grange\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31603386,
+   "identifier": "GBNHSG7108981",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value G7108981 is no ODS code (g-number, ODS not-ods-shaped); the mention names \"Memorial Medical Centre\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31603387,
+   "identifier": "GBNHSG7114953",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value G7114953 is no ODS code (g-number, ODS not-ods-shaped); the mention names \"Westgate Surgery\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31603424,
+   "identifier": "GBNHSY63NORTHEASTANDYORKSHIRECOMMISSIONINGREGION",
+   "verdict": "wrong",
+   "correct_identifier": "Y63",
+   "rationale": "[519 M6 nhse-523/medium] The value is the typed label Y63 NORTH EAST AND YORKSHIRE COMMISSIONING REGION; 4 of 9 mentions name NHS England NEY and the rest name ICBs and trusts (mixed). NHS England (issue 523): wrong with the NHS England code the value spells, which keys nothing; never a PPON. | challenger: rule-based challenger: unkeyed Y63  - Y63 is an ODS/NHS England code: keys nothing",
+   "confidence": "medium"
+  },
+  {
+   "org_id": 31603497,
+   "identifier": "GBNHSA137",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value A137 is no ODS code (other, ODS not-ods-shaped); the mention names \"Community Homes of Intensive Care & Education (CHOICE) Limited\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31603626,
+   "identifier": "GBNHSDOZ4R",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value DOZ4R is no ODS code (other, ODS 404); the mention names \"Framlingham Pharmacy\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31603637,
+   "identifier": "GBNHSPH348",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value PH348 is no ODS code (other, ODS 404); the mention names \"Woolpit Health Centre\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31605552,
+   "identifier": "GBNHS11417169",
+   "verdict": "wrong",
+   "correct_identifier": "11417169",
+   "rationale": "[519 M6 coh-value/high] The value is company number 11417169; the register names it MAYDEN SUPPORT LTD, which is this org (\"Mayden Support Ltd\"). A standing org carries it (31570190 GBCOH11417169 \"MAYDEN SUPPORT LTD\"), so the arm merges into it. | challenger: rule-based challenger: merge 11417169 31570190 - register 'MAYDEN SUPPORT LTD' matches (>= 1.00); unique owner 31570190",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31605690,
+   "identifier": "GBNHSOC415501",
+   "verdict": "wrong",
+   "correct_identifier": "GBPPONPTWP8794GHJN",
+   "rationale": "[519 M6 body-ppon/medium] OC415501 is Collaborative Procurement Partnership LLP (dissolved), a procurement collaborative the trust bought through; the mention names Leeds and York Partnership NHS FT (PPON row 30926718, RGD survivor). Held at medium: the value names a related body that may itself have been the party. | challenger: rule-based challenger: merge GBPPONPTWP8794GHJN 30926718 - unique live owner 30926718 'Leeds and York Partnership NHS Foundation Trust'; every mention name scores >= 1.00 | the reader held it at medium; on disagreement the row posts at medium anyway",
+   "confidence": "medium"
+  },
+  {
+   "org_id": 31606158,
+   "identifier": "GBNHSG7128088",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value G7128088 is no ODS code (g-number, ODS not-ods-shaped); the mention names \"Harborough Field Surgery\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31606280,
+   "identifier": "GBNHSUK1LONDON",
+   "verdict": "wrong",
+   "correct_identifier": "GBPPONPCXT8262NYRV",
+   "rationale": "[519 M6 body-ppon/high] UK1 - London is a NUTS code, no ODS code; the mention names NHS North East London ICB, whose same-name PPON row is 31576333. Every mention name is the body's and the PPON org stands under that literal (R3/r8). | challenger: rule-based challenger: merge GBPPONPCXT8262NYRV 31576333 - unique live owner 31576333 'NHS North East London Integrated Care Board'; every mention name scores >= 1.00",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31606428,
+   "identifier": "GBNHSC5UTR",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value C5UTR is no ODS code (other, ODS 404); the mention names \"Haydock Medical Centre\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31606724,
+   "identifier": "GBNHSG6770336",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value G6770336 is no ODS code (g-number, ODS not-ods-shaped); the mention names \"Bromley GP Alliance\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31606744,
+   "identifier": "GBNHSR2Y",
+   "verdict": "wrong",
+   "correct_identifier": "RY2",
+   "rationale": "[519 M6 body-no-ppon/high] R2Y is RY2 transposed (ODS 404); the mention names Bridgewater Community NHS FT, which stands as GBNHSRY2 31543388 and has no PPON row (API search). Ruling 8: a mistyped or glued code whose body has no standing PPON org gets the right ODS code, which keys nothing (withheld and flagged only). | challenger: rule-based challenger: unkeyed RY2  - RY2 is an ODS/NHS England code: keys nothing",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31607354,
+   "identifier": "GBNHSODS8HP78",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value ODS8HP78 is no ODS code (ods-glued, ODS not-ods-shaped); the mention names \"Broomwell Healthwatch Ltd\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31607612,
+   "identifier": "GBNHSD4UY",
+   "verdict": "wrong",
+   "correct_identifier": "GBPPONPLMH6718XNVJ",
+   "rationale": "[519 M6 body-ppon/high] D4UY is sub-ICB code D4U1Y with a digit dropped; the mention names NHS Frimley ICB, whose PPON row is the QNQ survivor 31552078. Every mention name is the body's and the PPON org stands under that literal (R3/r8). | challenger: rule-based challenger: merge GBPPONPLMH6718XNVJ 31552078 - unique live owner 31552078 'NHS Frimley Integrated Care Board'; every mention name scores >= 1.00",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31607981,
+   "identifier": "GBNHSG6782531",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value G6782531 is no ODS code (g-number, ODS not-ods-shaped); the mention names \"London Central West Unscheduled Care Collaborative\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31608238,
+   "identifier": "GBNHSQN1",
+   "verdict": "wrong",
+   "correct_identifier": "GBPPONPCLY6219YPTV",
+   "rationale": "[519 M6 body-no-ppon/high] QN1 is no ODS code (404); the mention names NHS Leicester, Leicestershire and Rutland ICB (with a stray bullet), whose same-name PPON row is 31542352. Every mention name is the body's. | challenger: rule-based challenger: merge GBPPONPCLY6219YPTV 31542352 - unique live owner 31542352 'NHS Leicester, Leicestershire and Rutland Integrated Care Board'; every mention name scores >= 1.00",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31608372,
+   "identifier": "GBNHSG6748900",
+   "verdict": "wrong",
+   "correct_identifier": "08904332",
+   "rationale": "[519 M6 company-coh/high] The value G6748900 is no ODS code or register number of this org; the same-name standing org 30926962 carries GBCOH08904332, which the register names TOGETHER FIRST CIC. Every mention names \"Together First CIC\", so that number is the correction and the arm merges into 30926962. | challenger: rule-based challenger: merge 08904332 30926962 - register 'TOGETHER FIRST CIC' matches (>= 1.00); unique owner 30926962",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31608376,
+   "identifier": "GBNHSG6749482",
+   "verdict": "wrong",
+   "correct_identifier": "09116741",
+   "rationale": "[519 M6 company-coh/high] The value G6749482 is no ODS code or register number of this org; the same-name standing org 30926964 carries GBCOH09116741, which the register names HEALTHBRIDGE DIRECT LIMITED. Every mention names \"Healthbridge Direct Limited\", so that number is the correction and the arm merges into 30926964. | challenger: rule-based challenger: merge 09116741 30926964 - register 'HEALTHBRIDGE DIRECT LIMITED' matches (>= 1.00); unique owner 30926964",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31608377,
+   "identifier": "GBNHSG6757401",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value G6757401 is no ODS code (g-number, ODS not-ods-shaped); the mention names \"Havering Health Limited\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31608597,
+   "identifier": "GBNHSUKG23",
+   "verdict": "wrong",
+   "correct_identifier": "GBPPONPRXC6549RWBT",
+   "rationale": "[519 M6 body-ppon/high] UKG23 is a NUTS code (ODS 404); both mentions name North Staffordshire Combined Healthcare NHS Trust, whose PPON row is the RLY survivor 30917613. Every mention name is the body's and the PPON org stands under that literal (R3/r8). | challenger: rule-based challenger: merge GBPPONPRXC6549RWBT 30917613 - unique live owner 30917613 'North Staffordshire Combined Healthcare NHS Trust'; every mention name scores >= 0.80",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31611764,
+   "identifier": "GBNHSRF1",
+   "verdict": "wrong",
+   "correct_identifier": "GBPPONPRBY9272TQGX",
+   "rationale": "[519 M6 body-ppon/high] RF1 is the trust code R1F transposed, ODS 404; all 4 mentions name Isle of Wight NHS Trust, whose same-name PPON row is 31571667 (D2 names this route). Every mention name is the body's and the PPON org stands under that literal (R3/r8). | challenger: rule-based challenger: merge GBPPONPRBY9272TQGX 31571667 - unique live owner 31571667 'Isle of Wight NHS Trust'; every mention name scores >= 1.00",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31612078,
+   "identifier": "GBNHSSC351",
+   "verdict": "wrong",
+   "correct_identifier": "GBPPONPDVQ1486BNXY",
+   "rationale": "[519 M6 body-ppon/high] SC351 is no ODS code (404); the mention names Derbyshire Community Health Services NHS FT, whose same-name PPON row is 31554134. Every mention name is the body's and the PPON org stands under that literal (R3/r8). | challenger: rule-based challenger: merge GBPPONPDVQ1486BNXY 31554134 - unique live owner 31554134 'Derbyshire Community Health Services NHS Foundation Trust'; every mention name scores >= 1.00",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31613106,
+   "identifier": "GBNHSRA09",
+   "verdict": "wrong",
+   "correct_identifier": "GBPPONPJTG6389PMXW",
+   "rationale": "[519 M6 body-ppon/high] RA09 is the trust code RA9 with a 0 inserted; the mention names Torbay and South Devon NHS FT, whose same-name PPON row is 31574072. Every mention name is the body's and the PPON org stands under that literal (R3/r8). | challenger: rule-based challenger: merge GBPPONPJTG6389PMXW 31574072 - unique live owner 31574072 'Torbay and South Devon NHS Foundation Trust'; every mention name scores >= 1.00",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31613184,
+   "identifier": "GBNHSGREATERMANCHESTERCOMMISSIONINGHUB14J",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 nhse-523/high] The value is the typed label GREATER MANCHESTER COMMISSIONING HUB (14J); both mentions name NHS England Greater Manchester. NHS England (issue 523): wrong with the NHS England code the value spells, which keys nothing; never a PPON. | challenger: rule-based challenger: unkeyed 14J  - 14J is an ODS/NHS England code: keys nothing | agent challenger C2: 14J is not an NHS England code (ODS: Greater Manchester Commissioning Hub, RO98, inactive since 2021); its only GB-NHS carrier 31604394 is another body; correction dropped.",
+   "confidence": "medium"
+  },
+  {
+   "org_id": 31613185,
+   "identifier": "GBNHSNORTHWESTCOMMISSIONINGREGIONY62",
+   "verdict": "wrong",
+   "correct_identifier": "Y62",
+   "rationale": "[519 M6 nhse-523/high] The value is the typed label NORTH WEST COMMISSIONING REGION (Y62); all 3 mentions name NHS England North West. NHS England (issue 523): wrong with the NHS England code the value spells, which keys nothing; never a PPON. | challenger: rule-based challenger: unkeyed Y62  - Y62 is an ODS/NHS England code: keys nothing",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31615538,
+   "identifier": "GBNHSUKC14",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 site-or-hosted/high] UKC14 is a NUTS code (404); 3 of 4 mentions name NENC ICB (County Durham Place), a place. 513 HOSTED_OR_SITE precedent (D2): wrong, no correction. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31616537,
+   "identifier": "GBNHS92GODS",
+   "verdict": "wrong",
+   "correct_identifier": "92G",
+   "rationale": "[519 M6 body-no-ppon/high] 92G - ODS is sub-ICB code 92G glued to ODS; the mention names BSW ICB, whose QOX survivor is provisional, so no PPON org stands for the body. Ruling 8: a mistyped or glued code whose body has no standing PPON org gets the right ODS code, which keys nothing (withheld and flagged only). | challenger: rule-based challenger: unkeyed 92G  - 92G is an ODS/NHS England code: keys nothing",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31616687,
+   "identifier": "GBNHSP08F",
+   "verdict": "wrong",
+   "correct_identifier": "00928555",
+   "rationale": "[519 M6 company-coh/high] The value P08F is no ODS code or register number of this org; the same-name standing org 14842878 carries 00928555, which the register names BOOTS UK LIMITED. Every mention names \"Boots UK Ltd\", so that number is the correction and the arm merges into 14842878. | challenger: rule-based challenger: merge 00928555 14842878 - register 'BOOTS UK LIMITED' matches (>= 1.00); unique owner 14842878",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31616691,
+   "identifier": "GBNHSP2R9",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value P2R9 is no ODS code (other, ODS not-ods-shaped); the mention names \"Gould's UK Ltd T/A Goulds Pharmacy\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31616692,
+   "identifier": "GBNHSP3J6",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value P3J6 is no ODS code (other, ODS not-ods-shaped); the mention names \"Zein Health Limited T/A Horley Late Night Pharmacy\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31616693,
+   "identifier": "GBNHSP29F",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value P29F is no ODS code (other, ODS not-ods-shaped); the mention names \"Tesco Plc\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31616694,
+   "identifier": "GBNHSP0L6",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value P0L6 is no ODS code (other, ODS not-ods-shaped); the mention names \"W M Morrison Supermarkets Plc Morrisons Pharmacy Reigate\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31616732,
+   "identifier": "GBNHSD9YOV",
+   "verdict": "wrong",
+   "correct_identifier": "GBPPONPBQZ2117NPPD",
+   "rationale": "[519 M6 body-no-ppon/high] D9YOV is sub-ICB code D9Y0V with O for 0, under QRL whose PPON survivor is 31552077; the mention names Hampshire & Isle of Wight ICB. Every mention name is the body's (spec §3.2 example). | challenger: rule-based challenger: merge GBPPONPBQZ2117NPPD 31552077 - unique live owner 31552077 'NHS Hampshire and Isle of Wight Integrated Care Board'; every mention name scores >= 1.00",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31617034,
+   "identifier": "GBNHSSWAGGAKJ1DO2",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value SWAGGAKJ1DO2 is no ODS code (other, ODS not-ods-shaped); the mention names \"Mather Avenue Surgery\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31617199,
+   "identifier": "GBNHS110001",
+   "verdict": "wrong",
+   "correct_identifier": "GBPPONPYHT5943VXGV",
+   "rationale": "[519 M6 body-ppon/high] 110001 is a local supplier number, ODS 404; both mentions name Gloucestershire Hospitals NHS FT, whose PPON row is the RTE survivor 30913986. Every mention name is the body's and the PPON org stands under that literal (R3/r8). | challenger: rule-based challenger: merge GBPPONPYHT5943VXGV 30913986 - unique live owner 30913986 'Gloucestershire Hospitals NHS Foundation Trust'; every mention name scores >= 1.00",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31617326,
+   "identifier": "GBNHS09425102",
+   "verdict": "wrong",
+   "correct_identifier": "09425102",
+   "rationale": "[519 M6 coh-value/high] The value is company number 09425102; the register names it HEERA CARE LTD, which is this org (\"Heera Care Ltd\"). No standing org carries it (r7), so the arm moves the row onto the bare number. | challenger: rule-based challenger: move 09425102  - register 'HEERA CARE LTD' matches (>= 1.00); no owner, so a move",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31618650,
+   "identifier": "GBNHSCQCREGISTRATION1199747268",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value CQCREGISTRATION1199747268 is no ODS code (cqc, ODS not-ods-shaped); the mention names \"Bedford Hill Family Practice\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31619315,
+   "identifier": "GBNHSODS8F231",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value ODS8F231 is no ODS code (ods-glued, ODS not-ods-shaped); the mention names \"Health Transportation Group UK Limited\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31619597,
+   "identifier": "GBNHSFQ365",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value FQ365 is no ODS code (other, ODS 404); the mention names \"GORGEMEAD LTD\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31619925,
+   "identifier": "GBNHSNHSENGLANDMIDLANDSNORTHMIDLANDSQ76",
+   "verdict": "wrong",
+   "correct_identifier": "Q76",
+   "rationale": "[519 M6 nhse-523/high] The value is the typed label NHS ENGLAND MIDLANDS (NORTH MIDLANDS) (Q76); both mentions name NHS England Midlands. NHS England (issue 523): wrong with the NHS England code the value spells, which keys nothing; never a PPON. | challenger: rule-based challenger: unkeyed Q76  - Q76 is an ODS/NHS England code: keys nothing",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31619926,
+   "identifier": "GBNHSNHSENGLANDREGIONNORTHOFENGLANDCOMMISSIONINGREGIONY54",
+   "verdict": "wrong",
+   "correct_identifier": "Y54",
+   "rationale": "[519 M6 nhse-523/high] The value is the typed label NORTH OF ENGLAND COMMISSIONING REGION (Y54); both mentions name NHS England North East and Yorkshire offices. NHS England (issue 523): wrong with the NHS England code the value spells, which keys nothing; never a PPON. | challenger: rule-based challenger: unkeyed Y54  - Y54 is an ODS/NHS England code: keys nothing",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31620223,
+   "identifier": "GBNHSQ74NHSENGLANDNORTHEASTANDYORKSHIRECUMBRIAANDNORTHEAST",
+   "verdict": "wrong",
+   "correct_identifier": "Q74",
+   "rationale": "[519 M6 nhse-523/high] The value is Q74 followed by the typed label of the same NHS England office; all 3 mentions name NHS England North East and Yorkshire Health and Justice. NHS England (issue 523): wrong with the NHS England code the value spells, which keys nothing; never a PPON. | challenger: rule-based challenger: unkeyed Q74  - Q74 is an ODS/NHS England code: keys nothing",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31620233,
+   "identifier": "GBNHSG6860370",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value G6860370 is no ODS code (g-number, ODS not-ods-shaped); the mention names \"PRIMARY CARE 24 (MERSEYSIDE) LTD\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31621091,
+   "identifier": "GBNHS1031647539",
+   "verdict": "wrong",
+   "correct_identifier": "GBPPONPGZV5874HRZD",
+   "rationale": "[519 M6 body-ppon/high] 1031647539 is a bare number; the mention names Cheshire and Wirral Partnership NHS FT, whose PPON row is the RXA survivor 31552751. Every mention name is the body's and the PPON org stands under that literal (R3/r8). | challenger: rule-based challenger: merge GBPPONPGZV5874HRZD 31552751 - unique live owner 31552751 'Cheshire and Wirral Partnership NHS Foundation Trust'; every mention name scores >= 1.00",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31623642,
+   "identifier": "GBNHSY61EASTOFENGLANDCOMMISSIONINGREGION",
+   "verdict": "wrong",
+   "correct_identifier": "03682679",
+   "rationale": "[519 M6 company-coh/medium] The value Y61EASTOFENGLANDCOMMISSIONINGREGION is no ODS code or register number of this org; the same-name standing org 30968917 carries GBCOH03682679, which the register names VACCINATION UK LIMITED. Every mention names \"Vaccination UK Limited\", so that number is the correction and the arm merges into 30968917. | challenger: rule-based challenger: merge 03682679 30968917 - register 'VACCINATION UK LIMITED' matches (>= 1.00); unique owner 30968917 | agent challenger C1 (wf_ac3d9f94-972): the raw value is the label of NHS England Y61 (RO209); a rekey would bind every later mention under that label to Vaccination UK unflagged (rekey_target, no name check); held medium like Gateshead/Y63 31623760.",
+   "confidence": "medium"
+  },
+  {
+   "org_id": 31623644,
+   "identifier": "GBNHSNHSENGLANDNORTHEASTANDYORKSHIRECUMBRIAANDNORTHEASTQ74",
+   "verdict": "wrong",
+   "correct_identifier": "Q74",
+   "rationale": "[519 M6 nhse-523/high] The value is the typed label NHS ENGLAND NORTH EAST AND YORKSHIRE (CUMBRIA AND NORTH EAST) (Q74); both mentions name that NHS England office. NHS England (issue 523): wrong with the NHS England code the value spells, which keys nothing; never a PPON. | challenger: rule-based challenger: unkeyed Q74  - Q74 is an ODS/NHS England code: keys nothing",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31623760,
+   "identifier": "GBNHSNHSENGLANDREGIONNORTHEASTANDYORKSHIRECOMMISSIONINGREGIONY63",
+   "verdict": "wrong",
+   "correct_identifier": "GBPPONPBLN7375RYXJ",
+   "rationale": "[519 M6 body-ppon/medium] The one mention names Gateshead Health NHS FT, but the value is the typed label of NHS England region Y63, another body. Held at medium: the value names another body, so the same-name PPON row 31535006 is not plain enough for a merge. | challenger: rule-based challenger: merge GBPPONPBLN7375RYXJ 31535006 - unique live owner 31535006 'Gateshead Health NHS Foundation Trust'; every mention name scores >= 1.00 | the reader held it at medium; on disagreement the row posts at medium anyway",
+   "confidence": "medium"
+  },
+  {
+   "org_id": 31623761,
+   "identifier": "GBNHSNHSENGLANDREGIONLOCALOFFICESITESOUTHYORKSHIREBASSETLAWQ720A",
+   "verdict": "wrong",
+   "correct_identifier": "Q720A",
+   "rationale": "[519 M6 nhse-523/high] The value is the typed label of NHS England local office site Q720A (South Yorkshire & Bassetlaw); the mention names NHS England North East and Yorkshire (South Yorkshire). NHS England (issue 523): wrong with the NHS England code the value spells, which keys nothing; never a PPON. | challenger: rule-based challenger: unkeyed Q720A  - Q720A is an ODS/NHS England code: keys nothing",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31623762,
+   "identifier": "GBNHSNHSTRUSTSITEDONCASTERROYALINFIRMARYRP5DR",
+   "verdict": "wrong",
+   "correct_identifier": "GBPPONPYCP3777NMJZ",
+   "rationale": "[519 M6 body-ppon/high] The value is the typed label of RP5DR, Doncaster Royal Infirmary, a site of the same trust; the mention names Doncaster and Bassetlaw Teaching Hospital NHS FT, whose same-name PPON row is 30917465. Every mention name is the body's and the PPON org stands under that literal (R3/r8). | challenger: rule-based challenger: merge GBPPONPYCP3777NMJZ 30917465 - unique live owner 30917465 'Doncaster and Bassetlaw Teaching Hospital NHS Foundation Trust'; every mention name scores >= 1.00",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31624070,
+   "identifier": "GBNHSNHSHUMBERANDNORTHYORKSHIREICB02Y02Y",
+   "verdict": "wrong",
+   "correct_identifier": "GBPPONPBCG3899RLCL",
+   "rationale": "[519 M6 body-ppon/high] The value is the typed label NHS HUMBER AND NORTH YORKSHIRE ICB - 02Y, 02Y being its own sub-ICB location; both mentions name the ICB, whose PPON row is the QOQ survivor 31573365. Every mention name is the body's and the PPON org stands under that literal (R3/r8). | challenger: rule-based challenger: merge GBPPONPBCG3899RLCL 31573365 - unique live owner 31573365 'NHS Humber and North Yorkshire Integrated Care Board (ICB)'; every mention name scores >= 1.00",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31624249,
+   "identifier": "GBNHSA83057005",
+   "verdict": "wrong",
+   "correct_identifier": "GBPPONPMYZ6944BYLH",
+   "rationale": "[519 M6 body-no-ppon/medium] A83057005 is GP-practice code A83057 with 005 glued; the mention names NHS North East North Cumbria ICB, whose PPON row is the QHM survivor 31556600. Held at medium: the value names another body (a practice under the ICB). | challenger: rule-based challenger: merge GBPPONPMYZ6944BYLH 31556600 - unique live owner 31556600 'NHS North East and North Cumbria Integrated Care Board'; every mention name scores >= 1.00 | the reader held it at medium; on disagreement the row posts at medium anyway",
+   "confidence": "medium"
+  },
+  {
+   "org_id": 31624630,
+   "identifier": "GBNHS16H",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 body-ppon/medium] Of 2 mentions, one names NENC ICB and one \"NENC ICB - Tees Valley Place\", a place (D2 exclusion); 16H answers ODS 404. Held at medium: a place never takes a PPON merge, though the ICB PPON row 31556600 (QHM survivor) is the body. | challenger: rule-based challenger: hold GBPPONPMYZ6944BYLH 31556600 - a mention names a site/place/network ('NHS North East North Cumbria Integrated Care Board - Tees Valley Place'): never high | agent challenger C4: a site/place takes no PPON (spec); correction dropped so a later re-POST of the holds at high can never promote it.",
+   "confidence": "medium"
+  },
+  {
+   "org_id": 31627902,
+   "identifier": "GBNHS01323762",
+   "verdict": "wrong",
+   "correct_identifier": "01323762",
+   "rationale": "[519 M6 coh-value/high] The value is company number 01323762; the register names it CHESHIRE DEAF SOCIETY, which is this org (\"Cheshire Deaf Society\"). No standing org carries it (r7), so the arm moves the row onto the bare number. | challenger: rule-based challenger: move 01323762  - register 'CHESHIRE DEAF SOCIETY' matches (>= 1.00); no owner, so a move",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31627903,
+   "identifier": "GBNHS03777037",
+   "verdict": "wrong",
+   "correct_identifier": "03777037",
+   "rationale": "[519 M6 coh-value/high] The value is company number 03777037; the register names it PLACES FOR PEOPLE GROUP LIMITED, which is this org (\"Places for People Group\"). A standing org carries it (30972137 GBCOH03777037 \"PLACES FOR PEOPLE GROUP LIMITED\"), so the arm merges into it. | challenger: rule-based challenger: merge 03777037 30972137 - register 'PLACES FOR PEOPLE GROUP LIMITED' matches (>= 1.00); unique owner 30972137",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31627904,
+   "identifier": "GBNHS04081379",
+   "verdict": "wrong",
+   "correct_identifier": "04081379",
+   "rationale": "[519 M6 coh-value/high] The value is company number 04081379; the register names it CONSENSUS SUPPORT SERVICES LIMITED, which is this org (\"Consensus Support Services Limited\"). A standing org carries it (31556251 GBCOH04081379 \"Consensus Support Services Ltd\"), so the arm merges into it. | challenger: rule-based challenger: merge 04081379 31556251 - register 'CONSENSUS SUPPORT SERVICES LIMITED' matches (>= 1.00); unique owner 31556251",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31627905,
+   "identifier": "GBNHS04251815",
+   "verdict": "wrong",
+   "correct_identifier": "04251815",
+   "rationale": "[519 M6 coh-value/high] The value is company number 04251815; the register names it ASHWOOD HOME CARE LIMITED, which is this org (\"Ashwood Home Care Limited\"). A standing org carries it (30974841 GBCOH04251815 \"ASHWOOD HOME CARE LIMITED\"), so the arm merges into it. | challenger: rule-based challenger: merge 04251815 30974841 - register 'ASHWOOD HOME CARE LIMITED' matches (>= 1.00); unique owner 30974841",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31627906,
+   "identifier": "GBNHS04620338",
+   "verdict": "wrong",
+   "correct_identifier": "04620338",
+   "rationale": "[519 M6 coh-value/high] The value is company number 04620338; the register names it B & L PROPERTY INVESTMENTS LIMITED, which is this org (\"B & L Property Investments Limited\"). A standing org carries it (31553530 GBCOH04620338 \"B & L PROPERTY INVESTMENTS LIMITED\"), so the arm merges into it. | challenger: rule-based challenger: merge 04620338 31553530 - register 'B & L PROPERTY INVESTMENTS LIMITED' matches (>= 1.00); unique owner 31553530",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31627907,
+   "identifier": "GBNHS05145427",
+   "verdict": "wrong",
+   "correct_identifier": "05145427",
+   "rationale": "[519 M6 coh-value/high] The value is company number 05145427; the register names it AUREM CARE (HILLCREST) LIMITED, which is this org (\"Aurem Care (Hillcrest) Limited\"). No standing org carries it (r7), so the arm moves the row onto the bare number. | challenger: rule-based challenger: move 05145427  - register 'AUREM CARE (HILLCREST) LIMITED' matches (>= 1.00); no owner, so a move",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31627908,
+   "identifier": "GBNHS05329299",
+   "verdict": "wrong",
+   "correct_identifier": "05329299",
+   "rationale": "[519 M6 coh-value/high] The value is company number 05329299; the register names it CHESHIRE HOMECARE SERVICES LIMITED, which is this org (\"Cheshire Homecare Services  Limited\"). No standing org carries it (r7), so the arm moves the row onto the bare number. | challenger: rule-based challenger: move 05329299  - register 'CHESHIRE HOMECARE SERVICES LIMITED' matches (>= 1.00); no owner, so a move",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31627909,
+   "identifier": "GBNHS05779309",
+   "verdict": "wrong",
+   "correct_identifier": "05779309",
+   "rationale": "[519 M6 coh-value/high] The value is company number 05779309; the register names it BLUECROFT ESTATES LIMITED, which is this org (\"Bluecroft Estates Limited\"). A standing org carries it (31553538 GBCOH05779309 \"BLUECROFT ESTATES LIMITED\"), so the arm merges into it. | challenger: rule-based challenger: merge 05779309 31553538 - register 'BLUECROFT ESTATES LIMITED' matches (>= 1.00); unique owner 31553538",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31627910,
+   "identifier": "GBNHS07737949",
+   "verdict": "wrong",
+   "correct_identifier": "07737949",
+   "rationale": "[519 M6 coh-value/high] The value is company number 07737949; the register names it AKARI CARE LIMITED, which is this org (\"Akari Care Limited\"). A standing org carries it (30974799 GBCOH07737949 \"AKARI CARE LIMITED\"), so the arm merges into it. | challenger: rule-based challenger: merge 07737949 30974799 - register 'AKARI CARE LIMITED' matches (>= 1.00); unique owner 30974799",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31627911,
+   "identifier": "GBNHS08073027",
+   "verdict": "wrong",
+   "correct_identifier": "08073027",
+   "rationale": "[519 M6 coh-value/high] The value is company number 08073027; the register names it BESPOKE CARE CHESHIRE LTD, which is this org (\"Bespoke Care Cheshire Ltd\"). No standing org carries it (r7), so the arm moves the row onto the bare number. | challenger: rule-based challenger: move 08073027  - register 'BESPOKE CARE CHESHIRE LTD' matches (>= 1.00); no owner, so a move",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31627912,
+   "identifier": "GBNHS08809516",
+   "verdict": "wrong",
+   "correct_identifier": "08809516",
+   "rationale": "[519 M6 coh-value/high] The value is company number 08809516; the register names it CAREFOUND HOME CARE (WILMSLOW) LIMITED, which is this org (\"Carefound Home Care (Wilmslow) Limited\"). No standing org carries it (r7), so the arm moves the row onto the bare number. | challenger: rule-based challenger: move 08809516  - register 'CAREFOUND HOME CARE (WILMSLOW) LIMITED' matches (>= 1.00); no owner, so a move",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31627913,
+   "identifier": "GBNHS09353634",
+   "verdict": "wrong",
+   "correct_identifier": "09353634",
+   "rationale": "[519 M6 coh-value/high] The value is company number 09353634; the register names it CATALYST CHOICES COMMUNITY INTEREST COMPANY, which is this org (\"Catalyst Choices Community Interest Company\"). No standing org carries it (r7), so the arm moves the row onto the bare number. | challenger: rule-based challenger: move 09353634  - register 'CATALYST CHOICES COMMUNITY INTEREST COMPANY' matches (>= 1.00); no owner, so a move",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31627914,
+   "identifier": "GBNHS09449312",
+   "verdict": "wrong",
+   "correct_identifier": "09449312",
+   "rationale": "[519 M6 coh-value/high] The value is company number 09449312; the register names it ACESO SERVICES LTD, which is this org (\"Aceso Services Ltd\"). A standing org carries it (31571718 GBCOH09449312 \"ACESO SERVICES LTD\"), so the arm merges into it. | challenger: rule-based challenger: merge 09449312 31571718 - register 'ACESO SERVICES LTD' matches (>= 1.00); unique owner 31571718",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31627915,
+   "identifier": "GBNHS09463267",
+   "verdict": "wrong",
+   "correct_identifier": "09463267",
+   "rationale": "[519 M6 coh-value/high] The value is company number 09463267; the register names it COMPASSIONATE HEALTHCARE LIMITED, which is this org (\"Compassionate Healthcare Limited\"). No standing org carries it (r7), so the arm moves the row onto the bare number. | challenger: rule-based challenger: move 09463267  - register 'COMPASSIONATE HEALTHCARE LIMITED' matches (>= 1.00); no owner, so a move",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31627916,
+   "identifier": "GBNHS10213678",
+   "verdict": "wrong",
+   "correct_identifier": "10213678",
+   "rationale": "[519 M6 coh-value/high] The value is company number 10213678; the register names it BREW 13 SERVICES LIMITED, which is this org (\"Brew 13 Services Limited\"). No standing org carries it (r7), so the arm moves the row onto the bare number. | challenger: rule-based challenger: move 10213678  - register 'BREW 13 SERVICES LIMITED' matches (>= 1.00); no owner, so a move",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31627917,
+   "identifier": "GBNHS10833910",
+   "verdict": "wrong",
+   "correct_identifier": "10833910",
+   "rationale": "[519 M6 coh-value/high] The value is company number 10833910; the register names it AMB CARE LTD, which is this org (\"AMB Care Ltd\"). No standing org carries it (r7), so the arm moves the row onto the bare number. | challenger: rule-based challenger: move 10833910  - register 'AMB CARE LTD' matches (>= 1.00); no owner, so a move",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31627918,
+   "identifier": "GBNHS11696513",
+   "verdict": "wrong",
+   "correct_identifier": "11696513",
+   "rationale": "[519 M6 coh-value/high] The value is company number 11696513; the register names it CARE QUALITY SERVICES LIMITED (previous name ALLIED HEALTH-SERVICES LIMITED), which is this org (\"Care Quality Services Limited\"). A standing org carries it (14647720 11696513 \"Allied Health-Services Ltd trading as Allied Healthcare\"), so the arm merges into it. | challenger: rule-based challenger: merge 11696513 14647720 - register 'CARE QUALITY SERVICES LIMITED' matches (>= 1.00); unique owner 14647720",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31627919,
+   "identifier": "GBNHS11822551",
+   "verdict": "wrong",
+   "correct_identifier": "11822551",
+   "rationale": "[519 M6 coh-value/high] The value is company number 11822551; the register names it CONNECT CARE CONSULTANCY LTD, which is this org (\"Connect Care Consultancy Ltd\"). No standing org carries it (r7), so the arm moves the row onto the bare number. | challenger: rule-based challenger: move 11822551  - register 'CONNECT CARE CONSULTANCY LTD' matches (>= 1.00); no owner, so a move",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31627920,
+   "identifier": "GBNHS14198384",
+   "verdict": "wrong",
+   "correct_identifier": "14198384",
+   "rationale": "[519 M6 coh-value/high] The value is company number 14198384; the register names it UNITY LIVES LTD, which is this org (\"Unity Lives Ltd\"). A standing org carries it (30974964 GBCOH14198384 \"UNITY LIVES LTD\"), so the arm merges into it. | challenger: rule-based challenger: merge 14198384 30974964 - register 'UNITY LIVES LTD' matches (>= 1.00); unique owner 30974964",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31627921,
+   "identifier": "GBNHS14368239",
+   "verdict": "wrong",
+   "correct_identifier": "14368239",
+   "rationale": "[519 M6 coh-value/high] The value is company number 14368239; the register names it CARE CONNECT CHESHIRE LTD, which is this org (\"Care Connect Cheshire Ltd\"). A standing org carries it (31571727 GBCOH14368239 \"CARE CONNECT CHESHIRE LTD\"), so the arm merges into it. | challenger: rule-based challenger: merge 14368239 31571727 - register 'CARE CONNECT CHESHIRE LTD' matches (>= 1.00); unique owner 31571727",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31627922,
+   "identifier": "GBNHSCE003108",
+   "verdict": "wrong",
+   "correct_identifier": "CE003108",
+   "rationale": "[519 M6 coh-value/high] The value is company number CE003108; the register names it WARRINGTON SPEAK UP, which is this org (\"Warrington Speak Up\"). No standing org carries it (r7), so the arm moves the row onto the bare number. | challenger: rule-based challenger: move CE003108  - register 'WARRINGTON SPEAK UP' matches (>= 1.00); no owner, so a move",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31627923,
+   "identifier": "GBNHSIP18632R",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value IP18632R is no ODS code (other, ODS not-ods-shaped); the mention names \"Muir Group Housing Association\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31633969,
+   "identifier": "GBNHS78HNHS",
+   "verdict": "wrong",
+   "correct_identifier": "GBPPONPWCM9262VJDY",
+   "rationale": "[519 M6 body-no-ppon/high] 78H NHS spells sub-ICB code 78H, whose parent QPM has the PPON survivor 31542357; the mention names NHS Northamptonshire ICB. Every mention name is the body's (spec §3.2 example). | challenger: rule-based challenger: merge GBPPONPWCM9262VJDY 31542357 - unique live owner 31542357 'NHS Northamptonshire Integrated Care Board'; every mention name scores >= 1.00",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31644655,
+   "identifier": "GBNHS10775747",
+   "verdict": "wrong",
+   "correct_identifier": "GBPPONPGJT9638TWQR",
+   "rationale": "[519 M6 body-ppon/high] 10775747 is the register number of Keynes Informatics Ltd (dissolved), an unrelated company; the mention names Liverpool University Hospitals NHS FT, whose PPON row is the REM survivor 30919565. Every mention name is the body's and the PPON org stands under that literal (R3/r8). | challenger: rule-based challenger: merge GBPPONPGJT9638TWQR 30919565 - unique live owner 30919565 'Liverpool University Hospitals NHS Foundation Trust'; every mention name scores >= 1.00",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31647215,
+   "identifier": "GBNHS83033",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value 83033 is no ODS code (numeric, ODS 404); the mention names \"Hibaldstow Medical Practice\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31647470,
+   "identifier": "GBNHS02647131",
+   "verdict": "wrong",
+   "correct_identifier": "02647131",
+   "rationale": "[519 M6 coh-value/high] The value is company number 02647131; the register names it NEW DIRECTIONS (RUGBY) LIMITED, which is this org (\"New Directions (Rugby) Limited\"). A standing org carries it (31647712 GBCOH02647131 \"New Directions (Rugby) Limited\"), so the arm merges into it. | challenger: rule-based challenger: merge 02647131 31647712 - register 'NEW DIRECTIONS (RUGBY) LIMITED' matches (>= 1.00); unique owner 31647712",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31647716,
+   "identifier": "GBNHSH418B",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value H418B is no ODS code (other, ODS 404); the mention names \"Nuffield Hospital The Holly Hospital\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31648862,
+   "identifier": "GBNHSV252065",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value V252065 is no ODS code (other, ODS not-ods-shaped); the mention names \"Mr A Ghaffoor (71 Dental)\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31648863,
+   "identifier": "GBNHSV299414",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 junk/high] The value V299414 is no ODS code (other, ODS not-ods-shaped); the mention names \"Mr D Hammond\", which carries no NHS code and no register-confirmed number on a same-name standing row. D5: wrong with no correction, withheld and flagged; the org stays. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  },
+  {
+   "org_id": 31911529,
+   "identifier": "GBNHSPNNX5248NRVD",
+   "verdict": "wrong",
+   "correct_identifier": "GBPPONPNNX5248NRVD",
+   "rationale": "[519 M6 ppon-value/medium] The value is a PPON serial that no standing org carries (R4: neither GBPPON nor PPON spelling); the mention names West Midlands Ambulance Service, whose RYA survivor carries a different PPON (30913621). D3: a PPON correction with no owner would move to the bare serial, so it is posted at medium (held). | challenger: rule-based challenger: hold GBPPONPNNX5248NRVD  - 0 live owners of GBPPONPNNX5248NRVD: no merge",
+   "confidence": "medium"
+  },
+  {
+   "org_id": 31967674,
+   "identifier": "GBNHSSLA20",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "rationale": "[519 M6 new-body-no-ppon/high] SLA20 answers ODS 404 (new class E since 10-12); both mentions name NHS Lanarkshire (Scotland), a Scottish health board with no standing PPON org (API search shows only provisional rows). Wrong with no correction: withheld and flagged. | challenger: rule-based challenger: none   - no correction claimed; nothing to re-key",
+   "confidence": "high"
+  }
+ ]
+}

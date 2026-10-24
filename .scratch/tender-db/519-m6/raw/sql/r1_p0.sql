@@ -1,0 +1,1 @@
+SELECT id, identifier, name, name_norm, provisional FROM organizations WHERE country = 'GB' AND identifier_kind = 'national' AND identifier >= 'GBNHS' AND identifier < 'GBNHT' ORDER BY identifier LIMIT 2500

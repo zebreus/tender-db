@@ -1,0 +1,16 @@
+{
+ "url": "https://tenders.zebreus.click/v1/organizations/14647720",
+ "http": "200",
+ "fetched": "2026-10-24T18:53:51Z",
+ "body": {
+  "country": "GB",
+  "id": 14647720,
+  "identifier": "11696513",
+  "identifier_kind": "national",
+  "identifier_status": null,
+  "mentions": 32,
+  "merged_identifiers": [],
+  "name": "Allied Health-Services Ltd trading as Allied Healthcare",
+  "provisional": false
+ }
+}

@@ -1,0 +1,4 @@
+# plan-copy
+SEARCH organization_mentions USING INDEX organization_mentions_org (organization_id=?)
+# plan-idx
+SEARCH organization_mentions USING INDEX organization_mentions_org (organization_id=?)

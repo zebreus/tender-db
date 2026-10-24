@@ -1,0 +1,16 @@
+{
+ "url": "https://tenders.zebreus.click/v1/organizations/30968917",
+ "http": "200",
+ "fetched": "2026-10-24T18:54:01Z",
+ "body": {
+  "country": "GB",
+  "id": 30968917,
+  "identifier": "GBCOH03682679",
+  "identifier_kind": "national",
+  "identifier_status": null,
+  "mentions": 4,
+  "merged_identifiers": [],
+  "name": "VACCINATION UK LIMITED",
+  "provisional": false
+ }
+}

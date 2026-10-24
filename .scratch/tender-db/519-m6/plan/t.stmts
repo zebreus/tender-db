@@ -1,0 +1,2 @@
+-- name: idx
+SELECT name, tbl_name, sql FROM sqlite_master WHERE type = 'index' AND tbl_name IN ('organizations','organization_mentions')

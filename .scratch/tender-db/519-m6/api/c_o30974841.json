@@ -1,0 +1,16 @@
+{
+ "url": "https://tenders.zebreus.click/v1/organizations/30974841",
+ "http": "200",
+ "fetched": "2026-10-24T18:53:46Z",
+ "body": {
+  "country": "GB",
+  "id": 30974841,
+  "identifier": "GBCOH04251815",
+  "identifier_kind": "national",
+  "identifier_status": null,
+  "mentions": 1,
+  "merged_identifiers": [],
+  "name": "ASHWOOD HOME CARE LIMITED",
+  "provisional": false
+ }
+}

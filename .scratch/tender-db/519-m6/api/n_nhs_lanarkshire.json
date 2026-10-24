@@ -1,0 +1,144 @@
+{
+ "url": "https://tenders.zebreus.click/v1/organizations?name_prefix=nhs%20lanarkshire&limit=20",
+ "http": "200",
+ "fetched": "2026-10-24T18:22:15Z",
+ "body": {
+  "ignored_filters": [],
+  "items": [
+   {
+    "country": null,
+    "id": 1635652,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 723,
+    "merged_identifiers": [],
+    "name": "NHS Lanarkshire",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 2098845,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 625,
+    "merged_identifiers": [],
+    "name": "NHS Lanarkshire",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31967674,
+    "identifier": "GBNHSSLA20",
+    "identifier_kind": "national",
+    "identifier_status": null,
+    "mentions": 2,
+    "merged_identifiers": [],
+    "name": "NHS Lanarkshire (Scotland)",
+    "provisional": false
+   },
+   {
+    "country": "GB",
+    "id": 9831066,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "NHS Lanarkshire Headquarters",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31198797,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "NHS LANARKSHIRE PROCUREMENT DEPARTMENT, STRATHCLYDE HOSPITAL",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31248517,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 3,
+    "merged_identifiers": [],
+    "name": "NHS LANARKSHIRE, ACUTE DIVISION",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31272374,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "NHS LANARKSHIRE, ACUTE DIVSION",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31209667,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 2,
+    "merged_identifiers": [],
+    "name": "NHS LANARKSHIRE, PROCUREMENT",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31256185,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "NHS LANARKSHIRE, PROCUREMENT DEPARTMENT, STRATHCLYDE HOSPITAL",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31236326,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "NHS LANARKSHIRE, PROCUREMENT, STRATHCLYDE HOSPITAL",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31246313,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "NHS LANARKSHIRE, PROPERTY ABD SUPPORT SERVICES",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31209679,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 3,
+    "merged_identifiers": [],
+    "name": "NHS LANARKSHIRE, STRATHCLYDE HOSPITAL",
+    "provisional": true
+   }
+  ],
+  "more": false,
+  "next_cursor": null
+ }
+}

@@ -1,0 +1,188 @@
+{
+ "url": "https://tenders.zebreus.click/v1/organizations?name_prefix=mersey%20care&limit=20",
+ "http": "200",
+ "fetched": "2026-10-24T18:30:43Z",
+ "body": {
+  "ignored_filters": [],
+  "items": [
+   {
+    "country": null,
+    "id": 11838093,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "Mersey Care",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 11838098,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "Mersey Care",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31545403,
+    "identifier": "GBCOH08053204",
+    "identifier_kind": "national",
+    "identifier_status": null,
+    "mentions": 2,
+    "merged_identifiers": [],
+    "name": "MERSEY CARE LIMITED",
+    "provisional": false
+   },
+   {
+    "country": "GB",
+    "id": 31560803,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "Mersey Care NHS Fiundation Trust",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 7158655,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 156,
+    "merged_identifiers": [],
+    "name": "Mersey Care NHS Foundation Trust",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 30915592,
+    "identifier": "GBNHSRW4",
+    "identifier_kind": "national",
+    "identifier_status": null,
+    "mentions": 180,
+    "merged_identifiers": [],
+    "name": "mersey care nhs foundation trust",
+    "provisional": false
+   },
+   {
+    "country": "GB",
+    "id": 31546207,
+    "identifier": "GBCOH00130163",
+    "identifier_kind": "national",
+    "identifier_status": "register_mismatch",
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "Mersey Care NHS Foundation Trust",
+    "provisional": false
+   },
+   {
+    "country": "GB",
+    "id": 31593803,
+    "identifier": "GBNHSNHSTRUSTMERSEYCARENHSFOUNDATIONTRUSTRW4",
+    "identifier_kind": "national",
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "Mersey Care NHS Foundation Trust",
+    "provisional": false
+   },
+   {
+    "country": null,
+    "id": 11838111,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "Mersey Care NHS Foundatuon Trust",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 4264728,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 46,
+    "merged_identifiers": [],
+    "name": "Mersey Care NHS Trust",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31366189,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "MERSEY CARE NHS TRUST AND LIVERPOOL AND SEFTON HEALTH PARTNERSHIP LTD (TOGETHER OR SEPARATELY, \"THE AUTHORITY\")",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31347971,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "MERSEY CARE NHS TRUST AND LIVERPOOL AND SEFTON HEALTH PARTNERSHIP LTD (TOGETHER, OR SEPARATELY, \"THE AUTHORITY\")",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31169825,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "MERSEY CARE NHS TRUST, ASHWORTH HOSPITAL",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31210430,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 2,
+    "merged_identifiers": [],
+    "name": "MERSEY CARE NHS TRUST, CENTRAL ADMINISTRATION BUILDING",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31614587,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 3,
+    "merged_identifiers": [],
+    "name": "Mersey care River Alt  Specialist Training PDS",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31614588,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 3,
+    "merged_identifiers": [],
+    "name": "Mersey care Vauxhall Specialist training PDS",
+    "provisional": true
+   }
+  ],
+  "more": false,
+  "next_cursor": null
+ }
+}

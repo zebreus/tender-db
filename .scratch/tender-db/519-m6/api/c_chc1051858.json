@@ -1,0 +1,11 @@
+{
+ "url": "https://tenders.zebreus.click/v1/organizations?identifier=GBCHC1051858",
+ "http": "200",
+ "fetched": "2026-10-24T18:53:10Z",
+ "body": {
+  "ignored_filters": [],
+  "items": [],
+  "more": false,
+  "next_cursor": null
+ }
+}

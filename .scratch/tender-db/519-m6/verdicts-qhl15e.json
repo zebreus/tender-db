@@ -1,0 +1,13 @@
+{
+ "cohort": "519-m6-qhl15e-2026-10-24",
+ "verdicts": [
+  {
+   "org_id": 31601033,
+   "identifier": "GBNHSQHL15E",
+   "verdict": "wrong",
+   "correct_identifier": "GBPPONPWQY9673JBYN",
+   "rationale": "[519 M6 body-ppon/high] QHL15E is two codes glued (QHL + 15E) and answers ODS 404; all 10 live mentions name NHS Birmingham and Solihull ICB. Decision §4 and the U3 panel route it to QHL survivor 30916123, the standing PPON org GBPPONPWQY9673JBYN. | challenger: rule-based challenger: merge GBPPONPWQY9673JBYN 30916123 - unique live owner 30916123 'NHS Birmingham and Solihull Integrated Care Board'; every mention name scores >= 1.00",
+   "confidence": "high"
+  }
+ ]
+}

@@ -1,0 +1,4 @@
+# plan-copy
+SCAN organizations
+# plan-idx
+SEARCH organizations USING INDEX organizations_identity (country=? AND identifier_kind=? AND identifier>=? AND identifier<?)

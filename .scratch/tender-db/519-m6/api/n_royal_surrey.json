@@ -1,0 +1,232 @@
+{
+ "url": "https://tenders.zebreus.click/v1/organizations?name_prefix=royal%20surrey&limit=20",
+ "http": "200",
+ "fetched": "2026-10-24T18:22:09Z",
+ "body": {
+  "ignored_filters": [],
+  "items": [
+   {
+    "country": "GB",
+    "id": 30992624,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "ROYAL SURREY COUNTY & ST LUKE'S HOSPITALS TRUST",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 30981302,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 3,
+    "merged_identifiers": [],
+    "name": "ROYAL SURREY COUNTY AND ST LUKE'S HOSPITAL NHS TRUST",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31094758,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "ROYAL SURREY COUNTY AND ST LUKE'S HOSPITAL TRUST",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31057383,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "ROYAL SURREY COUNTY AND ST LUKE'S HOSPITALS",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 30985813,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 11,
+    "merged_identifiers": [],
+    "name": "ROYAL SURREY COUNTY AND ST LUKE'S HOSPITALS NHS TRUST",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 30985075,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 9,
+    "merged_identifiers": [],
+    "name": "ROYAL SURREY COUNTY AND ST LUKE'S HOSPITALS TRUST",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31052262,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 2,
+    "merged_identifiers": [],
+    "name": "ROYAL SURREY COUNTY AND ST LUKE'S NHS TRUST",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31080903,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "ROYAL SURREY COUNTY AND ST LUKES HOSPITAL TRUST",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31009482,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 2,
+    "merged_identifiers": [],
+    "name": "ROYAL SURREY COUNTY AND ST LUKES HOSPITALS NHS TRUST",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31022153,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 2,
+    "merged_identifiers": [],
+    "name": "ROYAL SURREY COUNTY AND ST LUKES HOSPITALS TRUST",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31543162,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "Royal Surrey County Hosp NHS FT",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 1657438,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 10,
+    "merged_identifiers": [],
+    "name": "Royal Surrey County Hospital",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 2722980,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 45,
+    "merged_identifiers": [],
+    "name": "Royal Surrey County Hospital NHS Foundation Trust",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31538055,
+    "identifier": "GBNHSRA2",
+    "identifier_kind": "national",
+    "identifier_status": null,
+    "mentions": 9,
+    "merged_identifiers": [],
+    "name": "ROYAL SURREY COUNTY HOSPITAL NHS FOUNDATION TRUST",
+    "provisional": false
+   },
+   {
+    "country": "GB",
+    "id": 2346846,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 22,
+    "merged_identifiers": [],
+    "name": "Royal Surrey County Hospital NHS Trust",
+    "provisional": true
+   },
+   {
+    "country": null,
+    "id": 24734694,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "ROYAL SURREY COUNTY HOSPITAL NHS TRUST",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31065537,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "ROYAL SURREY COUNTY HOSPITALS NHS TRUST",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31635576,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "ROYAL SURREY COUNTY NHS FOUNDATION TRUST",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 16155169,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 2,
+    "merged_identifiers": [],
+    "name": "Royal Surrey Hospital NHS Foundation Trust",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31642846,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "Royal Surrey Hospitals NHS Foundation Trust",
+    "provisional": true
+   }
+  ],
+  "more": true,
+  "next_cursor": "31642846~royal surrey hospitals nhs foundation trust"
+ }
+}

@@ -1,0 +1,22 @@
+{
+ "url": "https://tenders.zebreus.click/v1/organizations/31535216",
+ "http": "200",
+ "fetched": "2026-10-24T18:53:56Z",
+ "body": {
+  "country": "GB",
+  "id": 31535216,
+  "identifier": "GBPPONPHHT9556BWJJ",
+  "identifier_kind": "national",
+  "identifier_status": null,
+  "mentions": 314,
+  "merged_identifiers": [
+   {
+    "country": "GB",
+    "identifier": "GBNHSRAT",
+    "identifier_kind": "national"
+   }
+  ],
+  "name": "North East London NHS Foundation Trust",
+  "provisional": false
+ }
+}

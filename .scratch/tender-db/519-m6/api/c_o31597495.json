@@ -1,0 +1,16 @@
+{
+ "url": "https://tenders.zebreus.click/v1/organizations/31597495",
+ "http": "200",
+ "fetched": "2026-10-24T18:53:49Z",
+ "body": {
+  "country": "GB",
+  "id": 31597495,
+  "identifier": "GBCOH08714511",
+  "identifier_kind": "national",
+  "identifier_status": null,
+  "mentions": 1,
+  "merged_identifiers": [],
+  "name": "ST HELENS PHARMACY LTD",
+  "provisional": false
+ }
+}

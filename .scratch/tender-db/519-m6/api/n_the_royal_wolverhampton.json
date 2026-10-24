@@ -1,0 +1,199 @@
+{
+ "url": "https://tenders.zebreus.click/v1/organizations?name_prefix=the%20royal%20wolverhampton&limit=20",
+ "http": "200",
+ "fetched": "2026-10-24T18:30:36Z",
+ "body": {
+  "ignored_filters": [],
+  "items": [
+   {
+    "country": "GB",
+    "id": 31062361,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 4,
+    "merged_identifiers": [],
+    "name": "THE ROYAL WOLVERHAMPTON HOSPITAL NHS TRUST",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 1502944,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 161,
+    "merged_identifiers": [],
+    "name": "The Royal Wolverhampton Hospitals NHS Trust",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31149707,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 2,
+    "merged_identifiers": [],
+    "name": "THE ROYAL WOLVERHAMPTON HOSPITALS NHS TRUST PROCUREMENT DEPARTMENT",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31160141,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 2,
+    "merged_identifiers": [],
+    "name": "THE ROYAL WOLVERHAMPTON HOSPITALS NHS TRUST, DEVELOPMENTS DIRECTORATE",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31194009,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "THE ROYAL WOLVERHAMPTON HOSPITALS NHS TRUST, NEW CROSS HOSPITAL",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31151079,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 101,
+    "merged_identifiers": [],
+    "name": "THE ROYAL WOLVERHAMPTON HOSPITALS NHS TRUST, PROCUREMENT DEPARTMENT",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31252204,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "THE ROYAL WOLVERHAMPTON HOSPITALS NHS TRUST, PROCUREMENT DEPARTMENT YEW TREE COURT",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31061879,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "THE ROYAL WOLVERHAMPTON HOSPITALS NHS TRUST, SUPPLIES DEPARTMENT",
+    "provisional": true
+   },
+   {
+    "country": null,
+    "id": 6409311,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "The Royal Wolverhampton NHS Trust",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 7534966,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 115,
+    "merged_identifiers": [],
+    "name": "The Royal Wolverhampton NHS Trust",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 30917610,
+    "identifier": "GBPPONPCXW3895DYVX",
+    "identifier_kind": "national",
+    "identifier_status": null,
+    "mentions": 10,
+    "merged_identifiers": [],
+    "name": "The Royal Wolverhampton NHS Trust",
+    "provisional": false
+   },
+   {
+    "country": "GB",
+    "id": 30953525,
+    "identifier": "GBNHSRL4",
+    "identifier_kind": "national",
+    "identifier_status": null,
+    "mentions": 3,
+    "merged_identifiers": [],
+    "name": "The Royal Wolverhampton NHS Trust",
+    "provisional": false
+   },
+   {
+    "country": "GB",
+    "id": 31601629,
+    "identifier": "GBCHC1059467",
+    "identifier_kind": "national",
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "The Royal Wolverhampton NHS Trust",
+    "provisional": false
+   },
+   {
+    "country": "GB",
+    "id": 31594543,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 2,
+    "merged_identifiers": [],
+    "name": "The Royal Wolverhampton NHS Trust (RWT)",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31615863,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 2,
+    "merged_identifiers": [],
+    "name": "The Royal Wolverhampton NHS Trust - New Cross Hospital ",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 13575887,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "The Royal Wolverhampton Trust",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31606461,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "The Royal Wolverhampton Trust Primary Care Network",
+    "provisional": true
+   }
+  ],
+  "more": false,
+  "next_cursor": null
+ }
+}

@@ -1,0 +1,16 @@
+{
+ "url": "https://tenders.zebreus.click/v1/organizations/31623642",
+ "http": "200",
+ "fetched": "2026-10-24T18:54:04Z",
+ "body": {
+  "country": "GB",
+  "id": 31623642,
+  "identifier": "GBNHSY61EASTOFENGLANDCOMMISSIONINGREGION",
+  "identifier_kind": "national",
+  "identifier_status": null,
+  "mentions": 1,
+  "merged_identifiers": [],
+  "name": "Vaccination UK Limited",
+  "provisional": false
+ }
+}

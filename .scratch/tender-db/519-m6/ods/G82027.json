@@ -1,0 +1,11 @@
+{
+ "code": "G82027",
+ "url": "https://directory.spineservices.nhs.uk/ORD/2-0-0/organisations/G82027",
+ "fetched": "2026-10-24T18:17Z",
+ "via": "WebFetch",
+ "found": true,
+ "name": "FAVERSHAM MEDICAL PRACTICE",
+ "status": "Active",
+ "primary_role": "RO177",
+ "note": "GP practice under 91Q (RE4/RE6 from 2020-04-01); a correct own code -> class D, not M6"
+}

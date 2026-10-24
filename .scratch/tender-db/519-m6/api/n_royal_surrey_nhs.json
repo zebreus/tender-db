@@ -1,0 +1,56 @@
+{
+ "url": "https://tenders.zebreus.click/v1/organizations?name_prefix=royal%20surrey%20nhs&limit=20",
+ "http": "200",
+ "fetched": "2026-10-24T18:31:01Z",
+ "body": {
+  "ignored_filters": [],
+  "items": [
+   {
+    "country": "GB",
+    "id": 15673694,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 21,
+    "merged_identifiers": [],
+    "name": "Royal Surrey NHS Foundation Trust",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31563960,
+    "identifier": "GBCOHRA2",
+    "identifier_kind": "national",
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "Royal Surrey NHS Foundation Trust",
+    "provisional": false
+   },
+   {
+    "country": "GB",
+    "id": 31596144,
+    "identifier": "GBNHSPBND1678TCRM",
+    "identifier_kind": "national",
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "Royal Surrey NHS Foundation Trust",
+    "provisional": false
+   },
+   {
+    "country": "GB",
+    "id": 31601635,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "Royal Surrey NHS Hospital Foundation Trust",
+    "provisional": true
+   }
+  ],
+  "more": false,
+  "next_cursor": null
+ }
+}

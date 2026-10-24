@@ -1,0 +1,45 @@
+{
+ "url": "https://tenders.zebreus.click/v1/organizations?name_prefix=bristol%20nhs&limit=20",
+ "http": "200",
+ "fetched": "2026-10-24T18:22:20Z",
+ "body": {
+  "ignored_filters": [],
+  "items": [
+   {
+    "country": "GB",
+    "id": 8041530,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 2,
+    "merged_identifiers": [],
+    "name": "Bristol NHS CCG",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31974885,
+    "identifier": "GBCOHRA7",
+    "identifier_kind": "national",
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "Bristol NHS Foundation  Trust",
+    "provisional": false
+   },
+   {
+    "country": "GB",
+    "id": 30928165,
+    "identifier": "GBPPONPHPY3425XCGD",
+    "identifier_kind": "national",
+    "identifier_status": null,
+    "mentions": 41,
+    "merged_identifiers": [],
+    "name": "Bristol NHS Foundation Trust.",
+    "provisional": false
+   }
+  ],
+  "more": false,
+  "next_cursor": null
+ }
+}

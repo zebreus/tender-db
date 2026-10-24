@@ -1,0 +1,23 @@
+{
+ "url": "https://tenders.zebreus.click/v1/organizations?identifier=GBCHC1059467",
+ "http": "200",
+ "fetched": "2026-10-24T18:53:13Z",
+ "body": {
+  "ignored_filters": [],
+  "items": [
+   {
+    "country": "GB",
+    "id": 31601629,
+    "identifier": "GBCHC1059467",
+    "identifier_kind": "national",
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "The Royal Wolverhampton NHS Trust",
+    "provisional": false
+   }
+  ],
+  "more": false,
+  "next_cursor": null
+ }
+}

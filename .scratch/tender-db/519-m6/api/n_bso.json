@@ -1,0 +1,342 @@
+{
+ "url": "https://tenders.zebreus.click/v1/organizations?name_prefix=business%20services%20organisation&limit=30",
+ "http": "200",
+ "fetched": "2026-10-24T18:22:17Z",
+ "body": {
+  "ignored_filters": [],
+  "items": [
+   {
+    "country": "GB",
+    "id": 2179255,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 1520,
+    "merged_identifiers": [],
+    "name": "Business Services Organisation",
+    "provisional": true
+   },
+   {
+    "country": null,
+    "id": 5101600,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 26,
+    "merged_identifiers": [],
+    "name": "Business Services Organisation",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 30915904,
+    "identifier": "GBPPONPCQH8657NGMT",
+    "identifier_kind": "national",
+    "identifier_status": null,
+    "mentions": 47,
+    "merged_identifiers": [],
+    "name": "Business Services Organisation",
+    "provisional": false
+   },
+   {
+    "country": "GB",
+    "id": 3157285,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 10,
+    "merged_identifiers": [],
+    "name": "Business Services Organisation (BSO)",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31642259,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 2,
+    "merged_identifiers": [],
+    "name": "Business Services Organisation (ITS)",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31637000,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "Business Services Organisation , PaLS",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 5358427,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "Business Services Organisation , Procurement and Logistics Service on behalf of Belfast HSC Trust, Southern HSC Trust, South Eastern HSC Trust , Western HSC Trust and Northern HSC Trust",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 8636698,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "Business Services Organisation ,PaLS",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31604596,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 9,
+    "merged_identifiers": [],
+    "name": "Business Services Organisation - PaLS",
+    "provisional": true
+   },
+   {
+    "country": null,
+    "id": 4073224,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 3,
+    "merged_identifiers": [],
+    "name": "Business Services Organisation - Procurement & Logistics Service",
+    "provisional": true
+   },
+   {
+    "country": null,
+    "id": 4195694,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 3,
+    "merged_identifiers": [],
+    "name": "Business Services Organisation - Procurement and Logistics Service",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31333981,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 3,
+    "merged_identifiers": [],
+    "name": "BUSINESS SERVICES ORGANISATION - PROCUREMENT AND LOGISTICS SERVICE",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31543791,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 3,
+    "merged_identifiers": [],
+    "name": "Business Services Organisation - Procurement and Logistics Service [BSO PaLS]",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31616695,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 3,
+    "merged_identifiers": [],
+    "name": "Business Services Organisation - Procurement and Logistics Service [BSO PaLS] on behalf of the Public Health Agency [PHA]",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31593850,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 2,
+    "merged_identifiers": [],
+    "name": "Business Services Organisation - Procurement and Logistics Service [BSO PaLS] on behalf of the Strategic Planning and Performance Group [SPPG]",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31607766,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "Business Services Organisation - Procurement and Logistics Service [BSO PaLS] on behalf of the Western Health and Social Care Trust",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31634578,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 2,
+    "merged_identifiers": [],
+    "name": "Business Services Organisation - Procurement and Logistics Service on behalf of Health and Social Care Board",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31636296,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 2,
+    "merged_identifiers": [],
+    "name": "Business Services Organisation - Procurement and Logistics Service on behalf of Health and Social Care Board HSCB",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31634330,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "Business Services Organisation - Procurement and Logistics Service on behalf of the Public Health Agency [PHA]",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31620312,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 3,
+    "merged_identifiers": [],
+    "name": "Business Services Organisation - Procurement and Logistics Services",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 11651146,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "Business Services Organisation BSO",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31633901,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 2,
+    "merged_identifiers": [],
+    "name": "Business Services Organisation BSO- Procurement and Logistics Service PaLS on behalf of the Public Health Agency \u2013 PHA",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 15410716,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 3,
+    "merged_identifiers": [],
+    "name": "Business Services Organisation c/o PaLS",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31647796,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "Business Services Organisation DLS",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31607112,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 62,
+    "merged_identifiers": [],
+    "name": "Business Services Organisation I T S",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 30953773,
+    "identifier": "GBNHSPWNJ1991NGDW",
+    "identifier_kind": "national",
+    "identifier_status": null,
+    "mentions": 44,
+    "merged_identifiers": [],
+    "name": "Business Services Organisation ITS",
+    "provisional": false
+   },
+   {
+    "country": "GB",
+    "id": 31625884,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "Business Services Organisation ITS",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31611453,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 2,
+    "merged_identifiers": [],
+    "name": "Business Services Organisation on behalf of Northern Ireland Ambulance Service",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 8533077,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 53,
+    "merged_identifiers": [],
+    "name": "Business Services Organisation PaLS",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 4444132,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "Business Services Organisation Procurement & Logistic Services",
+    "provisional": true
+   }
+  ],
+  "more": true,
+  "next_cursor": "4444132~business services organisation procurement & logistic services"
+ }
+}

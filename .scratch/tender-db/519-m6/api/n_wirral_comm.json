@@ -1,0 +1,177 @@
+{
+ "url": "https://tenders.zebreus.click/v1/organizations?name_prefix=wirral%20community&limit=20",
+ "http": "200",
+ "fetched": "2026-10-24T18:30:46Z",
+ "body": {
+  "ignored_filters": [],
+  "items": [
+   {
+    "country": "GB",
+    "id": 31604140,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 3,
+    "merged_identifiers": [],
+    "name": "Wirral Community Health & Care NHS Foundation Trust",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31588873,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "Wirral Community Health & Care NHS Foundation Trust & Wirral University Teaching Hospital NHS Foundation Trust",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31618811,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 2,
+    "merged_identifiers": [],
+    "name": "Wirral Community Health & Care Trust",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 14176429,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 17,
+    "merged_identifiers": [],
+    "name": "Wirral Community Health and Care NHS Foundation Trust",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31539451,
+    "identifier": "GBNHSRY7",
+    "identifier_kind": "national",
+    "identifier_status": null,
+    "mentions": 30,
+    "merged_identifiers": [],
+    "name": "WIRRAL COMMUNITY HEALTH AND CARE NHS FOUNDATION TRUST",
+    "provisional": false
+   },
+   {
+    "country": "GB",
+    "id": 31593804,
+    "identifier": "GBNHSNHSTRUSTWIRRALCOMMUNITYHEALTHANDCARENHSFOUNDATIONTRUSTRY7",
+    "identifier_kind": "national",
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "Wirral Community Health and Care NHS Foundation Trust",
+    "provisional": false
+   },
+   {
+    "country": "GB",
+    "id": 31637723,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "Wirral Community Health and Care NHS Trust",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 30994958,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 2,
+    "merged_identifiers": [],
+    "name": "WIRRAL COMMUNITY HEALTHCARE NHS TRUST",
+    "provisional": true
+   },
+   {
+    "country": null,
+    "id": 31665755,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "Wirral Community Healthcare NHS Trust",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 30990860,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "WIRRAL COMMUNITY HEALTHCARE TRUST",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 9199887,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 20,
+    "merged_identifiers": [],
+    "name": "Wirral Community NHS Foundation Trust",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 4759439,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 4,
+    "merged_identifiers": [],
+    "name": "Wirral Community NHS Trust",
+    "provisional": true
+   },
+   {
+    "country": null,
+    "id": 5784907,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "Wirral Community NHS Trust",
+    "provisional": true
+   },
+   {
+    "country": null,
+    "id": 30445832,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "Wirral Community Transport",
+    "provisional": true
+   },
+   {
+    "country": null,
+    "id": 30050361,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "Wirral Community Transport Services",
+    "provisional": true
+   }
+  ],
+  "more": false,
+  "next_cursor": null
+ }
+}

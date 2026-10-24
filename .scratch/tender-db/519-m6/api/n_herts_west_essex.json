@@ -1,0 +1,67 @@
+{
+ "url": "https://tenders.zebreus.click/v1/organizations?name_prefix=nhs%20hertfordshire%20and%20west%20essex&limit=20",
+ "http": "200",
+ "fetched": "2026-10-24T18:30:51Z",
+ "body": {
+  "ignored_filters": [],
+  "items": [
+   {
+    "country": "GB",
+    "id": 31554399,
+    "identifier": "GBPPONPDQL2869XVHY",
+    "identifier_kind": "national",
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "NHS Hertfordshire and West Essex ICB",
+    "provisional": false
+   },
+   {
+    "country": "GB",
+    "id": 31614629,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 20,
+    "merged_identifiers": [],
+    "name": "NHS Hertfordshire and West Essex ICB",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31620667,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "NHS Hertfordshire and West Essex Integrated Care Boad",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31536074,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 300,
+    "merged_identifiers": [],
+    "name": "NHS Hertfordshire and West Essex Integrated Care Board",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31616626,
+    "identifier": "GBNHS06K",
+    "identifier_kind": "national",
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "NHS Hertfordshire and West Essex Integrated Care Board",
+    "provisional": false
+   }
+  ],
+  "more": false,
+  "next_cursor": null
+ }
+}

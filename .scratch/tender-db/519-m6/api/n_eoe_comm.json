@@ -1,0 +1,56 @@
+{
+ "url": "https://tenders.zebreus.click/v1/organizations?name_prefix=east%20of%20england%20community&limit=20",
+ "http": "200",
+ "fetched": "2026-10-24T18:30:56Z",
+ "body": {
+  "ignored_filters": [],
+  "items": [
+   {
+    "country": "GB",
+    "id": 31534478,
+    "identifier": "GBNHSGBNHSRY3",
+    "identifier_kind": "national",
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "East of England Community Health and Care NHS Trust",
+    "provisional": false
+   },
+   {
+    "country": "GB",
+    "id": 31571533,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 20,
+    "merged_identifiers": [],
+    "name": "East of England Community Health and Care NHS Trust",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31572008,
+    "identifier": "GBNHSRY3",
+    "identifier_kind": "national",
+    "identifier_status": null,
+    "mentions": 5,
+    "merged_identifiers": [],
+    "name": "East of England Community Health and Care NHS Trust",
+    "provisional": false
+   },
+   {
+    "country": "GB",
+    "id": 31575162,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "East of England Community Health and Care NHS Trust (EEC)",
+    "provisional": true
+   }
+  ],
+  "more": false,
+  "next_cursor": null
+ }
+}

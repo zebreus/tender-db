@@ -1,0 +1,238 @@
+{
+ "url": "https://tenders.zebreus.click/v1/organizations?name_prefix=northumbria%20healthcare&limit=20",
+ "http": "200",
+ "fetched": "2026-10-24T18:30:53Z",
+ "body": {
+  "ignored_filters": [],
+  "items": [
+   {
+    "country": "GB",
+    "id": 1302353,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 11,
+    "merged_identifiers": [],
+    "name": "Northumbria Healthcare",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 30914055,
+    "identifier": "GBPPONPLMV4859MQXP",
+    "identifier_kind": "national",
+    "identifier_status": null,
+    "mentions": 170,
+    "merged_identifiers": [],
+    "name": "Northumbria Healthcare Facilities Management",
+    "provisional": false
+   },
+   {
+    "country": "GB",
+    "id": 30917544,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 33,
+    "merged_identifiers": [],
+    "name": "Northumbria Healthcare Facilities Management",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31539396,
+    "identifier": "GBCOH07913048",
+    "identifier_kind": "national",
+    "identifier_status": null,
+    "mentions": 11,
+    "merged_identifiers": [],
+    "name": "NORTHUMBRIA HEALTHCARE FACILITIES MANAGEMENT LIMITED",
+    "provisional": false
+   },
+   {
+    "country": "GB",
+    "id": 31555176,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 30,
+    "merged_identifiers": [],
+    "name": "Northumbria Healthcare Facilities Management Limited",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 15014912,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 21,
+    "merged_identifiers": [],
+    "name": "Northumbria Healthcare Facilities Management Ltd",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31626499,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "Northumbria Healthcare Facilities Management Ltd  North Shields  NE27 0QJ",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31319897,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "NORTHUMBRIA HEALTHCARE FOUNDATION NHS TRUST",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31301567,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "NORTHUMBRIA HEALTHCARE FOUNDATION NHS TRUST, SUPPLIES DEPARTMENT",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 8027015,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 14,
+    "merged_identifiers": [],
+    "name": "Northumbria Healthcare Foundation Trust",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 13806407,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "Northumbria Healthcare NHS Foundation",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 1172050,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 436,
+    "merged_identifiers": [
+     {
+      "country": "GB",
+      "identifier": "GBNHSRTF",
+      "identifier_kind": "national"
+     }
+    ],
+    "name": "Northumbria Healthcare NHS Foundation Trust",
+    "provisional": true
+   },
+   {
+    "country": null,
+    "id": 1864886,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 5,
+    "merged_identifiers": [],
+    "name": "Northumbria Healthcare NHS Foundation Trust",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31562109,
+    "identifier": "GBNHS133078",
+    "identifier_kind": "national",
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "Northumbria Healthcare NHS Foundation Trust",
+    "provisional": false
+   },
+   {
+    "country": "GB",
+    "id": 31589579,
+    "identifier": "GBCOH130078",
+    "identifier_kind": "national",
+    "identifier_status": "register_mismatch",
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "Northumbria Healthcare NHS Foundation Trust",
+    "provisional": false
+   },
+   {
+    "country": "GB",
+    "id": 9237506,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "Northumbria Healthcare NHS Foundation Trust (as host of NHS Payroll Services)",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 1460066,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "Northumbria Healthcare NHS Foundation Trust and/or its wholly owned subsidary company",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31615132,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "Northumbria Healthcare NHS Foundation Trust Ltd",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31269562,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 14,
+    "merged_identifiers": [],
+    "name": "NORTHUMBRIA HEALTHCARE NHS FOUNDATION TRUST, SUPPLIES DEPARTMENT",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31536024,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 2,
+    "merged_identifiers": [],
+    "name": "NORTHUMBRIA HEALTHCARE NHS FT",
+    "provisional": true
+   }
+  ],
+  "more": true,
+  "next_cursor": "31536024~northumbria healthcare nhs ft"
+ }
+}

@@ -1,0 +1,11 @@
+{
+ "wrong / high / none": 108,
+ "wrong / high / merge / ppon": 48,
+ "wrong / medium / hold / ppon": 18,
+ "wrong / high / unkeyed / ods": 14,
+ "wrong / high / merge / company": 39,
+ "wrong / high / move / company": 13,
+ "wrong / medium / hold / company": 4,
+ "wrong / medium / unkeyed / ods": 1,
+ "not posted (D8)": 3
+}

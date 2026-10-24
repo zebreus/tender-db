@@ -1,0 +1,232 @@
+{
+ "url": "https://tenders.zebreus.click/v1/organizations?name_prefix=birmingham%20women&limit=20",
+ "http": "200",
+ "fetched": "2026-10-24T18:30:48Z",
+ "body": {
+  "ignored_filters": [],
+  "items": [
+   {
+    "country": "GB",
+    "id": 9802220,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 2,
+    "merged_identifiers": [],
+    "name": "Birmingham Women's & Children NHS Foundation Trust",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 9656266,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "Birmingham Women's & Children's Hospital NHS Foundation Trust",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 10432538,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 4,
+    "merged_identifiers": [],
+    "name": "Birmingham Women's & Children's NHS Foundation Trust",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31571807,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "Birmingham Women's & Childrens NHS Foundation Trust",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 12115009,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 2,
+    "merged_identifiers": [],
+    "name": "Birmingham Women's and Children Management Services Ltd",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 13513911,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "Birmingham Women's and Children NHS Foundation Trust",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 13043614,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 4,
+    "merged_identifiers": [],
+    "name": "Birmingham Women's and Children's Hospital NHS Foundation Trust",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31643230,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "Birmingham Women's and Children's Hospitals NHS Foundation Trust",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 13304914,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "Birmingham Women's and Children's Management Services",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 9434941,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 112,
+    "merged_identifiers": [],
+    "name": "Birmingham Women's and Children's NHS Foundation Trust",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 30914076,
+    "identifier": "GBPPONPNXM2771CPCW",
+    "identifier_kind": "national",
+    "identifier_status": null,
+    "mentions": 281,
+    "merged_identifiers": [],
+    "name": "Birmingham Women's and Children's NHS Foundation Trust",
+    "provisional": false
+   },
+   {
+    "country": "GB",
+    "id": 30932864,
+    "identifier": "GBNHSRQ3",
+    "identifier_kind": "national",
+    "identifier_status": null,
+    "mentions": 14,
+    "merged_identifiers": [],
+    "name": "BIRMINGHAM WOMEN'S AND CHILDREN'S NHS FOUNDATION TRUST",
+    "provisional": false
+   },
+   {
+    "country": "GB",
+    "id": 31609282,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "Birmingham Women's and Children's NHS Foundation Trust  Steelhouse Ln, Birmingham B4 6NH",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31628838,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 2,
+    "merged_identifiers": [],
+    "name": "Birmingham Women's and Childrens Hospital NHS Foundation Trust",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 11685375,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 5,
+    "merged_identifiers": [],
+    "name": "Birmingham Women's and Childrens Management Services",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31592762,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 2,
+    "merged_identifiers": [],
+    "name": "Birmingham Women's and Childrens NHS FT",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31001863,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 2,
+    "merged_identifiers": [],
+    "name": "BIRMINGHAM WOMEN'S HEALTH CARE NHS TRUST",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31315418,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "BIRMINGHAM WOMEN'S HEALTHCARE NHS FOUNDATION TRUST",
+    "provisional": true
+   },
+   {
+    "country": "GB",
+    "id": 31334536,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "BIRMINGHAM WOMEN'S HEALTHCARE NHS FOUNDATIONTRUST",
+    "provisional": true
+   },
+   {
+    "country": null,
+    "id": 26501471,
+    "identifier": null,
+    "identifier_kind": null,
+    "identifier_status": null,
+    "mentions": 1,
+    "merged_identifiers": [],
+    "name": "BIRMINGHAM WOMEN'S HEALTHCARE NHS TRUST",
+    "provisional": true
+   }
+  ],
+  "more": true,
+  "next_cursor": "26501471~birmingham women's healthcare nhs trust"
+ }
+}
