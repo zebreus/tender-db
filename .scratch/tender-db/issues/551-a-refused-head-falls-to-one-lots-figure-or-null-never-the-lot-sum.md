@@ -1695,3 +1695,5 @@ Full record: `551-lot-sum/b6/decision-b6.md` (three judges — risk-first, value
   - U2b is crates/ingest/src/fts/checklist.rs, metadata only: not a fold input, 0 notices re-queued, no job.
   - It joins the 10-28 batch, and P1 covers its ingest touch. No W input.
 
+- **2026-10-24 09:36–10:00Z: 572 U2 gated green at 3fb8803; main = 70804a8.** 10:23–10:51Z: twin adcb7b0 re-gated green
+  (1,650 s); COVERS, skip. The 10-28 batch adds 572 U2 (docs, a sql.rs note, and checklist metadata).
