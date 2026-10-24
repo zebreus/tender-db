@@ -1656,3 +1656,13 @@ Full record: `551-lot-sum/b6/decision-b6.md` (three judges — risk-first, value
   segments. A dry admission reads today's heads. Across those segments, gd5 found NEW 0 and 0 R moves, and the retired
   Tenders are reported as not admitted. So the drift is at most a few re-headed non-R Tenders against 4,105, and the
   verdict cannot flip.
+- **W7 for 577 U2: NOT EMPTY (2026-10-24, wf_52627394-803, analyst + adversarial skeptic CONFIRMED; `b6/w7/W7.md`).**
+  Three code moves on eforms-de-1.x land on W-read ids: the lot estimate (its old id normalises to BT-27-Procedure),
+  the framework maximum and the lot name. 14 more W hits come from the overlap list only. By the rule, 577 U2's
+  deploy and 577 U3 wait until after 11-04. 406529a was on main undeployed, so it is reverted there (b3effc2) and the
+  batch no longer ships it.
+  - **The batch is now:** 576 U2 (cb19854, the one fold-changing commit), 578 U2, 579 U4, and 539's caveat retirement
+    (ce20b28).
+  - The 576 U2 + 539 + revert tree is gating at b3effc2. A green gate moves the marker off the twin adcb7b0, which is
+    re-gated right after. The deploy itself still waits for the 10-28 day-7 fetch (decision calendar).
+  - 576 U2 touches supervisor.rs, a flip file, so the twin rebuilt on the deployed base carries its hunk.

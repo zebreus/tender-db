@@ -1,0 +1,222 @@
+id	A_tags	tier	category	B_key	B_match	B_source
+BT-137-Lot	shadow.out:overlap	W	LOT_NUMBER	BT-137-Lot	exact	project.rs:8840 PUBLISHED_LOT_NO_FIELDS
+BT-137-LotsGroup	shadow.out:overlap	W	LOT_NUMBER	BT-137-LotsGroup	exact	project.rs:8840 PUBLISHED_LOT_NO_FIELDS
+BT-137-Part	shadow.out:overlap	W	LOT_NUMBER	BT-137-Part	exact	project.rs:8840 PUBLISHED_LOT_NO_FIELDS
+BT-195(BT-720)-Tender	shadow.out:overlap	W	AMOUNT/LOT_RESULT quality (withheld marker on BT-720)	BT-195(BT-720)	prefix	project.rs:9323 withheld_source
+BT-195(BT-720)-Tender	shadow.out:overlap	nonW	withheld declaration of a non-W source (read, never looked up for W)	BT-195(	prefix	project.rs:9323 withheld_source
+BT-21-Lot	shadow.out:overlap	W	LOT_TITLE(R6 reads the served lot title)	BT-21	stem	project.rs:241 TEXTS
+BT-21-LotsGroup	shadow.out:overlap	W	LOT_TITLE(R6 reads the served lot title)	BT-21	stem	project.rs:241 TEXTS
+BT-21-Part	shadow.out:overlap	W	LOT_TITLE(R6 reads the served lot title)	BT-21	stem	project.rs:241 TEXTS
+BT-27-Lot	shadow.out:overlap	W	AMOUNT	BT-27	stem	project.rs:313 AMOUNTS
+BT-27-LotsGroup	shadow.out:overlap	W	AMOUNT	BT-27	stem	project.rs:313 AMOUNTS
+BT-27-Part	shadow.out:overlap	W	AMOUNT	BT-27	stem	project.rs:313 AMOUNTS
+BT-271-Lot	shadow.out:overlap	W	AMOUNT	BT-271	stem	project.rs:314 AMOUNTS
+BT-271-LotsGroup	shadow.out:overlap	W	AMOUNT	BT-271	stem	project.rs:314 AMOUNTS
+BT-271-Part	shadow.out:overlap	W	AMOUNT	BT-271	stem	project.rs:314 AMOUNTS
+DE1-ProcurementProject-Name	code:bind-old,shadow.out:shadow	W	LOT_TITLE(R6 reads the served lot title) [via DE1 alias -> BT-21-Procedure]	DE1-ProcurementProject-Name	exact	project.rs DE1_FIELD_ALIASES
+DE1-ProcurementProject-RequestedTenderTotal-EstimatedOverallContractAmount	code:bind-old,shadow.out:shadow	W	STATED_TOTAL [via DE1 alias -> BT-27-Procedure]	DE1-ProcurementProject-RequestedTenderTotal-EstimatedOverallContractAmount	exact	project.rs DE1_FIELD_ALIASES
+DE1-ProcurementProject-RequestedTenderTotal-EstimatedOverallContractAmount	code:bind-old,shadow.out:shadow	W	AMOUNT [via DE1 alias -> BT-27-Procedure]	DE1-ProcurementProject-RequestedTenderTotal-EstimatedOverallContractAmount	exact	project.rs DE1_FIELD_ALIASES
+DE1-ProcurementProject-RequestedTenderTotal-FrameworkMaximumAmount	code:bind-old,shadow.out:shadow	W	AMOUNT [via DE1 alias -> BT-271-Procedure]	DE1-ProcurementProject-RequestedTenderTotal-FrameworkMaximumAmount	exact	project.rs DE1_FIELD_ALIASES
+DE1-ProcurementProjectLot-ProcurementProject-Name	code:bind-new,shadow.out:shadow	W	LOT_TITLE(R6 reads the served lot title) [via DE1 alias -> BT-21-Lot]	DE1-ProcurementProjectLot-ProcurementProject-Name	exact	project.rs DE1_FIELD_ALIASES
+DE1-ProcurementProjectLot-ProcurementProject-RequestedTenderTotal-EstimatedOverallContractAmount	code:bind-new,shadow.out:shadow	W	AMOUNT [via DE1 alias -> BT-27-Lot]	DE1-ProcurementProjectLot-ProcurementProject-RequestedTenderTotal-EstimatedOverallContractAmount	exact	project.rs DE1_FIELD_ALIASES
+DE1-ProcurementProjectLot-ProcurementProject-RequestedTenderTotal-FrameworkMaximumAmount	code:bind-new,shadow.out:shadow	W	AMOUNT [via DE1 alias -> BT-271-Lot]	DE1-ProcurementProjectLot-ProcurementProject-RequestedTenderTotal-FrameworkMaximumAmount	exact	project.rs DE1_FIELD_ALIASES
+UBL-FrameworkEstimatedMaximumValue	shadow.out:overlap	W	AMOUNT	UBL-FrameworkEstimatedMaximumValue	stem	project.rs:331 AMOUNTS
+DE1-ProcurementProjectLot-TenderingTerms-AppealTerms-AppealInformationParty-PartyIdentification-ID	code:bind-new,shadow.out:shadow	W-ind	ROLE_REF (530-T role guard -> winner identity) [via DE1 alias -> OPT-301-Lot-ReviewInfo]	DE1-ProcurementProjectLot-TenderingTerms-AppealTerms-AppealInformationParty-PartyIdentification-ID	exact	project.rs DE1_FIELD_ALIASES
+DE1-ProcurementProjectLot-TenderingTerms-AppealTerms-AppealInformationParty-PartyIdentification-ID	code:bind-new,shadow.out:shadow	W-ind	ROLE_REF [via DE1 alias -> OPT-301-Lot-ReviewInfo]	DE1-ProcurementProjectLot-TenderingTerms-AppealTerms-AppealInformationParty-PartyIdentification-ID	exact	project.rs DE1_FIELD_ALIASES
+DE1-ProcurementProjectLot-TenderingTerms-AppealTerms-AppealReceiverParty-PartyIdentification-ID	code:bind-new,shadow.out:shadow	W-ind	ROLE_REF [via DE1 alias -> OPT-301-Lot-ReviewOrg]	DE1-ProcurementProjectLot-TenderingTerms-AppealTerms-AppealReceiverParty-PartyIdentification-ID	exact	project.rs DE1_FIELD_ALIASES
+DE1-ProcurementProjectLot-TenderingTerms-AppealTerms-AppealReceiverParty-PartyIdentification-ID	code:bind-new,shadow.out:shadow	W-ind	ROLE_REF (530-T role guard -> winner identity) [via DE1 alias -> OPT-301-Lot-ReviewOrg]	DE1-ProcurementProjectLot-TenderingTerms-AppealTerms-AppealReceiverParty-PartyIdentification-ID	exact	project.rs DE1_FIELD_ALIASES
+DE1-ProcurementProjectLot-TenderingTerms-AppealTerms-MediationParty-PartyIdentification-ID	code:bind-new,shadow.out:shadow	W-ind	ROLE_REF (530-T role guard -> winner identity) [via DE1 alias -> OPT-301-Lot-Mediator]	DE1-ProcurementProjectLot-TenderingTerms-AppealTerms-MediationParty-PartyIdentification-ID	exact	project.rs DE1_FIELD_ALIASES
+DE1-ProcurementProjectLot-TenderingTerms-AppealTerms-MediationParty-PartyIdentification-ID	code:bind-new,shadow.out:shadow	W-ind	ROLE_REF [via DE1 alias -> OPT-301-Lot-Mediator]	DE1-ProcurementProjectLot-TenderingTerms-AppealTerms-MediationParty-PartyIdentification-ID	exact	project.rs DE1_FIELD_ALIASES
+DE1-ProcurementProjectLot-TenderingTerms-EmploymentLegislationDocumentReference-IssuerParty-PartyIdentification-ID	code:bind-new,shadow.out:shadow	W-ind	ROLE_REF (530-T role guard -> winner identity) [via DE1 alias -> OPT-301-Lot-EmployLegis]	DE1-ProcurementProjectLot-TenderingTerms-EmploymentLegislationDocumentReference-IssuerParty-PartyIdentification-ID	exact	project.rs DE1_FIELD_ALIASES
+DE1-ProcurementProjectLot-TenderingTerms-EmploymentLegislationDocumentReference-IssuerParty-PartyIdentification-ID	code:bind-new,shadow.out:shadow	W-ind	ROLE_REF [via DE1 alias -> OPT-301-Lot-EmployLegis]	DE1-ProcurementProjectLot-TenderingTerms-EmploymentLegislationDocumentReference-IssuerParty-PartyIdentification-ID	exact	project.rs DE1_FIELD_ALIASES
+DE1-ProcurementProjectLot-TenderingTerms-EnvironmentalLegislationDocumentReference-IssuerParty-PartyIdentification-ID	code:bind-new,shadow.out:shadow	W-ind	ROLE_REF [via DE1 alias -> OPT-301-Lot-EnvironLegis]	DE1-ProcurementProjectLot-TenderingTerms-EnvironmentalLegislationDocumentReference-IssuerParty-PartyIdentification-ID	exact	project.rs DE1_FIELD_ALIASES
+DE1-ProcurementProjectLot-TenderingTerms-EnvironmentalLegislationDocumentReference-IssuerParty-PartyIdentification-ID	code:bind-new,shadow.out:shadow	W-ind	ROLE_REF (530-T role guard -> winner identity) [via DE1 alias -> OPT-301-Lot-EnvironLegis]	DE1-ProcurementProjectLot-TenderingTerms-EnvironmentalLegislationDocumentReference-IssuerParty-PartyIdentification-ID	exact	project.rs DE1_FIELD_ALIASES
+DE1-ProcurementProjectLot-TenderingTerms-FiscalLegislationDocumentReference-IssuerParty-PartyIdentification-ID	code:bind-new,shadow.out:shadow	W-ind	ROLE_REF (530-T role guard -> winner identity) [via DE1 alias -> OPT-301-Lot-FiscalLegis]	DE1-ProcurementProjectLot-TenderingTerms-FiscalLegislationDocumentReference-IssuerParty-PartyIdentification-ID	exact	project.rs DE1_FIELD_ALIASES
+DE1-ProcurementProjectLot-TenderingTerms-FiscalLegislationDocumentReference-IssuerParty-PartyIdentification-ID	code:bind-new,shadow.out:shadow	W-ind	ROLE_REF [via DE1 alias -> OPT-301-Lot-FiscalLegis]	DE1-ProcurementProjectLot-TenderingTerms-FiscalLegislationDocumentReference-IssuerParty-PartyIdentification-ID	exact	project.rs DE1_FIELD_ALIASES
+DE1-ProcurementProjectLot-TenderingTerms-TenderRecipientParty-PartyIdentification-ID	code:bind-new,shadow.out:shadow	W-ind	ROLE_REF [via DE1 alias -> OPT-301-Lot-TenderReceipt]	DE1-ProcurementProjectLot-TenderingTerms-TenderRecipientParty-PartyIdentification-ID	exact	project.rs DE1_FIELD_ALIASES
+DE1-ProcurementProjectLot-TenderingTerms-TenderRecipientParty-PartyIdentification-ID	code:bind-new,shadow.out:shadow	W-ind	ROLE_REF (530-T role guard -> winner identity) [via DE1 alias -> OPT-301-Lot-TenderReceipt]	DE1-ProcurementProjectLot-TenderingTerms-TenderRecipientParty-PartyIdentification-ID	exact	project.rs DE1_FIELD_ALIASES
+DE1-TenderingTerms-AppealTerms-AppealInformationParty-PartyIdentification-ID	code:bind-old,shadow.out:shadow	W-ind	ROLE_REF (530-T role guard -> winner identity) [via DE1 alias -> OPT-301-Lot-ReviewInfo]	DE1-TenderingTerms-AppealTerms-AppealInformationParty-PartyIdentification-ID	exact	project.rs DE1_FIELD_ALIASES
+DE1-TenderingTerms-AppealTerms-AppealInformationParty-PartyIdentification-ID	code:bind-old,shadow.out:shadow	W-ind	ROLE_REF [via DE1 alias -> OPT-301-Lot-ReviewInfo]	DE1-TenderingTerms-AppealTerms-AppealInformationParty-PartyIdentification-ID	exact	project.rs DE1_FIELD_ALIASES
+DE1-TenderingTerms-AppealTerms-AppealReceiverParty-PartyIdentification-ID	code:bind-old,shadow.out:shadow	W-ind	ROLE_REF (530-T role guard -> winner identity) [via DE1 alias -> OPT-301-Lot-ReviewOrg]	DE1-TenderingTerms-AppealTerms-AppealReceiverParty-PartyIdentification-ID	exact	project.rs DE1_FIELD_ALIASES
+DE1-TenderingTerms-AppealTerms-AppealReceiverParty-PartyIdentification-ID	code:bind-old,shadow.out:shadow	W-ind	ROLE_REF [via DE1 alias -> OPT-301-Lot-ReviewOrg]	DE1-TenderingTerms-AppealTerms-AppealReceiverParty-PartyIdentification-ID	exact	project.rs DE1_FIELD_ALIASES
+DE1-TenderingTerms-AppealTerms-MediationParty-PartyIdentification-ID	code:bind-old,shadow.out:shadow	W-ind	ROLE_REF (530-T role guard -> winner identity) [via DE1 alias -> OPT-301-Lot-Mediator]	DE1-TenderingTerms-AppealTerms-MediationParty-PartyIdentification-ID	exact	project.rs DE1_FIELD_ALIASES
+DE1-TenderingTerms-AppealTerms-MediationParty-PartyIdentification-ID	code:bind-old,shadow.out:shadow	W-ind	ROLE_REF [via DE1 alias -> OPT-301-Lot-Mediator]	DE1-TenderingTerms-AppealTerms-MediationParty-PartyIdentification-ID	exact	project.rs DE1_FIELD_ALIASES
+DE1-TenderingTerms-EmploymentLegislationDocumentReference-IssuerParty-PartyIdentification-ID	code:bind-old,shadow.out:shadow	W-ind	ROLE_REF [via DE1 alias -> OPT-301-Lot-EmployLegis]	DE1-TenderingTerms-EmploymentLegislationDocumentReference-IssuerParty-PartyIdentification-ID	exact	project.rs DE1_FIELD_ALIASES
+DE1-TenderingTerms-EmploymentLegislationDocumentReference-IssuerParty-PartyIdentification-ID	code:bind-old,shadow.out:shadow	W-ind	ROLE_REF (530-T role guard -> winner identity) [via DE1 alias -> OPT-301-Lot-EmployLegis]	DE1-TenderingTerms-EmploymentLegislationDocumentReference-IssuerParty-PartyIdentification-ID	exact	project.rs DE1_FIELD_ALIASES
+DE1-TenderingTerms-EnvironmentalLegislationDocumentReference-IssuerParty-PartyIdentification-ID	code:bind-old,shadow.out:shadow	W-ind	ROLE_REF [via DE1 alias -> OPT-301-Lot-EnvironLegis]	DE1-TenderingTerms-EnvironmentalLegislationDocumentReference-IssuerParty-PartyIdentification-ID	exact	project.rs DE1_FIELD_ALIASES
+DE1-TenderingTerms-EnvironmentalLegislationDocumentReference-IssuerParty-PartyIdentification-ID	code:bind-old,shadow.out:shadow	W-ind	ROLE_REF (530-T role guard -> winner identity) [via DE1 alias -> OPT-301-Lot-EnvironLegis]	DE1-TenderingTerms-EnvironmentalLegislationDocumentReference-IssuerParty-PartyIdentification-ID	exact	project.rs DE1_FIELD_ALIASES
+DE1-TenderingTerms-FiscalLegislationDocumentReference-IssuerParty-PartyIdentification-ID	code:bind-old,shadow.out:shadow	W-ind	ROLE_REF [via DE1 alias -> OPT-301-Lot-FiscalLegis]	DE1-TenderingTerms-FiscalLegislationDocumentReference-IssuerParty-PartyIdentification-ID	exact	project.rs DE1_FIELD_ALIASES
+DE1-TenderingTerms-FiscalLegislationDocumentReference-IssuerParty-PartyIdentification-ID	code:bind-old,shadow.out:shadow	W-ind	ROLE_REF (530-T role guard -> winner identity) [via DE1 alias -> OPT-301-Lot-FiscalLegis]	DE1-TenderingTerms-FiscalLegislationDocumentReference-IssuerParty-PartyIdentification-ID	exact	project.rs DE1_FIELD_ALIASES
+DE1-TenderingTerms-TenderRecipientParty-PartyIdentification-ID	code:bind-old,shadow.out:shadow	W-ind	ROLE_REF [via DE1 alias -> OPT-301-Lot-TenderReceipt]	DE1-TenderingTerms-TenderRecipientParty-PartyIdentification-ID	exact	project.rs DE1_FIELD_ALIASES
+DE1-TenderingTerms-TenderRecipientParty-PartyIdentification-ID	code:bind-old,shadow.out:shadow	W-ind	ROLE_REF (530-T role guard -> winner identity) [via DE1 alias -> OPT-301-Lot-TenderReceipt]	DE1-TenderingTerms-TenderRecipientParty-PartyIdentification-ID	exact	project.rs DE1_FIELD_ALIASES
+OPT-301-Lot-AddInfo	shadow.out:overlap	W-ind	ROLE_REF	OPT-301-	prefix	guid_twin.rs:239 guid_twin_role_ref
+OPT-301-Lot-AddInfo	shadow.out:overlap	W-ind	ROLE_REF (530-T role guard -> winner identity)	OPT-301-	prefix	project.rs:10302 role_name
+OPT-301-Lot-AddInfo	shadow.out:overlap	W-ind	ROLE_REF (530-T role guard -> winner identity)	OPT-301-	prefix	role_name / guid_twin_role_ref
+OPT-301-Lot-AddInfo	shadow.out:overlap	W-ind	ROLE_REF	OPT-301-	prefix	project.rs:11364 de1_mark_reference
+OPT-301-Lot-DocProvider	shadow.out:overlap	W-ind	ROLE_REF	OPT-301-	prefix	guid_twin.rs:239 guid_twin_role_ref
+OPT-301-Lot-DocProvider	shadow.out:overlap	W-ind	ROLE_REF (530-T role guard -> winner identity)	OPT-301-	prefix	project.rs:10302 role_name
+OPT-301-Lot-DocProvider	shadow.out:overlap	W-ind	ROLE_REF (530-T role guard -> winner identity)	OPT-301-	prefix	role_name / guid_twin_role_ref
+OPT-301-Lot-DocProvider	shadow.out:overlap	W-ind	ROLE_REF	OPT-301-	prefix	project.rs:11364 de1_mark_reference
+OPT-301-Lot-EmployLegis	shadow.out:overlap	W-ind	ROLE_REF	OPT-301-	prefix	guid_twin.rs:239 guid_twin_role_ref
+OPT-301-Lot-EmployLegis	shadow.out:overlap	W-ind	ROLE_REF (530-T role guard -> winner identity)	OPT-301-	prefix	project.rs:10302 role_name
+OPT-301-Lot-EmployLegis	shadow.out:overlap	W-ind	ROLE_REF (530-T role guard -> winner identity)	OPT-301-	prefix	role_name / guid_twin_role_ref
+OPT-301-Lot-EmployLegis	shadow.out:overlap	W-ind	ROLE_REF	OPT-301-	prefix	project.rs:11364 de1_mark_reference
+OPT-301-Lot-EnvironLegis	shadow.out:overlap	W-ind	ROLE_REF	OPT-301-	prefix	guid_twin.rs:239 guid_twin_role_ref
+OPT-301-Lot-EnvironLegis	shadow.out:overlap	W-ind	ROLE_REF (530-T role guard -> winner identity)	OPT-301-	prefix	project.rs:10302 role_name
+OPT-301-Lot-EnvironLegis	shadow.out:overlap	W-ind	ROLE_REF (530-T role guard -> winner identity)	OPT-301-	prefix	role_name / guid_twin_role_ref
+OPT-301-Lot-EnvironLegis	shadow.out:overlap	W-ind	ROLE_REF	OPT-301-	prefix	project.rs:11364 de1_mark_reference
+OPT-301-Lot-FiscalLegis	shadow.out:overlap	W-ind	ROLE_REF	OPT-301-	prefix	guid_twin.rs:239 guid_twin_role_ref
+OPT-301-Lot-FiscalLegis	shadow.out:overlap	W-ind	ROLE_REF (530-T role guard -> winner identity)	OPT-301-	prefix	project.rs:10302 role_name
+OPT-301-Lot-FiscalLegis	shadow.out:overlap	W-ind	ROLE_REF (530-T role guard -> winner identity)	OPT-301-	prefix	role_name / guid_twin_role_ref
+OPT-301-Lot-FiscalLegis	shadow.out:overlap	W-ind	ROLE_REF	OPT-301-	prefix	project.rs:11364 de1_mark_reference
+OPT-301-Lot-Mediator	shadow.out:overlap	W-ind	ROLE_REF	OPT-301-	prefix	guid_twin.rs:239 guid_twin_role_ref
+OPT-301-Lot-Mediator	shadow.out:overlap	W-ind	ROLE_REF (530-T role guard -> winner identity)	OPT-301-	prefix	project.rs:10302 role_name
+OPT-301-Lot-Mediator	shadow.out:overlap	W-ind	ROLE_REF (530-T role guard -> winner identity)	OPT-301-	prefix	role_name / guid_twin_role_ref
+OPT-301-Lot-Mediator	shadow.out:overlap	W-ind	ROLE_REF	OPT-301-	prefix	project.rs:11364 de1_mark_reference
+OPT-301-Lot-ReviewInfo	shadow.out:overlap	W-ind	ROLE_REF	OPT-301-	prefix	guid_twin.rs:239 guid_twin_role_ref
+OPT-301-Lot-ReviewInfo	shadow.out:overlap	W-ind	ROLE_REF (530-T role guard -> winner identity)	OPT-301-	prefix	project.rs:10302 role_name
+OPT-301-Lot-ReviewInfo	shadow.out:overlap	W-ind	ROLE_REF (530-T role guard -> winner identity)	OPT-301-	prefix	role_name / guid_twin_role_ref
+OPT-301-Lot-ReviewInfo	shadow.out:overlap	W-ind	ROLE_REF	OPT-301-	prefix	project.rs:11364 de1_mark_reference
+OPT-301-Lot-ReviewOrg	shadow.out:overlap	W-ind	ROLE_REF	OPT-301-	prefix	guid_twin.rs:239 guid_twin_role_ref
+OPT-301-Lot-ReviewOrg	shadow.out:overlap	W-ind	ROLE_REF (530-T role guard -> winner identity)	OPT-301-	prefix	project.rs:10302 role_name
+OPT-301-Lot-ReviewOrg	shadow.out:overlap	W-ind	ROLE_REF (530-T role guard -> winner identity)	OPT-301-	prefix	role_name / guid_twin_role_ref
+OPT-301-Lot-ReviewOrg	shadow.out:overlap	W-ind	ROLE_REF	OPT-301-	prefix	project.rs:11364 de1_mark_reference
+OPT-301-Lot-TenderEval	shadow.out:overlap	W-ind	ROLE_REF	OPT-301-	prefix	guid_twin.rs:239 guid_twin_role_ref
+OPT-301-Lot-TenderEval	shadow.out:overlap	W-ind	ROLE_REF (530-T role guard -> winner identity)	OPT-301-	prefix	project.rs:10302 role_name
+OPT-301-Lot-TenderEval	shadow.out:overlap	W-ind	ROLE_REF (530-T role guard -> winner identity)	OPT-301-	prefix	role_name / guid_twin_role_ref
+OPT-301-Lot-TenderEval	shadow.out:overlap	W-ind	ROLE_REF	OPT-301-	prefix	project.rs:11364 de1_mark_reference
+OPT-301-Lot-TenderReceipt	shadow.out:overlap	W-ind	ROLE_REF	OPT-301-	prefix	guid_twin.rs:239 guid_twin_role_ref
+OPT-301-Lot-TenderReceipt	shadow.out:overlap	W-ind	ROLE_REF (530-T role guard -> winner identity)	OPT-301-	prefix	project.rs:10302 role_name
+OPT-301-Lot-TenderReceipt	shadow.out:overlap	W-ind	ROLE_REF (530-T role guard -> winner identity)	OPT-301-	prefix	role_name / guid_twin_role_ref
+OPT-301-Lot-TenderReceipt	shadow.out:overlap	W-ind	ROLE_REF	OPT-301-	prefix	project.rs:11364 de1_mark_reference
+OPT-301-Part-AddInfo	shadow.out:overlap	W-ind	ROLE_REF	OPT-301-	prefix	guid_twin.rs:239 guid_twin_role_ref
+OPT-301-Part-AddInfo	shadow.out:overlap	W-ind	ROLE_REF (530-T role guard -> winner identity)	OPT-301-	prefix	project.rs:10302 role_name
+OPT-301-Part-AddInfo	shadow.out:overlap	W-ind	ROLE_REF (530-T role guard -> winner identity)	OPT-301-	prefix	role_name / guid_twin_role_ref
+OPT-301-Part-AddInfo	shadow.out:overlap	W-ind	ROLE_REF	OPT-301-	prefix	project.rs:11364 de1_mark_reference
+OPT-301-Part-DocProvider	shadow.out:overlap	W-ind	ROLE_REF	OPT-301-	prefix	guid_twin.rs:239 guid_twin_role_ref
+OPT-301-Part-DocProvider	shadow.out:overlap	W-ind	ROLE_REF (530-T role guard -> winner identity)	OPT-301-	prefix	project.rs:10302 role_name
+OPT-301-Part-DocProvider	shadow.out:overlap	W-ind	ROLE_REF (530-T role guard -> winner identity)	OPT-301-	prefix	role_name / guid_twin_role_ref
+OPT-301-Part-DocProvider	shadow.out:overlap	W-ind	ROLE_REF	OPT-301-	prefix	project.rs:11364 de1_mark_reference
+OPT-301-Part-EmployLegis	shadow.out:overlap	W-ind	ROLE_REF	OPT-301-	prefix	guid_twin.rs:239 guid_twin_role_ref
+OPT-301-Part-EmployLegis	shadow.out:overlap	W-ind	ROLE_REF (530-T role guard -> winner identity)	OPT-301-	prefix	project.rs:10302 role_name
+OPT-301-Part-EmployLegis	shadow.out:overlap	W-ind	ROLE_REF (530-T role guard -> winner identity)	OPT-301-	prefix	role_name / guid_twin_role_ref
+OPT-301-Part-EmployLegis	shadow.out:overlap	W-ind	ROLE_REF	OPT-301-	prefix	project.rs:11364 de1_mark_reference
+OPT-301-Part-EnvironLegis	shadow.out:overlap	W-ind	ROLE_REF	OPT-301-	prefix	guid_twin.rs:239 guid_twin_role_ref
+OPT-301-Part-EnvironLegis	shadow.out:overlap	W-ind	ROLE_REF (530-T role guard -> winner identity)	OPT-301-	prefix	project.rs:10302 role_name
+OPT-301-Part-EnvironLegis	shadow.out:overlap	W-ind	ROLE_REF (530-T role guard -> winner identity)	OPT-301-	prefix	role_name / guid_twin_role_ref
+OPT-301-Part-EnvironLegis	shadow.out:overlap	W-ind	ROLE_REF	OPT-301-	prefix	project.rs:11364 de1_mark_reference
+OPT-301-Part-FiscalLegis	shadow.out:overlap	W-ind	ROLE_REF	OPT-301-	prefix	guid_twin.rs:239 guid_twin_role_ref
+OPT-301-Part-FiscalLegis	shadow.out:overlap	W-ind	ROLE_REF (530-T role guard -> winner identity)	OPT-301-	prefix	project.rs:10302 role_name
+OPT-301-Part-FiscalLegis	shadow.out:overlap	W-ind	ROLE_REF (530-T role guard -> winner identity)	OPT-301-	prefix	role_name / guid_twin_role_ref
+OPT-301-Part-FiscalLegis	shadow.out:overlap	W-ind	ROLE_REF	OPT-301-	prefix	project.rs:11364 de1_mark_reference
+OPT-301-Part-Mediator	shadow.out:overlap	W-ind	ROLE_REF	OPT-301-	prefix	guid_twin.rs:239 guid_twin_role_ref
+OPT-301-Part-Mediator	shadow.out:overlap	W-ind	ROLE_REF (530-T role guard -> winner identity)	OPT-301-	prefix	project.rs:10302 role_name
+OPT-301-Part-Mediator	shadow.out:overlap	W-ind	ROLE_REF (530-T role guard -> winner identity)	OPT-301-	prefix	role_name / guid_twin_role_ref
+OPT-301-Part-Mediator	shadow.out:overlap	W-ind	ROLE_REF	OPT-301-	prefix	project.rs:11364 de1_mark_reference
+OPT-301-Part-ReviewInfo	shadow.out:overlap	W-ind	ROLE_REF	OPT-301-	prefix	guid_twin.rs:239 guid_twin_role_ref
+OPT-301-Part-ReviewInfo	shadow.out:overlap	W-ind	ROLE_REF (530-T role guard -> winner identity)	OPT-301-	prefix	project.rs:10302 role_name
+OPT-301-Part-ReviewInfo	shadow.out:overlap	W-ind	ROLE_REF (530-T role guard -> winner identity)	OPT-301-	prefix	role_name / guid_twin_role_ref
+OPT-301-Part-ReviewInfo	shadow.out:overlap	W-ind	ROLE_REF	OPT-301-	prefix	project.rs:11364 de1_mark_reference
+OPT-301-Part-ReviewOrg	shadow.out:overlap	W-ind	ROLE_REF	OPT-301-	prefix	guid_twin.rs:239 guid_twin_role_ref
+OPT-301-Part-ReviewOrg	shadow.out:overlap	W-ind	ROLE_REF (530-T role guard -> winner identity)	OPT-301-	prefix	project.rs:10302 role_name
+OPT-301-Part-ReviewOrg	shadow.out:overlap	W-ind	ROLE_REF (530-T role guard -> winner identity)	OPT-301-	prefix	role_name / guid_twin_role_ref
+OPT-301-Part-ReviewOrg	shadow.out:overlap	W-ind	ROLE_REF	OPT-301-	prefix	project.rs:11364 de1_mark_reference
+OPT-301-Part-TenderEval	shadow.out:overlap	W-ind	ROLE_REF	OPT-301-	prefix	guid_twin.rs:239 guid_twin_role_ref
+OPT-301-Part-TenderEval	shadow.out:overlap	W-ind	ROLE_REF (530-T role guard -> winner identity)	OPT-301-	prefix	project.rs:10302 role_name
+OPT-301-Part-TenderEval	shadow.out:overlap	W-ind	ROLE_REF (530-T role guard -> winner identity)	OPT-301-	prefix	role_name / guid_twin_role_ref
+OPT-301-Part-TenderEval	shadow.out:overlap	W-ind	ROLE_REF	OPT-301-	prefix	project.rs:11364 de1_mark_reference
+OPT-301-Part-TenderReceipt	shadow.out:overlap	W-ind	ROLE_REF	OPT-301-	prefix	guid_twin.rs:239 guid_twin_role_ref
+OPT-301-Part-TenderReceipt	shadow.out:overlap	W-ind	ROLE_REF (530-T role guard -> winner identity)	OPT-301-	prefix	project.rs:10302 role_name
+OPT-301-Part-TenderReceipt	shadow.out:overlap	W-ind	ROLE_REF (530-T role guard -> winner identity)	OPT-301-	prefix	role_name / guid_twin_role_ref
+OPT-301-Part-TenderReceipt	shadow.out:overlap	W-ind	ROLE_REF	OPT-301-	prefix	project.rs:11364 de1_mark_reference
+BT-13(d)-Lot	shadow.out:overlap	nonW	deadline/duration dates	BT-13(d)	stem	project.rs:438 DATES
+BT-13(d)-Part	shadow.out:overlap	nonW	deadline/duration dates	BT-13(d)	stem	project.rs:438 DATES
+BT-195(BT-105)-Procedure	shadow.out:overlap	nonW	withheld declaration of a non-W source (read, never looked up for W)	BT-195(	prefix	project.rs:9323 withheld_source
+BT-195(BT-106)-Procedure	shadow.out:overlap	nonW	withheld declaration of a non-W source (read, never looked up for W)	BT-195(	prefix	project.rs:9323 withheld_source
+BT-195(BT-1252)-Procedure	shadow.out:overlap	nonW	withheld declaration of a non-W source (read, never looked up for W)	BT-195(	prefix	project.rs:9323 withheld_source
+BT-195(BT-135)-Procedure	shadow.out:overlap	nonW	withheld declaration of a non-W source (read, never looked up for W)	BT-195(	prefix	project.rs:9323 withheld_source
+BT-195(BT-1351)-Procedure	shadow.out:overlap	nonW	withheld declaration of a non-W source (read, never looked up for W)	BT-195(	prefix	project.rs:9323 withheld_source
+BT-195(BT-136)-Procedure	shadow.out:overlap	nonW	withheld declaration of a non-W source (read, never looked up for W)	BT-195(	prefix	project.rs:9323 withheld_source
+BT-195(BT-160)-Tender	shadow.out:overlap	nonW	withheld declaration of a non-W source (read, never looked up for W)	BT-195(	prefix	project.rs:9323 withheld_source
+BT-195(BT-162)-Tender	shadow.out:overlap	nonW	withheld declaration of a non-W source (read, never looked up for W)	BT-195(	prefix	project.rs:9323 withheld_source
+BT-195(BT-163)-Tender	shadow.out:overlap	nonW	withheld declaration of a non-W source (read, never looked up for W)	BT-195(	prefix	project.rs:9323 withheld_source
+BT-195(BT-171)-Tender	shadow.out:overlap	nonW	withheld declaration of a non-W source (read, never looked up for W)	BT-195(	prefix	project.rs:9323 withheld_source
+BT-195(BT-193)-Tender	shadow.out:overlap	nonW	withheld declaration of a non-W source (read, never looked up for W)	BT-195(	prefix	project.rs:9323 withheld_source
+BT-195(BT-539)-Lot	shadow.out:overlap	nonW	withheld declaration of a non-W source (read, never looked up for W)	BT-195(	prefix	project.rs:9323 withheld_source
+BT-195(BT-539)-LotsGroup	shadow.out:overlap	nonW	withheld declaration of a non-W source (read, never looked up for W)	BT-195(	prefix	project.rs:9323 withheld_source
+BT-195(BT-540)-Lot	shadow.out:overlap	nonW	withheld declaration of a non-W source (read, never looked up for W)	BT-195(	prefix	project.rs:9323 withheld_source
+BT-195(BT-540)-LotsGroup	shadow.out:overlap	nonW	withheld declaration of a non-W source (read, never looked up for W)	BT-195(	prefix	project.rs:9323 withheld_source
+BT-195(BT-541)-Lot	shadow.out:overlap	nonW	withheld declaration of a non-W source (read, never looked up for W)	BT-195(	prefix	project.rs:9323 withheld_source
+BT-195(BT-541)-Lot-Fixed	shadow.out:overlap	nonW	withheld declaration of a non-W source (read, never looked up for W)	BT-195(	prefix	project.rs:9323 withheld_source
+BT-195(BT-541)-Lot-Threshold	shadow.out:overlap	nonW	withheld declaration of a non-W source (read, never looked up for W)	BT-195(	prefix	project.rs:9323 withheld_source
+BT-195(BT-541)-Lot-Weight	shadow.out:overlap	nonW	withheld declaration of a non-W source (read, never looked up for W)	BT-195(	prefix	project.rs:9323 withheld_source
+BT-195(BT-541)-LotsGroup	shadow.out:overlap	nonW	withheld declaration of a non-W source (read, never looked up for W)	BT-195(	prefix	project.rs:9323 withheld_source
+BT-195(BT-541)-LotsGroup-Fixed	shadow.out:overlap	nonW	withheld declaration of a non-W source (read, never looked up for W)	BT-195(	prefix	project.rs:9323 withheld_source
+BT-195(BT-541)-LotsGroup-Threshold	shadow.out:overlap	nonW	withheld declaration of a non-W source (read, never looked up for W)	BT-195(	prefix	project.rs:9323 withheld_source
+BT-195(BT-541)-LotsGroup-Weight	shadow.out:overlap	nonW	withheld declaration of a non-W source (read, never looked up for W)	BT-195(	prefix	project.rs:9323 withheld_source
+BT-195(BT-5421)-Lot	shadow.out:overlap	nonW	withheld declaration of a non-W source (read, never looked up for W)	BT-195(	prefix	project.rs:9323 withheld_source
+BT-195(BT-5421)-LotsGroup	shadow.out:overlap	nonW	withheld declaration of a non-W source (read, never looked up for W)	BT-195(	prefix	project.rs:9323 withheld_source
+BT-195(BT-5422)-Lot	shadow.out:overlap	nonW	withheld declaration of a non-W source (read, never looked up for W)	BT-195(	prefix	project.rs:9323 withheld_source
+BT-195(BT-5422)-LotsGroup	shadow.out:overlap	nonW	withheld declaration of a non-W source (read, never looked up for W)	BT-195(	prefix	project.rs:9323 withheld_source
+BT-195(BT-5423)-Lot	shadow.out:overlap	nonW	withheld declaration of a non-W source (read, never looked up for W)	BT-195(	prefix	project.rs:9323 withheld_source
+BT-195(BT-5423)-LotsGroup	shadow.out:overlap	nonW	withheld declaration of a non-W source (read, never looked up for W)	BT-195(	prefix	project.rs:9323 withheld_source
+BT-195(BT-543)-Lot	shadow.out:overlap	nonW	withheld declaration of a non-W source (read, never looked up for W)	BT-195(	prefix	project.rs:9323 withheld_source
+BT-195(BT-543)-LotsGroup	shadow.out:overlap	nonW	withheld declaration of a non-W source (read, never looked up for W)	BT-195(	prefix	project.rs:9323 withheld_source
+BT-195(BT-553)-Tender	shadow.out:overlap	nonW	withheld declaration of a non-W source (read, never looked up for W)	BT-195(	prefix	project.rs:9323 withheld_source
+BT-195(BT-554)-Tender	shadow.out:overlap	nonW	withheld declaration of a non-W source (read, never looked up for W)	BT-195(	prefix	project.rs:9323 withheld_source
+BT-195(BT-555)-Tender	shadow.out:overlap	nonW	withheld declaration of a non-W source (read, never looked up for W)	BT-195(	prefix	project.rs:9323 withheld_source
+BT-195(BT-730)-Tender	shadow.out:overlap	nonW	withheld declaration of a non-W source (read, never looked up for W)	BT-195(	prefix	project.rs:9323 withheld_source
+BT-195(BT-731)-Tender	shadow.out:overlap	nonW	withheld declaration of a non-W source (read, never looked up for W)	BT-195(	prefix	project.rs:9323 withheld_source
+BT-195(BT-733)-Lot	shadow.out:overlap	nonW	withheld declaration of a non-W source (read, never looked up for W)	BT-195(	prefix	project.rs:9323 withheld_source
+BT-195(BT-733)-LotsGroup	shadow.out:overlap	nonW	withheld declaration of a non-W source (read, never looked up for W)	BT-195(	prefix	project.rs:9323 withheld_source
+BT-195(BT-734)-Lot	shadow.out:overlap	nonW	withheld declaration of a non-W source (read, never looked up for W)	BT-195(	prefix	project.rs:9323 withheld_source
+BT-195(BT-734)-LotsGroup	shadow.out:overlap	nonW	withheld declaration of a non-W source (read, never looked up for W)	BT-195(	prefix	project.rs:9323 withheld_source
+BT-195(BT-773)-Tender	shadow.out:overlap	nonW	withheld declaration of a non-W source (read, never looked up for W)	BT-195(	prefix	project.rs:9323 withheld_source
+BT-195(BT-88)-Procedure	shadow.out:overlap	nonW	withheld declaration of a non-W source (read, never looked up for W)	BT-195(	prefix	project.rs:9323 withheld_source
+BT-23-Lot	code:bind-old,shadow.out:overlap,shadow.out:shadow	nonW	contract nature	BT-23	stem	project.rs:9644 contract_nature
+BT-23-Lot	code:bind-old,shadow.out:overlap,shadow.out:shadow	nonW	contract nature	BT-23	stem	project.rs:9416 NATURE_STEMS
+BT-23-Part	shadow.out:overlap	nonW	contract nature	BT-23	stem	project.rs:9644 contract_nature
+BT-23-Part	shadow.out:overlap	nonW	contract nature	BT-23	stem	project.rs:9416 NATURE_STEMS
+BT-23-Procedure	code:bind-new,shadow.out:overlap,shadow.out:shadow	nonW	contract nature	BT-23	stem	project.rs:9644 contract_nature
+BT-23-Procedure	code:bind-new,shadow.out:overlap,shadow.out:shadow	nonW	contract nature	BT-23	stem	project.rs:9416 NATURE_STEMS
+BT-24-Lot	shadow.out:overlap	nonW	text fact (description/selection_criterion/tenderer_requirement/...)	BT-24	stem	project.rs:242 TEXTS
+BT-24-LotsGroup	shadow.out:overlap	nonW	text fact (description/selection_criterion/tenderer_requirement/...)	BT-24	stem	project.rs:242 TEXTS
+BT-24-Part	shadow.out:overlap	nonW	text fact (description/selection_criterion/tenderer_requirement/...)	BT-24	stem	project.rs:242 TEXTS
+BT-262-Lot	shadow.out:overlap	nonW	cpv/nuts	BT-262	stem	project.rs:367 CLASSIFICATIONS
+BT-262-Part	shadow.out:overlap	nonW	cpv/nuts	BT-262	stem	project.rs:367 CLASSIFICATIONS
+BT-263-Lot	shadow.out:overlap	nonW	cpv/nuts	BT-263	stem	project.rs:368 CLASSIFICATIONS
+BT-263-Part	shadow.out:overlap	nonW	cpv/nuts	BT-263	stem	project.rs:368 CLASSIFICATIONS
+BT-5071-Lot	shadow.out:overlap	nonW	cpv/nuts	BT-5071	stem	project.rs:369 CLASSIFICATIONS
+BT-5071-Part	shadow.out:overlap	nonW	cpv/nuts	BT-5071	stem	project.rs:369 CLASSIFICATIONS
+BT-5141-Lot	shadow.out:overlap	nonW	place country	BT-5141-Lot	exact	project.rs:9703 PLACE_COUNTRY_FIELDS
+BT-5141-Part	shadow.out:overlap	nonW	place country	BT-5141-Part	exact	project.rs:9704 PLACE_COUNTRY_FIELDS
+BT-536-Lot	shadow.out:overlap	nonW	deadline/duration dates	BT-536	stem	project.rs:439 DATES
+BT-536-Part	shadow.out:overlap	nonW	deadline/duration dates	BT-536	stem	project.rs:439 DATES
+BT-537-Lot	shadow.out:overlap	nonW	deadline/duration dates	BT-537	stem	project.rs:440 DATES
+BT-537-Part	shadow.out:overlap	nonW	deadline/duration dates	BT-537	stem	project.rs:440 DATES
+BT-749-Lot	code:extra-new,shadow.out:overlap	nonW	text fact (description/selection_criterion/tenderer_requirement/...)	BT-749	stem	project.rs:310 TEXTS
+BT-749-Lot	code:extra-new,shadow.out:overlap	nonW	selection_criterion section filter (577 U2)	BT-749	stem	project.rs:5657 read
+BT-766-Lot	shadow.out:overlap	nonW	dps	BT-766-Lot	exact	project.rs:9666 CONTRACTING_SYSTEM_FIELDS
+BT-766-Part	shadow.out:overlap	nonW	dps	BT-766-Part	exact	project.rs:9667 CONTRACTING_SYSTEM_FIELDS
+DE1-ProcurementProject-AdditionalCommodityClassification-ItemClassificationCode	code:bind-old,shadow.out:shadow	nonW	cpv/nuts [via DE1 alias -> BT-263-Procedure]	DE1-ProcurementProject-AdditionalCommodityClassification-ItemClassificationCode	exact	project.rs DE1_FIELD_ALIASES
+DE1-ProcurementProject-Description	code:bind-old,shadow.out:shadow	nonW	text fact (description/selection_criterion/tenderer_requirement/...) [via DE1 alias -> BT-24-Procedure]	DE1-ProcurementProject-Description	exact	project.rs DE1_FIELD_ALIASES
+DE1-ProcurementProject-MainCommodityClassification-ItemClassificationCode	code:bind-old,shadow.out:shadow	nonW	cpv/nuts [via DE1 alias -> BT-262-Procedure]	DE1-ProcurementProject-MainCommodityClassification-ItemClassificationCode	exact	project.rs DE1_FIELD_ALIASES
+DE1-ProcurementProject-PlannedPeriod-EndDate	code:bind-old,shadow.out:shadow	nonW	deadline/duration dates [via DE1 alias -> BT-537-Procedure]	DE1-ProcurementProject-PlannedPeriod-EndDate	exact	project.rs DE1_FIELD_ALIASES
+DE1-ProcurementProject-PlannedPeriod-StartDate	code:bind-old,shadow.out:shadow	nonW	deadline/duration dates [via DE1 alias -> BT-536-Procedure]	DE1-ProcurementProject-PlannedPeriod-StartDate	exact	project.rs DE1_FIELD_ALIASES
+DE1-ProcurementProject-RealizedLocation-Address-Country-IdentificationCode	code:bind-old,shadow.out:shadow	nonW	place country [via DE1 alias -> BT-5141-Procedure]	DE1-ProcurementProject-RealizedLocation-Address-Country-IdentificationCode	exact	project.rs DE1_FIELD_ALIASES
+DE1-ProcurementProject-RealizedLocation-Address-CountrySubentityCode	code:bind-old,shadow.out:shadow	nonW	cpv/nuts [via DE1 alias -> BT-5071-Procedure]	DE1-ProcurementProject-RealizedLocation-Address-CountrySubentityCode	exact	project.rs DE1_FIELD_ALIASES
+DE1-ProcurementProjectLot-ProcurementProject-AdditionalCommodityClassification-ItemClassificationCode	code:bind-new,shadow.out:shadow	nonW	cpv/nuts [via DE1 alias -> BT-263-Lot]	DE1-ProcurementProjectLot-ProcurementProject-AdditionalCommodityClassification-ItemClassificationCode	exact	project.rs DE1_FIELD_ALIASES
+DE1-ProcurementProjectLot-ProcurementProject-Description	code:bind-new,shadow.out:shadow	nonW	text fact (description/selection_criterion/tenderer_requirement/...) [via DE1 alias -> BT-24-Lot]	DE1-ProcurementProjectLot-ProcurementProject-Description	exact	project.rs DE1_FIELD_ALIASES
+DE1-ProcurementProjectLot-ProcurementProject-MainCommodityClassification-ItemClassificationCode	code:bind-new,shadow.out:shadow	nonW	cpv/nuts [via DE1 alias -> BT-262-Lot]	DE1-ProcurementProjectLot-ProcurementProject-MainCommodityClassification-ItemClassificationCode	exact	project.rs DE1_FIELD_ALIASES
+DE1-ProcurementProjectLot-ProcurementProject-PlannedPeriod-EndDate	code:bind-new,shadow.out:shadow	nonW	deadline/duration dates [via DE1 alias -> BT-537-Lot]	DE1-ProcurementProjectLot-ProcurementProject-PlannedPeriod-EndDate	exact	project.rs DE1_FIELD_ALIASES
+DE1-ProcurementProjectLot-ProcurementProject-PlannedPeriod-StartDate	code:bind-new,shadow.out:shadow	nonW	deadline/duration dates [via DE1 alias -> BT-536-Lot]	DE1-ProcurementProjectLot-ProcurementProject-PlannedPeriod-StartDate	exact	project.rs DE1_FIELD_ALIASES
+DE1-ProcurementProjectLot-ProcurementProject-RealizedLocation-Address-Country-IdentificationCode	code:bind-new,shadow.out:shadow	nonW	place country [via DE1 alias -> BT-5141-Lot]	DE1-ProcurementProjectLot-ProcurementProject-RealizedLocation-Address-Country-IdentificationCode	exact	project.rs DE1_FIELD_ALIASES
+DE1-ProcurementProjectLot-ProcurementProject-RealizedLocation-Address-CountrySubentityCode	code:bind-new,shadow.out:shadow	nonW	cpv/nuts [via DE1 alias -> BT-5071-Lot]	DE1-ProcurementProjectLot-ProcurementProject-RealizedLocation-Address-CountrySubentityCode	exact	project.rs DE1_FIELD_ALIASES
+DE1-ProcurementProjectLot-TenderingProcess-OpenTenderEvent-OccurrenceDate	code:bind-new,shadow.out:shadow	nonW	deadline/duration dates [via DE1 alias -> BT-132(d)-Lot]	DE1-ProcurementProjectLot-TenderingProcess-OpenTenderEvent-OccurrenceDate	exact	project.rs DE1_FIELD_ALIASES
+DE1-ProcurementProjectLot-TenderingProcess-TenderSubmissionDeadlinePeriod-EndDate	code:bind-new,shadow.out:shadow	nonW	deadline/duration dates [via DE1 alias -> BT-131(d)-Lot]	DE1-ProcurementProjectLot-TenderingProcess-TenderSubmissionDeadlinePeriod-EndDate	exact	project.rs DE1_FIELD_ALIASES
+DE1-ProcurementProjectLot-TenderingTerms-SelectionCriteria-Name	code:bind-new,shadow.out:shadow,shadow_extra.out	nonW	text fact (description/selection_criterion/tenderer_requirement/...)	DE1-ProcurementProjectLot-TenderingTerms-SelectionCriteria-Name	stem	project.rs:309 TEXTS
+DE1-ProcurementProjectLot-TenderingTerms-TendererQualificationRequest-SpecificTendererRequirement-Description	code:bind-new,shadow.out:shadow,shadow_extra.out	nonW	text fact (description/selection_criterion/tenderer_requirement/...)	DE1-ProcurementProjectLot-TenderingTerms-TendererQualificationRequest-SpecificTendererRequirement-Description	stem	project.rs:306 TEXTS
+DE1-TenderingProcess-OpenTenderEvent-OccurrenceDate	code:bind-old,shadow.out:shadow	nonW	deadline/duration dates [via DE1 alias -> BT-132(d)-Procedure]	DE1-TenderingProcess-OpenTenderEvent-OccurrenceDate	exact	project.rs DE1_FIELD_ALIASES
+DE1-TenderingProcess-TenderSubmissionDeadlinePeriod-EndDate	code:bind-old,shadow.out:shadow	nonW	deadline/duration dates [via DE1 alias -> BT-131(d)-Procedure]	DE1-TenderingProcess-TenderSubmissionDeadlinePeriod-EndDate	exact	project.rs DE1_FIELD_ALIASES
+UBL-SelectionCriterionName	code:bind-old,code:extra-old,shadow.out:overlap,shadow.out:shadow,shadow_extra.out	nonW	text fact (description/selection_criterion/tenderer_requirement/...)	UBL-SelectionCriterionName	stem	project.rs:294 TEXTS
+UBL-TendererRequirementDescription	code:bind-old,shadow.out:overlap,shadow.out:shadow,shadow_extra.out	nonW	text fact (description/selection_criterion/tenderer_requirement/...)	UBL-TendererRequirementDescription	stem	project.rs:295 TEXTS

@@ -1,0 +1,163 @@
+ANALYST-HIT BT-13(d)-Lot id=BT-13(d)-Lot @ project.rs:1455(+0) | stem=BT-13(d) @ project.rs:438(+0)
+ANALYST-HIT BT-13(d)-Part stem=BT-13(d) @ project.rs:438(+0)
+ANALYST-HIT BT-137-Lot id=BT-137-Lot @ project.rs:8840(+0)
+ANALYST-HIT BT-137-LotsGroup id=BT-137-LotsGroup @ project.rs:8840(+0)
+ANALYST-HIT BT-137-Part id=BT-137-Part @ project.rs:8840(+0)
+ANALYST-HIT BT-195(BT-105)-Procedure prefix=BT-195( @ project.rs:9323
+ANALYST-HIT BT-195(BT-106)-Procedure prefix=BT-195( @ project.rs:9323
+ANALYST-HIT BT-195(BT-1252)-Procedure prefix=BT-195( @ project.rs:9323
+ANALYST-HIT BT-195(BT-135)-Procedure prefix=BT-195( @ project.rs:9323
+ANALYST-HIT BT-195(BT-1351)-Procedure prefix=BT-195( @ project.rs:9323
+ANALYST-HIT BT-195(BT-136)-Procedure prefix=BT-195( @ project.rs:9323
+ANALYST-HIT BT-195(BT-160)-Tender prefix=BT-195( @ project.rs:9323
+ANALYST-HIT BT-195(BT-162)-Tender prefix=BT-195( @ project.rs:9323
+ANALYST-HIT BT-195(BT-163)-Tender prefix=BT-195( @ project.rs:9323
+ANALYST-HIT BT-195(BT-171)-Tender prefix=BT-195( @ project.rs:9323
+ANALYST-HIT BT-195(BT-193)-Tender prefix=BT-195( @ project.rs:9323
+ANALYST-HIT BT-195(BT-539)-Lot prefix=BT-195( @ project.rs:9323
+ANALYST-HIT BT-195(BT-539)-LotsGroup prefix=BT-195( @ project.rs:9323
+ANALYST-HIT BT-195(BT-540)-Lot prefix=BT-195( @ project.rs:9323
+ANALYST-HIT BT-195(BT-540)-LotsGroup prefix=BT-195( @ project.rs:9323
+ANALYST-HIT BT-195(BT-541)-Lot prefix=BT-195( @ project.rs:9323
+ANALYST-HIT BT-195(BT-541)-Lot-Fixed prefix=BT-195( @ project.rs:9323
+ANALYST-HIT BT-195(BT-541)-Lot-Threshold prefix=BT-195( @ project.rs:9323
+ANALYST-HIT BT-195(BT-541)-Lot-Weight prefix=BT-195( @ project.rs:9323
+ANALYST-HIT BT-195(BT-541)-LotsGroup prefix=BT-195( @ project.rs:9323
+ANALYST-HIT BT-195(BT-541)-LotsGroup-Fixed prefix=BT-195( @ project.rs:9323
+ANALYST-HIT BT-195(BT-541)-LotsGroup-Threshold prefix=BT-195( @ project.rs:9323
+ANALYST-HIT BT-195(BT-541)-LotsGroup-Weight prefix=BT-195( @ project.rs:9323
+ANALYST-HIT BT-195(BT-5421)-Lot prefix=BT-195( @ project.rs:9323
+ANALYST-HIT BT-195(BT-5421)-LotsGroup prefix=BT-195( @ project.rs:9323
+ANALYST-HIT BT-195(BT-5422)-Lot prefix=BT-195( @ project.rs:9323
+ANALYST-HIT BT-195(BT-5422)-LotsGroup prefix=BT-195( @ project.rs:9323
+ANALYST-HIT BT-195(BT-5423)-Lot prefix=BT-195( @ project.rs:9323
+ANALYST-HIT BT-195(BT-5423)-LotsGroup prefix=BT-195( @ project.rs:9323
+ANALYST-HIT BT-195(BT-543)-Lot prefix=BT-195( @ project.rs:9323
+ANALYST-HIT BT-195(BT-543)-LotsGroup prefix=BT-195( @ project.rs:9323
+ANALYST-HIT BT-195(BT-553)-Tender prefix=BT-195( @ project.rs:9323
+ANALYST-HIT BT-195(BT-554)-Tender prefix=BT-195( @ project.rs:9323
+ANALYST-HIT BT-195(BT-555)-Tender prefix=BT-195( @ project.rs:9323
+ANALYST-HIT BT-195(BT-720)-Tender prefix=BT-195( @ project.rs:9323
+ANALYST-HIT BT-195(BT-730)-Tender prefix=BT-195( @ project.rs:9323
+ANALYST-HIT BT-195(BT-731)-Tender prefix=BT-195( @ project.rs:9323
+ANALYST-HIT BT-195(BT-733)-Lot prefix=BT-195( @ project.rs:9323
+ANALYST-HIT BT-195(BT-733)-LotsGroup prefix=BT-195( @ project.rs:9323
+ANALYST-HIT BT-195(BT-734)-Lot prefix=BT-195( @ project.rs:9323
+ANALYST-HIT BT-195(BT-734)-LotsGroup prefix=BT-195( @ project.rs:9323
+ANALYST-HIT BT-195(BT-773)-Tender prefix=BT-195( @ project.rs:9323
+ANALYST-HIT BT-195(BT-88)-Procedure prefix=BT-195( @ project.rs:9323
+ANALYST-HIT BT-21-Lot id=BT-21-Lot @ project.rs:1390(+0) | stem=BT-21 @ project.rs:241(+0)
+ANALYST-HIT BT-21-LotsGroup stem=BT-21 @ project.rs:241(+0)
+ANALYST-HIT BT-21-Part stem=BT-21 @ project.rs:241(+0)
+ANALYST-HIT BT-23-Lot stem=BT-23 @ project.rs:9416(+1)
+ANALYST-HIT BT-23-Part stem=BT-23 @ project.rs:9416(+1)
+ANALYST-HIT BT-23-Procedure stem=BT-23 @ project.rs:9416(+1)
+ANALYST-HIT BT-24-Lot id=BT-24-Lot @ project.rs:1392(+0) | stem=BT-24 @ project.rs:242(+0)
+ANALYST-HIT BT-24-LotsGroup stem=BT-24 @ project.rs:242(+0)
+ANALYST-HIT BT-24-Part stem=BT-24 @ project.rs:242(+0)
+ANALYST-HIT BT-262-Lot id=BT-262-Lot @ project.rs:1421(+0) | stem=BT-262 @ project.rs:367(+0)
+ANALYST-HIT BT-262-Part stem=BT-262 @ project.rs:367(+0)
+ANALYST-HIT BT-263-Lot id=BT-263-Lot @ project.rs:1429(+0) | stem=BT-263 @ project.rs:368(+0)
+ANALYST-HIT BT-263-Part stem=BT-263 @ project.rs:368(+0)
+ANALYST-HIT BT-27-Lot id=BT-27-Lot @ project.rs:1397(+0) | stem=BT-27 @ project.rs:313(+0)
+ANALYST-HIT BT-27-LotsGroup stem=BT-27 @ project.rs:313(+0)
+ANALYST-HIT BT-27-Part stem=BT-27 @ project.rs:313(+0)
+ANALYST-HIT BT-271-Lot id=BT-271-Lot @ project.rs:1402(+0) | stem=BT-271 @ project.rs:314(+0)
+ANALYST-HIT BT-271-LotsGroup stem=BT-271 @ project.rs:314(+0)
+ANALYST-HIT BT-271-Part stem=BT-271 @ project.rs:314(+0)
+ANALYST-HIT BT-5071-Lot id=BT-5071-Lot @ project.rs:1434(+0) | stem=BT-5071 @ project.rs:369(+0)
+ANALYST-HIT BT-5071-Part stem=BT-5071 @ project.rs:369(+0)
+ANALYST-HIT BT-5141-Lot id=BT-5141-Lot @ project.rs:1441(+1)
+ANALYST-HIT BT-5141-Part id=BT-5141-Part @ project.rs:9704(+0)
+ANALYST-HIT BT-536-Lot id=BT-536-Lot @ project.rs:1458(+0) | stem=BT-536 @ project.rs:439(+0)
+ANALYST-HIT BT-536-Part stem=BT-536 @ project.rs:439(+0)
+ANALYST-HIT BT-537-Lot id=BT-537-Lot @ project.rs:1460(+0) | stem=BT-537 @ project.rs:440(+0)
+ANALYST-HIT BT-537-Part stem=BT-537 @ project.rs:440(+0)
+ANALYST-HIT BT-749-Lot stem=BT-749 @ project.rs:310(+1)
+ANALYST-HIT BT-766-Lot id=BT-766-Lot @ project.rs:9666(+0)
+ANALYST-HIT BT-766-Part id=BT-766-Part @ project.rs:9667(+0)
+ANALYST-HIT DE1-ProcurementProject-AdditionalCommodityClassification-ItemClassificationCode id=DE1-ProcurementProject-AdditionalCommodityClassification-ItemClassificationCode @ project.rs:1424(+0) | norm-stem=BT-263 @ project.rs:368(+0) | norm=BT-263-Procedure @ project.rs:1425(+0)
+ANALYST-HIT DE1-ProcurementProject-Description id=DE1-ProcurementProject-Description @ project.rs:1391(+0) | norm-stem=BT-24 @ project.rs:242(+0) | norm=BT-24-Procedure @ project.rs:1391(+0)
+ANALYST-HIT DE1-ProcurementProject-MainCommodityClassification-ItemClassificationCode id=DE1-ProcurementProject-MainCommodityClassification-ItemClassificationCode @ project.rs:1418(+0) | norm-stem=BT-262 @ project.rs:367(+0) | norm=BT-262-Procedure @ project.rs:1418(+0)
+ANALYST-HIT DE1-ProcurementProject-Name id=DE1-ProcurementProject-Name @ project.rs:1389(+0) | norm-stem=BT-21 @ project.rs:241(+0) | norm=BT-21-Procedure @ project.rs:1389(+0)
+ANALYST-HIT DE1-ProcurementProject-PlannedPeriod-EndDate id=DE1-ProcurementProject-PlannedPeriod-EndDate @ project.rs:1459(+0) | norm-stem=BT-537 @ project.rs:440(+0) | norm=BT-537-Procedure @ project.rs:1459(+0)
+ANALYST-HIT DE1-ProcurementProject-PlannedPeriod-StartDate id=DE1-ProcurementProject-PlannedPeriod-StartDate @ project.rs:1457(+0) | norm-stem=BT-536 @ project.rs:439(+0) | norm=BT-536-Procedure @ project.rs:1457(+0)
+ANALYST-HIT DE1-ProcurementProject-RealizedLocation-Address-Country-IdentificationCode id=DE1-ProcurementProject-RealizedLocation-Address-Country-IdentificationCode @ project.rs:1438(+0) | norm=BT-5141-Procedure @ project.rs:1438(+1)
+ANALYST-HIT DE1-ProcurementProject-RealizedLocation-Address-CountrySubentityCode id=DE1-ProcurementProject-RealizedLocation-Address-CountrySubentityCode @ project.rs:1431(+0) | norm-stem=BT-5071 @ project.rs:369(+0) | norm=BT-5071-Procedure @ project.rs:1431(+0)
+ANALYST-HIT DE1-ProcurementProject-RequestedTenderTotal-EstimatedOverallContractAmount id=DE1-ProcurementProject-RequestedTenderTotal-EstimatedOverallContractAmount @ project.rs:1394(+0) | norm-stem=BT-27 @ project.rs:313(+0) | norm=BT-27-Procedure @ project.rs:1394(+1)
+ANALYST-HIT DE1-ProcurementProject-RequestedTenderTotal-FrameworkMaximumAmount id=DE1-ProcurementProject-RequestedTenderTotal-FrameworkMaximumAmount @ project.rs:1399(+0) | norm-stem=BT-271 @ project.rs:314(+0) | norm=BT-271-Procedure @ project.rs:1399(+0)
+ANALYST-HIT DE1-ProcurementProjectLot-ProcurementProject-AdditionalCommodityClassification-ItemClassificationCode id=DE1-ProcurementProjectLot-ProcurementProject-AdditionalCommodityClassification-ItemClassificationCode @ project.rs:1428(+0) | norm-stem=BT-263 @ project.rs:368(+0) | norm=BT-263-Lot @ project.rs:1429(+0)
+ANALYST-HIT DE1-ProcurementProjectLot-ProcurementProject-Description id=DE1-ProcurementProjectLot-ProcurementProject-Description @ project.rs:1392(+0) | norm-stem=BT-24 @ project.rs:242(+0) | norm=BT-24-Lot @ project.rs:1392(+0)
+ANALYST-HIT DE1-ProcurementProjectLot-ProcurementProject-MainCommodityClassification-ItemClassificationCode id=DE1-ProcurementProjectLot-ProcurementProject-MainCommodityClassification-ItemClassificationCode @ project.rs:1420(+0) | norm-stem=BT-262 @ project.rs:367(+0) | norm=BT-262-Lot @ project.rs:1421(+0)
+ANALYST-HIT DE1-ProcurementProjectLot-ProcurementProject-Name id=DE1-ProcurementProjectLot-ProcurementProject-Name @ project.rs:1390(+0) | norm-stem=BT-21 @ project.rs:241(+0) | norm=BT-21-Lot @ project.rs:1390(+0)
+ANALYST-HIT DE1-ProcurementProjectLot-ProcurementProject-PlannedPeriod-EndDate id=DE1-ProcurementProjectLot-ProcurementProject-PlannedPeriod-EndDate @ project.rs:1460(+0) | norm-stem=BT-537 @ project.rs:440(+0) | norm=BT-537-Lot @ project.rs:1460(+0)
+ANALYST-HIT DE1-ProcurementProjectLot-ProcurementProject-PlannedPeriod-StartDate id=DE1-ProcurementProjectLot-ProcurementProject-PlannedPeriod-StartDate @ project.rs:1458(+0) | norm-stem=BT-536 @ project.rs:439(+0) | norm=BT-536-Lot @ project.rs:1458(+0)
+ANALYST-HIT DE1-ProcurementProjectLot-ProcurementProject-RealizedLocation-Address-Country-IdentificationCode id=DE1-ProcurementProjectLot-ProcurementProject-RealizedLocation-Address-Country-IdentificationCode @ project.rs:1440(+0) | norm=BT-5141-Lot @ project.rs:1441(+1)
+ANALYST-HIT DE1-ProcurementProjectLot-ProcurementProject-RealizedLocation-Address-CountrySubentityCode id=DE1-ProcurementProjectLot-ProcurementProject-RealizedLocation-Address-CountrySubentityCode @ project.rs:1433(+0) | norm-stem=BT-5071 @ project.rs:369(+0) | norm=BT-5071-Lot @ project.rs:1434(+0)
+ANALYST-HIT DE1-ProcurementProjectLot-ProcurementProject-RequestedTenderTotal-EstimatedOverallContractAmount id=DE1-ProcurementProjectLot-ProcurementProject-RequestedTenderTotal-EstimatedOverallContractAmount @ project.rs:1396(+0) | norm-stem=BT-27 @ project.rs:313(+0) | norm=BT-27-Lot @ project.rs:1397(+0)
+ANALYST-HIT DE1-ProcurementProjectLot-ProcurementProject-RequestedTenderTotal-FrameworkMaximumAmount id=DE1-ProcurementProjectLot-ProcurementProject-RequestedTenderTotal-FrameworkMaximumAmount @ project.rs:1401(+0) | norm-stem=BT-271 @ project.rs:314(+0) | norm=BT-271-Lot @ project.rs:1402(+0)
+ANALYST-HIT DE1-ProcurementProjectLot-TenderingProcess-OpenTenderEvent-OccurrenceDate id=DE1-ProcurementProjectLot-TenderingProcess-OpenTenderEvent-OccurrenceDate @ project.rs:1452(+0) | norm-stem=BT-132(d) @ project.rs:437(+0) | norm=BT-132(d)-Lot @ project.rs:1452(+0)
+ANALYST-HIT DE1-ProcurementProjectLot-TenderingProcess-TenderSubmissionDeadlinePeriod-EndDate id=DE1-ProcurementProjectLot-TenderingProcess-TenderSubmissionDeadlinePeriod-EndDate @ project.rs:1446(+0) | norm-stem=BT-131(d) @ project.rs:435(+0) | norm=BT-131(d)-Lot @ project.rs:1446(+0)
+ANALYST-HIT DE1-ProcurementProjectLot-TenderingTerms-AppealTerms-AppealInformationParty-PartyIdentification-ID id=DE1-ProcurementProjectLot-TenderingTerms-AppealTerms-AppealInformationParty-PartyIdentification-ID @ project.rs:1486(+0) | norm=OPT-301-Lot-ReviewInfo @ project.rs:1485(+1) | prefix=OPT-301- @ project.rs:10302
+ANALYST-HIT DE1-ProcurementProjectLot-TenderingTerms-AppealTerms-AppealReceiverParty-PartyIdentification-ID id=DE1-ProcurementProjectLot-TenderingTerms-AppealTerms-AppealReceiverParty-PartyIdentification-ID @ project.rs:1484(+0) | norm=OPT-301-Lot-ReviewOrg @ project.rs:1483(+1) | prefix=OPT-301- @ project.rs:10302
+ANALYST-HIT DE1-ProcurementProjectLot-TenderingTerms-AppealTerms-MediationParty-PartyIdentification-ID id=DE1-ProcurementProjectLot-TenderingTerms-AppealTerms-MediationParty-PartyIdentification-ID @ project.rs:1488(+0) | norm=OPT-301-Lot-Mediator @ project.rs:1487(+1) | prefix=OPT-301- @ project.rs:10302
+ANALYST-HIT DE1-ProcurementProjectLot-TenderingTerms-EmploymentLegislationDocumentReference-IssuerParty-PartyIdentification-ID id=DE1-ProcurementProjectLot-TenderingTerms-EmploymentLegislationDocumentReference-IssuerParty-PartyIdentification-ID @ project.rs:1497(+0) | norm=OPT-301-Lot-EmployLegis @ project.rs:1496(+1) | prefix=OPT-301- @ project.rs:10302
+ANALYST-HIT DE1-ProcurementProjectLot-TenderingTerms-EnvironmentalLegislationDocumentReference-IssuerParty-PartyIdentification-ID id=DE1-ProcurementProjectLot-TenderingTerms-EnvironmentalLegislationDocumentReference-IssuerParty-PartyIdentification-ID @ project.rs:1499(+0) | norm=OPT-301-Lot-EnvironLegis @ project.rs:1498(+1) | prefix=OPT-301- @ project.rs:10302
+ANALYST-HIT DE1-ProcurementProjectLot-TenderingTerms-FiscalLegislationDocumentReference-IssuerParty-PartyIdentification-ID id=DE1-ProcurementProjectLot-TenderingTerms-FiscalLegislationDocumentReference-IssuerParty-PartyIdentification-ID @ project.rs:1495(+0) | norm=OPT-301-Lot-FiscalLegis @ project.rs:1494(+1) | prefix=OPT-301- @ project.rs:10302
+ANALYST-HIT DE1-ProcurementProjectLot-TenderingTerms-SelectionCriteria-Name id=DE1-ProcurementProjectLot-TenderingTerms-SelectionCriteria-Name @ project.rs:309(+0)
+ANALYST-HIT DE1-ProcurementProjectLot-TenderingTerms-TenderRecipientParty-PartyIdentification-ID id=DE1-ProcurementProjectLot-TenderingTerms-TenderRecipientParty-PartyIdentification-ID @ project.rs:1490(+0) | norm=OPT-301-Lot-TenderReceipt @ project.rs:1489(+1) | prefix=OPT-301- @ project.rs:10302
+ANALYST-HIT DE1-ProcurementProjectLot-TenderingTerms-TendererQualificationRequest-SpecificTendererRequirement-Description id=DE1-ProcurementProjectLot-TenderingTerms-TendererQualificationRequest-SpecificTendererRequirement-Description @ project.rs:306(+0)
+ANALYST-HIT DE1-TenderingProcess-OpenTenderEvent-OccurrenceDate id=DE1-TenderingProcess-OpenTenderEvent-OccurrenceDate @ project.rs:1451(+0) | norm-stem=BT-132(d) @ project.rs:437(+0) | norm=BT-132(d)-Procedure @ project.rs:1451(+0)
+ANALYST-HIT DE1-TenderingProcess-TenderSubmissionDeadlinePeriod-EndDate id=DE1-TenderingProcess-TenderSubmissionDeadlinePeriod-EndDate @ project.rs:1445(+0) | norm-stem=BT-131(d) @ project.rs:435(+0) | norm=BT-131(d)-Procedure @ project.rs:1445(+0)
+ANALYST-HIT DE1-TenderingTerms-AppealTerms-AppealInformationParty-PartyIdentification-ID id=DE1-TenderingTerms-AppealTerms-AppealInformationParty-PartyIdentification-ID @ project.rs:1485(+0) | norm=OPT-301-Lot-ReviewInfo @ project.rs:1485(+1) | prefix=OPT-301- @ project.rs:10302
+ANALYST-HIT DE1-TenderingTerms-AppealTerms-AppealReceiverParty-PartyIdentification-ID id=DE1-TenderingTerms-AppealTerms-AppealReceiverParty-PartyIdentification-ID @ project.rs:1483(+0) | norm=OPT-301-Lot-ReviewOrg @ project.rs:1483(+1) | prefix=OPT-301- @ project.rs:10302
+ANALYST-HIT DE1-TenderingTerms-AppealTerms-MediationParty-PartyIdentification-ID id=DE1-TenderingTerms-AppealTerms-MediationParty-PartyIdentification-ID @ project.rs:1487(+0) | norm=OPT-301-Lot-Mediator @ project.rs:1487(+1) | prefix=OPT-301- @ project.rs:10302
+ANALYST-HIT DE1-TenderingTerms-EmploymentLegislationDocumentReference-IssuerParty-PartyIdentification-ID id=DE1-TenderingTerms-EmploymentLegislationDocumentReference-IssuerParty-PartyIdentification-ID @ project.rs:1496(+0) | norm=OPT-301-Lot-EmployLegis @ project.rs:1496(+1) | prefix=OPT-301- @ project.rs:10302
+ANALYST-HIT DE1-TenderingTerms-EnvironmentalLegislationDocumentReference-IssuerParty-PartyIdentification-ID id=DE1-TenderingTerms-EnvironmentalLegislationDocumentReference-IssuerParty-PartyIdentification-ID @ project.rs:1498(+0) | norm=OPT-301-Lot-EnvironLegis @ project.rs:1498(+1) | prefix=OPT-301- @ project.rs:10302
+ANALYST-HIT DE1-TenderingTerms-FiscalLegislationDocumentReference-IssuerParty-PartyIdentification-ID id=DE1-TenderingTerms-FiscalLegislationDocumentReference-IssuerParty-PartyIdentification-ID @ project.rs:1494(+0) | norm=OPT-301-Lot-FiscalLegis @ project.rs:1494(+1) | prefix=OPT-301- @ project.rs:10302
+ANALYST-HIT DE1-TenderingTerms-TenderRecipientParty-PartyIdentification-ID id=DE1-TenderingTerms-TenderRecipientParty-PartyIdentification-ID @ project.rs:1489(+0) | norm=OPT-301-Lot-TenderReceipt @ project.rs:1489(+1) | prefix=OPT-301- @ project.rs:10302
+ANALYST-HIT OPT-301-Lot-AddInfo id=OPT-301-Lot-AddInfo @ project.rs:1491(+0) | prefix=OPT-301- @ project.rs:10302
+ANALYST-HIT OPT-301-Lot-DocProvider id=OPT-301-Lot-DocProvider @ project.rs:1492(+0) | prefix=OPT-301- @ project.rs:10302
+ANALYST-HIT OPT-301-Lot-EmployLegis id=OPT-301-Lot-EmployLegis @ project.rs:1496(+1) | prefix=OPT-301- @ project.rs:10302
+ANALYST-HIT OPT-301-Lot-EnvironLegis id=OPT-301-Lot-EnvironLegis @ project.rs:1498(+1) | prefix=OPT-301- @ project.rs:10302
+ANALYST-HIT OPT-301-Lot-FiscalLegis id=OPT-301-Lot-FiscalLegis @ project.rs:1494(+1) | prefix=OPT-301- @ project.rs:10302
+ANALYST-HIT OPT-301-Lot-Mediator id=OPT-301-Lot-Mediator @ project.rs:1487(+1) | prefix=OPT-301- @ project.rs:10302
+ANALYST-HIT OPT-301-Lot-ReviewInfo id=OPT-301-Lot-ReviewInfo @ project.rs:1485(+1) | prefix=OPT-301- @ project.rs:10302
+ANALYST-HIT OPT-301-Lot-ReviewOrg id=OPT-301-Lot-ReviewOrg @ project.rs:1483(+1) | prefix=OPT-301- @ project.rs:10302
+ANALYST-HIT OPT-301-Lot-TenderEval id=OPT-301-Lot-TenderEval @ project.rs:1493(+0) | prefix=OPT-301- @ project.rs:10302
+ANALYST-HIT OPT-301-Lot-TenderReceipt id=OPT-301-Lot-TenderReceipt @ project.rs:1489(+1) | prefix=OPT-301- @ project.rs:10302
+ANALYST-HIT OPT-301-Part-AddInfo prefix=OPT-301- @ project.rs:10302
+ANALYST-HIT OPT-301-Part-DocProvider prefix=OPT-301- @ project.rs:10302
+ANALYST-HIT OPT-301-Part-EmployLegis prefix=OPT-301- @ project.rs:10302
+ANALYST-HIT OPT-301-Part-EnvironLegis prefix=OPT-301- @ project.rs:10302
+ANALYST-HIT OPT-301-Part-FiscalLegis prefix=OPT-301- @ project.rs:10302
+ANALYST-HIT OPT-301-Part-Mediator prefix=OPT-301- @ project.rs:10302
+ANALYST-HIT OPT-301-Part-ReviewInfo prefix=OPT-301- @ project.rs:10302
+ANALYST-HIT OPT-301-Part-ReviewOrg prefix=OPT-301- @ project.rs:10302
+ANALYST-HIT OPT-301-Part-TenderEval prefix=OPT-301- @ project.rs:10302
+ANALYST-HIT OPT-301-Part-TenderReceipt prefix=OPT-301- @ project.rs:10302
+UNCLASSIFIED UBL-AwardCriterionParameterCode stem=UBL-AwardCriterionParameterCode @ project.rs:803(+0)
+UNCLASSIFIED UBL-CompanyLegalForm stem=UBL-CompanyLegalForm @ project.rs:843(+0)
+UNCLASSIFIED UBL-CompanyLegalFormCode stem=UBL-CompanyLegalFormCode @ project.rs:804(+0)
+UNCLASSIFIED UBL-ContractExecutionDescription stem=UBL-ContractExecutionDescription @ project.rs:878(+0)
+UNCLASSIFIED UBL-ContractExecutionPermissionCode stem=UBL-ContractExecutionPermissionCode @ project.rs:805(+0)
+UNCLASSIFIED UBL-ContractExecutionReservedCode stem=UBL-ContractExecutionReservedCode @ project.rs:806(+0)
+UNCLASSIFIED UBL-ContractingPartyTypeCode stem=UBL-ContractingPartyTypeCode @ project.rs:807(+0)
+UNCLASSIFIED UBL-DocumentLanguageID stem=UBL-DocumentLanguageID @ project.rs:808(+0)
+UNCLASSIFIED UBL-DocumentStatusCode stem=UBL-DocumentStatusCode @ project.rs:809(+0)
+UNCLASSIFIED UBL-ElectronicOrderUsage stem=UBL-ElectronicOrderUsage @ project.rs:892(+0)
+UNCLASSIFIED UBL-ElectronicPaymentUsage stem=UBL-ElectronicPaymentUsage @ project.rs:893(+0)
+ANALYST-HIT UBL-FrameworkEstimatedMaximumValue stem=UBL-FrameworkEstimatedMaximumValue @ project.rs:331(+0)
+UNCLASSIFIED UBL-ProcessJustificationDescription stem=UBL-ProcessJustificationDescription @ project.rs:882(+0)
+UNCLASSIFIED UBL-ProcessReason stem=UBL-ProcessReason @ project.rs:881(+0)
+UNCLASSIFIED UBL-ProcurementAdditionalTypeCode stem=UBL-ProcurementAdditionalTypeCode @ project.rs:810(+0)
+UNCLASSIFIED UBL-ProcurementLegislationDescription stem=UBL-ProcurementLegislationDescription @ project.rs:883(+0)
+UNCLASSIFIED UBL-ProcurementLegislationID stem=UBL-ProcurementLegislationID @ project.rs:829(+0)
+UNCLASSIFIED UBL-ProcurementTypeLabel stem=UBL-ProcurementTypeLabel @ project.rs:884(+0)
+ANALYST-HIT UBL-SelectionCriterionName stem=UBL-SelectionCriterionName @ project.rs:294(+0)
+UNCLASSIFIED UBL-SelectionCriterionParameterCode stem=UBL-SelectionCriterionParameterCode @ project.rs:811(+0)
+UNCLASSIFIED UBL-SelectionCriterionType stem=UBL-SelectionCriterionType @ project.rs:812(+0)
+UNCLASSIFIED UBL-SelectionCriterionUsage stem=UBL-SelectionCriterionUsage @ project.rs:813(+0)
+ANALYST-HIT UBL-TendererRequirementDescription stem=UBL-TendererRequirementDescription @ project.rs:295(+0)
+UNCLASSIFIED UBL-TendererRequirementTypeCode stem=UBL-TendererRequirementTypeCode @ project.rs:815(+0)
+UNCLASSIFIED UBL-TerminatedIndicator stem=UBL-TerminatedIndicator @ project.rs:895(+0)

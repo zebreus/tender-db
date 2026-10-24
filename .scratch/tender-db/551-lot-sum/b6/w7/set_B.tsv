@@ -1,0 +1,429 @@
+key	match	tier	category	source
+BT-1118-NoticeResult	exact	W	STATED_TOTAL	project.rs:8924 stated_total_kind
+BT-118-NoticeResult	exact	W	STATED_TOTAL	project.rs:8924 stated_total_kind
+BT-137-Lot	exact	W	LOT_NUMBER	project.rs:8840 PUBLISHED_LOT_NO_FIELDS
+BT-137-LotsGroup	exact	W	LOT_NUMBER	project.rs:8840 PUBLISHED_LOT_NO_FIELDS
+BT-137-Part	exact	W	LOT_NUMBER	project.rs:8840 PUBLISHED_LOT_NO_FIELDS
+BT-13713	stem	W	LOT_RESULT/WINNER/TENDERER_REF	project.rs:7298 read_results
+BT-13713	stem	W	LOT_RESULT/TENDERER_REF	project.rs:9409 RESULT_ID_STEMS
+BT-13714	stem	W	LOT_RESULT/WINNER/TENDERER_REF	project.rs:7338 read_results
+BT-13714	stem	W	LOT_RESULT/TENDERER_REF	project.rs:9409 RESULT_ID_STEMS
+BT-142	stem	W	LOT_RESULT/WINNER/TENDERER_REF	project.rs:7294 read_results
+BT-142	stem	W	LOT_RESULT	project.rs:9410 RESULT_CODE_STEMS
+BT-144	stem	W	LOT_RESULT/WINNER/TENDERER_REF	project.rs:7295 read_results
+BT-144	stem	W	LOT_RESULT	project.rs:9410 RESULT_CODE_STEMS
+BT-145	stem	W	LOT_RESULT/WINNER/TENDERER_REF	project.rs:7349 read_results
+BT-145	stem	W	LOT_RESULT	project.rs:9411 RESULT_DATE_STEMS
+BT-1451	stem	W	LOT_RESULT/WINNER/TENDERER_REF	project.rs:7310 read_results
+BT-1451	stem	W	LOT_RESULT/WINNER/TENDERER_REF	project.rs:7356 read_results
+BT-1451	stem	W	LOT_RESULT	project.rs:9411 RESULT_DATE_STEMS
+BT-150	stem	W	LOT_RESULT/WINNER/TENDERER_REF	project.rs:7346 read_results
+BT-150	stem	W	LOT_RESULT/TENDERER_REF	project.rs:9409 RESULT_ID_STEMS
+BT-161	stem	W	AMOUNT	project.rs:315 AMOUNTS
+BT-161	stem	W	AMOUNT/LOT_RESULT(BT-720 award, BT-161)	project.rs:9412 RESULT_AMOUNT_STEMS
+BT-161-NoticeResult	exact	W	STATED_TOTAL	project.rs:8924 stated_total_kind
+BT-195(BT-1118)	prefix	W	AMOUNT/LOT_RESULT quality (withheld marker on BT-1118)	project.rs:9323 withheld_source
+BT-195(BT-118)	prefix	W	AMOUNT/LOT_RESULT quality (withheld marker on BT-118)	project.rs:9323 withheld_source
+BT-195(BT-161)	prefix	W	AMOUNT/LOT_RESULT quality (withheld marker on BT-161)	project.rs:9323 withheld_source
+BT-195(BT-27)	prefix	W	AMOUNT/LOT_RESULT quality (withheld marker on BT-27)	project.rs:9323 withheld_source
+BT-195(BT-271)	prefix	W	AMOUNT/LOT_RESULT quality (withheld marker on BT-271)	project.rs:9323 withheld_source
+BT-195(BT-660)	prefix	W	AMOUNT/LOT_RESULT quality (withheld marker on BT-660)	project.rs:9323 withheld_source
+BT-195(BT-709)	prefix	W	AMOUNT/LOT_RESULT quality (withheld marker on BT-709)	project.rs:9323 withheld_source
+BT-195(BT-720)	prefix	W	AMOUNT/LOT_RESULT quality (withheld marker on BT-720)	project.rs:9323 withheld_source
+BT-195(BT-759)	prefix	W	AMOUNT/LOT_RESULT quality (withheld marker on BT-759)	project.rs:9323 withheld_source
+BT-195(BT-760)	prefix	W	AMOUNT/LOT_RESULT quality (withheld marker on BT-760)	project.rs:9323 withheld_source
+BT-21	stem	W	LOT_TITLE(R6 reads the served lot title)	project.rs:241 TEXTS
+BT-27	stem	W	AMOUNT	project.rs:313 AMOUNTS
+BT-27-Procedure	exact	W	STATED_TOTAL	project.rs:8925 stated_total_kind
+BT-271	stem	W	AMOUNT	project.rs:314 AMOUNTS
+BT-3202	stem	W	LOT_RESULT/WINNER/TENDERER_REF	project.rs:7359 read_results
+BT-3202	stem	W	LOT_RESULT/TENDERER_REF	project.rs:9409 RESULT_ID_STEMS
+BT-660	stem	W	AMOUNT(result framework, partner-only)	project.rs:365 RESULT_LOT_AMOUNTS
+BT-702(a)-notice	exact	W	LOT_TITLE(R6 language pick)	project.rs:1556 ORIGINAL_LANG_FIELDS
+BT-709	stem	W	AMOUNT(result framework, partner-only)	project.rs:365 RESULT_LOT_AMOUNTS
+BT-720	stem	W	LOT_RESULT/WINNER/TENDERER_REF	project.rs:7331 read_results
+BT-720	stem	W	LOT_RESULT/WINNER/TENDERER_REF	project.rs:7335 read_results
+BT-720	stem	W	AMOUNT/LOT_RESULT(BT-720 award, BT-161)	project.rs:9412 RESULT_AMOUNT_STEMS
+BT-759	stem	W	LOT_RESULT/WINNER/TENDERER_REF	project.rs:7313 read_results
+BT-759	stem	W	LOT_RESULT/WINNER/TENDERER_REF	project.rs:7317 read_results
+BT-759	stem	W	LOT_RESULT/WINNER/TENDERER_REF	project.rs:7395 read_results
+BT-759	stem	W	LOT_RESULT	project.rs:9413 RESULT_NUMBER_STEMS
+BT-760	stem	W	LOT_RESULT/WINNER/TENDERER_REF	project.rs:7321 read_results
+BT-760	stem	W	LOT_RESULT/WINNER/TENDERER_REF	project.rs:7396 read_results
+BT-760	stem	W	LOT_RESULT	project.rs:9410 RESULT_CODE_STEMS
+DE1-ContractingParty-Party-PartyIdentification-ID	exact	W	LOT_RESULT/TENDERER_REF [via DE1 alias -> OPT-300-Procedure-Buyer]	project.rs DE1_FIELD_ALIASES
+DE1-ContractingParty-Party-ServiceProviderParty-Party-PartyIdentification-ID	exact	W	LOT_RESULT/TENDERER_REF [via DE1 alias -> OPT-300-Procedure-SProvider]	project.rs DE1_FIELD_ALIASES
+DE1-FrameworkMaximumAmount	exact	W	AMOUNT [via DE1 alias -> UBL-FrameworkMaximumAmount]	project.rs DE1_FIELD_ALIASES
+DE1-NoticeLanguageCode	exact	W	LOT_TITLE(R6 language pick)	project.rs:1563 ORIGINAL_LANG_FIELDS
+DE1-NoticeResult-LotResult-DecisionReason-DecisionReasonCode	exact	W	LOT_RESULT [via DE1 alias -> BT-144-LotResult]	project.rs DE1_FIELD_ALIASES
+DE1-NoticeResult-LotResult-DecisionReason-DecisionReasonCode	exact	W	LOT_RESULT/WINNER/TENDERER_REF [via DE1 alias -> BT-144-LotResult]	project.rs DE1_FIELD_ALIASES
+DE1-NoticeResult-LotResult-FrameworkAgreementValues-MaximumValueAmount	exact	W	AMOUNT(result framework, partner-only) [via DE1 alias -> BT-709-LotResult]	project.rs DE1_FIELD_ALIASES
+DE1-NoticeResult-LotResult-FrameworkAgreementValues-ReestimatedValueAmount	exact	W	AMOUNT(result framework, partner-only) [via DE1 alias -> BT-660-LotResult]	project.rs DE1_FIELD_ALIASES
+DE1-NoticeResult-LotResult-LotTender-ID	exact	W	LOT_RESULT/TENDERER_REF [via DE1 alias -> OPT-320-LotResult]	project.rs DE1_FIELD_ALIASES
+DE1-NoticeResult-LotResult-LotTender-ID	exact	W	LOT_RESULT/WINNER/TENDERER_REF [via DE1 alias -> OPT-320-LotResult]	project.rs DE1_FIELD_ALIASES
+DE1-NoticeResult-LotResult-LotTender-LegalMonetaryTotal-PayableAmount	exact	W	AMOUNT/LOT_RESULT(BT-720 award, BT-161) [via DE1 alias -> BT-720-Tender]	project.rs DE1_FIELD_ALIASES
+DE1-NoticeResult-LotResult-LotTender-LegalMonetaryTotal-PayableAmount	exact	W	LOT_RESULT/WINNER/TENDERER_REF [via DE1 alias -> BT-720-Tender]	project.rs DE1_FIELD_ALIASES
+DE1-NoticeResult-LotResult-ReceivedSubmissionsStatistics-StatisticsCode	exact	W	LOT_RESULT [via DE1 alias -> BT-760-LotResult]	project.rs DE1_FIELD_ALIASES
+DE1-NoticeResult-LotResult-ReceivedSubmissionsStatistics-StatisticsCode	exact	W	LOT_RESULT/WINNER/TENDERER_REF [via DE1 alias -> BT-760-LotResult]	project.rs DE1_FIELD_ALIASES
+DE1-NoticeResult-LotResult-ReceivedSubmissionsStatistics-StatisticsNumeric	exact	W	LOT_RESULT [via DE1 alias -> BT-759-LotResult]	project.rs DE1_FIELD_ALIASES
+DE1-NoticeResult-LotResult-ReceivedSubmissionsStatistics-StatisticsNumeric	exact	W	LOT_RESULT/WINNER/TENDERER_REF [via DE1 alias -> BT-759-LotResult]	project.rs DE1_FIELD_ALIASES
+DE1-NoticeResult-LotResult-SettledContract-ID	exact	W	LOT_RESULT/TENDERER_REF [via DE1 alias -> OPT-315-LotResult]	project.rs DE1_FIELD_ALIASES
+DE1-NoticeResult-LotResult-SettledContract-ID	exact	W	LOT_RESULT/WINNER/TENDERER_REF [via DE1 alias -> OPT-315-LotResult]	project.rs DE1_FIELD_ALIASES
+DE1-NoticeResult-LotResult-TenderLot-ID	exact	W	LOT_RESULT/TENDERER_REF [via DE1 alias -> BT-13713-LotResult]	project.rs DE1_FIELD_ALIASES
+DE1-NoticeResult-LotResult-TenderLot-ID	exact	W	LOT_RESULT/WINNER/TENDERER_REF [via DE1 alias -> BT-13713-LotResult]	project.rs DE1_FIELD_ALIASES
+DE1-NoticeResult-LotResult-TenderResultCode	exact	W	LOT_RESULT [via DE1 alias -> BT-142-LotResult]	project.rs DE1_FIELD_ALIASES
+DE1-NoticeResult-LotResult-TenderResultCode	exact	W	LOT_RESULT/WINNER/TENDERER_REF [via DE1 alias -> BT-142-LotResult]	project.rs DE1_FIELD_ALIASES
+DE1-NoticeResult-LotTender-LegalMonetaryTotal-PayableAmount	exact	W	AMOUNT/LOT_RESULT(BT-720 award, BT-161) [via DE1 alias -> BT-720-Tender]	project.rs DE1_FIELD_ALIASES
+DE1-NoticeResult-LotTender-LegalMonetaryTotal-PayableAmount	exact	W	LOT_RESULT/WINNER/TENDERER_REF [via DE1 alias -> BT-720-Tender]	project.rs DE1_FIELD_ALIASES
+DE1-NoticeResult-LotTender-TenderLot-ID	exact	W	LOT_RESULT/TENDERER_REF [via DE1 alias -> BT-13714-Tender]	project.rs DE1_FIELD_ALIASES
+DE1-NoticeResult-LotTender-TenderLot-ID	exact	W	LOT_RESULT/WINNER/TENDERER_REF [via DE1 alias -> BT-13714-Tender]	project.rs DE1_FIELD_ALIASES
+DE1-NoticeResult-LotTender-TenderingParty-ID	exact	W	LOT_RESULT/TENDERER_REF [via DE1 alias -> OPT-310-Tender]	project.rs DE1_FIELD_ALIASES
+DE1-NoticeResult-LotTender-TenderingParty-ID	exact	W	LOT_RESULT/WINNER/TENDERER_REF [via DE1 alias -> OPT-310-Tender]	project.rs DE1_FIELD_ALIASES
+DE1-NoticeResult-SettledContract-ContractReference-ID	exact	W	LOT_RESULT/TENDERER_REF [via DE1 alias -> BT-150-Contract]	project.rs DE1_FIELD_ALIASES
+DE1-NoticeResult-SettledContract-ContractReference-ID	exact	W	LOT_RESULT/WINNER/TENDERER_REF [via DE1 alias -> BT-150-Contract]	project.rs DE1_FIELD_ALIASES
+DE1-NoticeResult-SettledContract-IssueDate	exact	W	LOT_RESULT [via DE1 alias -> BT-145-Contract]	project.rs DE1_FIELD_ALIASES
+DE1-NoticeResult-SettledContract-IssueDate	exact	W	LOT_RESULT/WINNER/TENDERER_REF [via DE1 alias -> BT-145-Contract]	project.rs DE1_FIELD_ALIASES
+DE1-NoticeResult-SettledContract-LotTender-ID	exact	W	LOT_RESULT/TENDERER_REF [via DE1 alias -> BT-3202-Contract]	project.rs DE1_FIELD_ALIASES
+DE1-NoticeResult-SettledContract-LotTender-ID	exact	W	LOT_RESULT/WINNER/TENDERER_REF [via DE1 alias -> BT-3202-Contract]	project.rs DE1_FIELD_ALIASES
+DE1-NoticeResult-SettledContract-SignatoryParty-PartyIdentification-ID	exact	W	LOT_RESULT/TENDERER_REF [via DE1 alias -> OPT-300-Contract-Signatory]	project.rs DE1_FIELD_ALIASES
+DE1-NoticeResult-TenderingParty-SubContractor-ID	exact	W	LOT_RESULT/WINNER/TENDERER_REF [via DE1 alias -> OPT-301-Tenderer-SubCont]	project.rs DE1_FIELD_ALIASES
+DE1-NoticeResult-TenderingParty-SubContractor-ID	exact	W	TENDERER_REF [via DE1 alias -> OPT-301-Tenderer-SubCont]	project.rs DE1_FIELD_ALIASES
+DE1-NoticeResult-TenderingParty-Tenderer-ID	exact	W	LOT_RESULT/TENDERER_REF [via DE1 alias -> OPT-300-Tenderer]	project.rs DE1_FIELD_ALIASES
+DE1-NoticeResult-TenderingParty-Tenderer-ID	exact	W	LOT_RESULT/WINNER/TENDERER_REF [via DE1 alias -> OPT-300-Tenderer]	project.rs DE1_FIELD_ALIASES
+DE1-NoticeResult-TenderingParty-Tenderer-ID	exact	W	TENDERER_REF/WINNER [via DE1 alias -> OPT-300-Tenderer]	project.rs DE1_FIELD_ALIASES
+DE1-NoticeResult-TotalAmount	exact	W	AMOUNT [via DE1 alias -> BT-161-NoticeResult]	project.rs DE1_FIELD_ALIASES
+DE1-NoticeResult-TotalAmount	exact	W	AMOUNT/LOT_RESULT(BT-720 award, BT-161) [via DE1 alias -> BT-161-NoticeResult]	project.rs DE1_FIELD_ALIASES
+DE1-NoticeResult-TotalAmount	exact	W	STATED_TOTAL [via DE1 alias -> BT-161-NoticeResult]	project.rs DE1_FIELD_ALIASES
+DE1-ProcurementProject-Name	exact	W	LOT_TITLE(R6 reads the served lot title) [via DE1 alias -> BT-21-Procedure]	project.rs DE1_FIELD_ALIASES
+DE1-ProcurementProject-RequestedTenderTotal-EstimatedOverallContractAmount	exact	W	AMOUNT [via DE1 alias -> BT-27-Procedure]	project.rs DE1_FIELD_ALIASES
+DE1-ProcurementProject-RequestedTenderTotal-EstimatedOverallContractAmount	exact	W	STATED_TOTAL [via DE1 alias -> BT-27-Procedure]	project.rs DE1_FIELD_ALIASES
+DE1-ProcurementProject-RequestedTenderTotal-FrameworkMaximumAmount	exact	W	AMOUNT [via DE1 alias -> BT-271-Procedure]	project.rs DE1_FIELD_ALIASES
+DE1-ProcurementProjectLot-ID	exact	W	LOT_NUMBER	project.rs:8840 PUBLISHED_LOT_NO_FIELDS
+DE1-ProcurementProjectLot-ProcurementProject-Name	exact	W	LOT_TITLE(R6 reads the served lot title) [via DE1 alias -> BT-21-Lot]	project.rs DE1_FIELD_ALIASES
+DE1-ProcurementProjectLot-ProcurementProject-RequestedTenderTotal-EstimatedOverallContractAmount	exact	W	AMOUNT [via DE1 alias -> BT-27-Lot]	project.rs DE1_FIELD_ALIASES
+DE1-ProcurementProjectLot-ProcurementProject-RequestedTenderTotal-FrameworkMaximumAmount	exact	W	AMOUNT [via DE1 alias -> BT-271-Lot]	project.rs DE1_FIELD_ALIASES
+OCDS-ContractValue	exact	W	AMOUNT/LOT_RESULT(FTS contract value)	fts::parse::CONTRACT_VALUE via read_results
+OPT-300	stem	W	LOT_RESULT/TENDERER_REF	project.rs:9409 RESULT_ID_STEMS
+OPT-300-Tenderer	stem	W	LOT_RESULT/WINNER/TENDERER_REF	project.rs:7373 read_results
+OPT-300-Tenderer	exact	W	TENDERER_REF/WINNER	read_results TenderingParty
+OPT-301-Tenderer-SubCont	stem	W	LOT_RESULT/WINNER/TENDERER_REF	project.rs:7376 read_results
+OPT-301-Tenderer-SubCont	exact	W	TENDERER_REF	read_results TenderingParty
+OPT-310	stem	W	LOT_RESULT/WINNER/TENDERER_REF	project.rs:7339 read_results
+OPT-310	stem	W	LOT_RESULT/TENDERER_REF	project.rs:9409 RESULT_ID_STEMS
+OPT-315	stem	W	LOT_RESULT/WINNER/TENDERER_REF	project.rs:7303 read_results
+OPT-315	stem	W	LOT_RESULT/TENDERER_REF	project.rs:9409 RESULT_ID_STEMS
+OPT-320	stem	W	LOT_RESULT/WINNER/TENDERER_REF	project.rs:7302 read_results
+OPT-320	stem	W	LOT_RESULT/TENDERER_REF	project.rs:9409 RESULT_ID_STEMS
+SDK01-NoticeLanguageCode	exact	W	LOT_TITLE(R6 language pick)	project.rs:1564 ORIGINAL_LANG_FIELDS
+SDK01-ProcurementProject-Name	stem	W	LOT_TITLE(R6 reads the served lot title)	project.rs:285 TEXTS
+SDK01-ProcurementProject-RequestedTenderTotal-EstimatedOverallContractAmount	stem	W	AMOUNT	project.rs:345 AMOUNTS
+SDK01-ProcurementProject-RequestedTenderTotal-TotalAmount	stem	W	AMOUNT	project.rs:350 AMOUNTS
+SDK01-ProcurementProjectLot-ProcurementProject-Name	stem	W	LOT_TITLE(R6 reads the served lot title)	project.rs:286 TEXTS
+SDK01-ProcurementProjectLot-ProcurementProject-RequestedTenderTotal-EstimatedOverallContractAmount	stem	W	AMOUNT	project.rs:347 AMOUNTS
+SDK01-TenderResult-AwardDate	exact	W	LOT_RESULT(sdk-0.1)	project.rs:1281 SDK01_AWARD_DATE_FIELD
+SDK01-TenderResult-TenderResultCode	exact	W	LOT_RESULT(sdk-0.1)	project.rs:1275 SDK01_RESULT_CODE_FIELD
+TED-ADDRESS_PARTY	exact	W	LOT_RESULT(legacy)	project.rs:7428 LEGACY_NON_WINNER_REFS
+TED-AWARDED_CONTRACT	exact	W	LOT_RESULT(legacy)	project.rs:1321 LEGACY_AWARDED_MARKER
+TED-AWARDED_TO_GROUP	exact	W	LOT_RESULT(group, legacy)	project.rs:1349 LEGACY_GROUP_MARKER
+TED-CONTRACT_AWARD_DATE	exact	W	LOT_RESULT(legacy)	project.rs:1301 LEGACY_AWARD_DATE_FIELD
+TED-CONTRACT_TITLE	stem	W	LOT_TITLE(R6 reads the served lot title)	project.rs:247 TEXTS
+TED-CONTRACT_TITLE	exact	W	LOT_RESULT(legacy award placement)	project.rs:7912 AWARD_TITLE_FIELDS
+TED-DATE_CONCLUSION_CONTRACT	exact	W	LOT_RESULT(legacy)	project.rs:1315 LEGACY_AWARD_DATE_FIELD_R209
+TED-DATE_OF_CONTRACT_AWARD	exact	W	LOT_RESULT(legacy)	project.rs:1308 LEGACY_AWARD_DATE_FIELD_R207
+TED-ECONOMIC_OPERATOR_NAME_ADDRESS	exact	W	LOT_RESULT(legacy MOVE winner)	project.rs:7615 MOVE_OPERATOR_FIELD
+TED-FORM	exact	W	LOT_RESULT(legacy MOVE)	project.rs:7647 read_move_award
+TED-FORM	exact	W	STATED_TOTAL(TED-FORM cn_form)	project.rs:8953 notice_stated_totals
+TED-HIGH	exact	W	STATED_TOTAL	project.rs:8929 stated_total_kind
+TED-ITEM	exact	W	LOT_RESULT(legacy)	project.rs:7485 read_legacy_results
+TED-ITEM	exact	W	LOT_NUMBER(legacy ordinal)	project.rs:7724 read
+TED-ITEM	exact	W	LOT_NUMBER(legacy)	project.rs:7759 resolve
+TED-ITEM	exact	W	LOT_NUMBER(legacy)	project.rs:7762 resolve
+TED-LG_ORIG	exact	W	LOT_TITLE(R6 language pick)	project.rs:1557 ORIGINAL_LANG_FIELDS
+TED-LOT_NO	exact	W	LOT_RESULT(legacy)	project.rs:7485 read_legacy_results
+TED-LOT_NO	exact	W	LOT_NUMBER(legacy)	project.rs:7723 read
+TED-LOT_NO	exact	W	LOT_NUMBER(legacy)	project.rs:7759 resolve
+TED-LOT_NO	exact	W	LOT_NUMBER(legacy)	project.rs:7928 read
+TED-LOT_NO	exact	W	LOT_NUMBER	project.rs:8840 PUBLISHED_LOT_NO_FIELDS
+TED-LOT_NO	exact	W	LOT_NUMBER(legacy)	project.rs:8868 award_block_lot_number<
+TED-LOT_NUMBER	exact	W	LOT_RESULT(legacy)	project.rs:7485 read_legacy_results
+TED-LOT_NUMBER	exact	W	LOT_NUMBER(legacy)	project.rs:7723 read
+TED-LOT_NUMBER	exact	W	LOT_NUMBER(legacy)	project.rs:7759 resolve
+TED-LOT_NUMBER	exact	W	LOT_NUMBER(legacy)	project.rs:7928 read
+TED-LOT_NUMBER	exact	W	LOT_NUMBER	project.rs:8840 PUBLISHED_LOT_NO_FIELDS
+TED-LOT_NUMBER	exact	W	LOT_NUMBER(legacy)	project.rs:8868 award_block_lot_number<
+TED-LOT_TITLE	stem	W	LOT_TITLE(R6 reads the served lot title)	project.rs:270 TEXTS
+TED-LOW	exact	W	STATED_TOTAL	project.rs:8929 stated_total_kind
+TED-NB_TENDERS_RECEIVED	exact	W	LOT_RESULT(statistics, legacy)	project.rs:1243 LEGACY_BID_COUNT_FIELDS
+TED-NEW_VALUE.TEXT	exact	W	AMOUNT(F14 corrected value, legacy)	project.rs:563 F14_VALUE_FIELD
+TED-NO_AWARDED_CONTRACT	exact	W	LOT_RESULT(legacy)	project.rs:1329 LEGACY_NO_AWARD_MARKER
+TED-NO_AWARDED_TO_GROUP	exact	W	LOT_RESULT(group, legacy)	project.rs:1350 LEGACY_NO_GROUP_MARKER
+TED-OFFERS_RECEIVED_NUMBER	exact	W	LOT_RESULT(statistics, legacy)	project.rs:1243 LEGACY_BID_COUNT_FIELDS
+TED-OLD_VALUE.TEXT	exact	W	AMOUNT(F14 corrected value, legacy)	project.rs:564 F14_OLD_VALUE_FIELD
+TED-PROCUREMENT_DISCONTINUED	exact	W	LOT_RESULT(legacy)	project.rs:1335 LEGACY_DISCONTINUED_MARKER
+TED-PROCUREMENT_UNSUCCESSFUL	exact	W	LOT_RESULT(legacy)	project.rs:1338 LEGACY_UNSUCCESSFUL_MARKER
+TED-SECTION	exact	W	AMOUNT/DATE(F14 target, legacy)	project.rs:475 F14_TARGET_FIELD
+TED-TITLE	stem	W	LOT_TITLE(R6 reads the served lot title)	project.rs:245 TEXTS
+TED-TITLE	exact	W	LOT_RESULT(legacy award placement)	project.rs:7912 AWARD_TITLE_FIELDS
+TED-TITLE_CONTRACT	stem	W	LOT_TITLE(R6 reads the served lot title)	project.rs:246 TEXTS
+TED-TITLE_CONTRACT	exact	W	LOT_RESULT(legacy award placement)	project.rs:7912 AWARD_TITLE_FIELDS
+TED-TITLE_DESIGN_CONTACT_NOTICE	stem	W	LOT_TITLE(R6 reads the served lot title)	project.rs:261 TEXTS
+TED-TITLE_NOTICE_BUYER_PROFILE	stem	W	LOT_TITLE(R6 reads the served lot title)	project.rs:263 TEXTS
+TED-TITLE_QUALIFICATION_SYSTEM	stem	W	LOT_TITLE(R6 reads the served lot title)	project.rs:260 TEXTS
+TED-TITLE_RESULT_DESIGN_CONTEST	stem	W	LOT_TITLE(R6 reads the served lot title)	project.rs:262 TEXTS
+TED-TOTAL_ESTIMATED.VALUE_COST	stem	W	AMOUNT	project.rs:325 AMOUNTS
+TED-VALUE_COST	exact	W	LOT_RESULT(legacy)	project.rs:7496 read_legacy_results
+TED-VALUE_COST	exact	W	AMOUNT	project.rs:10272 amount_target
+TED-VAL_ESTIMATED_TOTAL	stem	W	AMOUNT	project.rs:317 AMOUNTS
+TED-VAL_ESTIMATED_TOTAL	exact	W	STATED_TOTAL	project.rs:8928 stated_total_kind
+TED-VAL_TOTAL	stem	W	AMOUNT	project.rs:318 AMOUNTS
+TED-VAL_TOTAL	exact	W	LOT_RESULT(legacy)	project.rs:7492 read_legacy_results
+TED-VAL_TOTAL	exact	W	STATED_TOTAL	project.rs:8927 stated_total_kind
+TED-VAL_TOTAL	exact	W	AMOUNT	project.rs:10284 amount_target
+TED-VAL_TOTAL_TAX_BASIS	exact	W	AMOUNT(tax basis)	project.rs:1211 TAX_BASIS_FIELDS
+TXT-OL	exact	W	LOT_TITLE(R6 language pick)	project.rs:1558 ORIGINAL_LANG_FIELDS
+TXT-TI	stem	W	LOT_TITLE(R6 reads the served lot title)	project.rs:279 TEXTS
+UBL-FrameworkEstimatedMaximumValue	stem	W	AMOUNT	project.rs:331 AMOUNTS
+UBL-FrameworkMaximumAmount	stem	W	AMOUNT	project.rs:330 AMOUNTS
+VALUE_COST	suffix	W	AMOUNT(legacy VALUE_COST, AMOUNT_ELEMENT)	project.rs AMOUNT_ELEMENT / has_destination
+BT-02-notice	exact	W-ind	CHAIN(fold order)	project.rs:1185 EFORMS_NOTICE_TYPE_FIELDS
+BT-04-notice	exact	W-ind	CHAIN	project.rs:1545 PROCEDURE_KEY_FIELD
+BT-05(a)-notice	exact	W-ind	CHAIN(version order)	project.rs:1023 DISPATCH_DATE_FIELDS
+BT-1375-Procedure	exact	W-ind	CHAIN	project.rs:957 GROUP_MEMBER_FIELD
+BT-330-Procedure	exact	W-ind	CHAIN	project.rs:955 GROUP_ID_FIELD
+BT-500-Organization-Company	exact	W-ind	WINNER_IDENTITY	project.rs:1263 ORG_NAME_FIELD_IDS
+BT-500-Organization-Company	exact	W-ind	WINNER_IDENTITY	project.rs:1575 ORG_NAME_FIELD
+BT-500-Organization-TouchPoint	exact	W-ind	WINNER_IDENTITY(576 U2 touchpoint, worktree only)	worktree project.rs:1618 TOUCHPOINT_NAME_FIELD (uncommitted, not in HEAD)
+BT-501-Organization-Company	exact	W-ind	WINNER_IDENTITY	project.rs:1576 ORG_IDENTIFIER_FIELD
+BT-514-Organization-Company	exact	W-ind	WINNER_IDENTITY	project.rs:1577 ORG_COUNTRY_FIELD
+BT-514-Organization-TouchPoint	exact	W-ind	WINNER_IDENTITY(576 U2 touchpoint, worktree only)	worktree project.rs:1619 TOUCHPOINT_COUNTRY_FIELD (uncommitted, not in HEAD)
+BT-701-notice	exact	W-ind	CHAIN	project.rs:1546 LOGICAL_NOTICE_FIELD
+BT-738-notice	exact	W-ind	CHAIN(version order)	project.rs:1012 PUBLICATION_DATE_FIELDS
+DE1-ContractFolderID	exact	W-ind	CHAIN	project.rs:1543 DE1_FOLDER_FIELD
+DE1-ContractingParty-Party-PartyIdentification-ID	exact	W-ind	ROLE_REF [via DE1 alias -> OPT-300-Procedure-Buyer]	project.rs DE1_FIELD_ALIASES
+DE1-ContractingParty-Party-PartyIdentification-ID	exact	W-ind	ROLE_REF (530-T role guard -> winner identity) [via DE1 alias -> OPT-300-Procedure-Buyer]	project.rs DE1_FIELD_ALIASES
+DE1-ContractingParty-Party-ServiceProviderParty-Party-PartyIdentification-ID	exact	W-ind	ROLE_REF [via DE1 alias -> OPT-300-Procedure-SProvider]	project.rs DE1_FIELD_ALIASES
+DE1-ContractingParty-Party-ServiceProviderParty-Party-PartyIdentification-ID	exact	W-ind	ROLE_REF (530-T role guard -> winner identity) [via DE1 alias -> OPT-300-Procedure-SProvider]	project.rs DE1_FIELD_ALIASES
+DE1-ID	exact	W-ind	CHAIN [via DE1 alias -> BT-701-notice]	project.rs DE1_FIELD_ALIASES
+DE1-IssueDate	exact	W-ind	CHAIN(version order)	project.rs:1024 DISPATCH_DATE_FIELDS
+DE1-IssueDate	exact	W-ind	CHAIN(version order) [via DE1 alias -> BT-05(a)-notice]	project.rs DE1_FIELD_ALIASES
+DE1-NoticeResult-LotResult-FinancingParty-PartyIdentification-ID	exact	W-ind	ROLE_REF [via DE1 alias -> OPT-301-LotResult-Financing]	project.rs DE1_FIELD_ALIASES
+DE1-NoticeResult-LotResult-FinancingParty-PartyIdentification-ID	exact	W-ind	ROLE_REF (530-T role guard -> winner identity) [via DE1 alias -> OPT-301-LotResult-Financing]	project.rs DE1_FIELD_ALIASES
+DE1-NoticeResult-LotResult-PayerParty-PartyIdentification-ID	exact	W-ind	ROLE_REF [via DE1 alias -> OPT-301-LotResult-Paying]	project.rs DE1_FIELD_ALIASES
+DE1-NoticeResult-LotResult-PayerParty-PartyIdentification-ID	exact	W-ind	ROLE_REF (530-T role guard -> winner identity) [via DE1 alias -> OPT-301-LotResult-Paying]	project.rs DE1_FIELD_ALIASES
+DE1-NoticeResult-SettledContract-SignatoryParty-PartyIdentification-ID	exact	W-ind	ROLE_REF [via DE1 alias -> OPT-300-Contract-Signatory]	project.rs DE1_FIELD_ALIASES
+DE1-NoticeResult-SettledContract-SignatoryParty-PartyIdentification-ID	exact	W-ind	ROLE_REF (530-T role guard -> winner identity) [via DE1 alias -> OPT-300-Contract-Signatory]	project.rs DE1_FIELD_ALIASES
+DE1-NoticeResult-TenderingParty-SubContractor-ID	exact	W-ind	ROLE_REF [via DE1 alias -> OPT-301-Tenderer-SubCont]	project.rs DE1_FIELD_ALIASES
+DE1-NoticeResult-TenderingParty-SubContractor-ID	exact	W-ind	ROLE_REF (530-T role guard -> winner identity) [via DE1 alias -> OPT-301-Tenderer-SubCont]	project.rs DE1_FIELD_ALIASES
+DE1-NoticeResult-TenderingParty-SubContractor-MainContractor-ID	exact	W-ind	ROLE_REF [via DE1 alias -> OPT-301-Tenderer-MainCont]	project.rs DE1_FIELD_ALIASES
+DE1-NoticeResult-TenderingParty-SubContractor-MainContractor-ID	exact	W-ind	ROLE_REF (530-T role guard -> winner identity) [via DE1 alias -> OPT-301-Tenderer-MainCont]	project.rs DE1_FIELD_ALIASES
+DE1-NoticeResult-TenderingParty-Tenderer-ID	exact	W-ind	ROLE_REF [via DE1 alias -> OPT-300-Tenderer]	project.rs DE1_FIELD_ALIASES
+DE1-NoticeResult-TenderingParty-Tenderer-ID	exact	W-ind	ROLE_REF (530-T role guard -> winner identity) [via DE1 alias -> OPT-300-Tenderer]	project.rs DE1_FIELD_ALIASES
+DE1-NoticeSubType-SubTypeCode	exact	W-ind	CHAIN(fold order) [via DE1 alias -> OPP-070-notice]	project.rs DE1_FIELD_ALIASES
+DE1-Organizations-Organization-Company-PartyLegalEntity-CompanyID	exact	W-ind	WINNER_IDENTITY [via DE1 alias -> BT-501-Organization-Company]	project.rs DE1_FIELD_ALIASES
+DE1-Organizations-Organization-Company-PartyName-Name	exact	W-ind	WINNER_IDENTITY [via DE1 alias -> BT-500-Organization-Company]	project.rs DE1_FIELD_ALIASES
+DE1-Organizations-Organization-Company-PostalAddress-Country-IdentificationCode	exact	W-ind	WINNER_IDENTITY [via DE1 alias -> BT-514-Organization-Company]	project.rs DE1_FIELD_ALIASES
+DE1-ProcurementProjectLot-TenderingTerms-AdditionalInformationParty-PartyIdentification-ID	exact	W-ind	ROLE_REF [via DE1 alias -> OPT-301-Lot-AddInfo]	project.rs DE1_FIELD_ALIASES
+DE1-ProcurementProjectLot-TenderingTerms-AdditionalInformationParty-PartyIdentification-ID	exact	W-ind	ROLE_REF (530-T role guard -> winner identity) [via DE1 alias -> OPT-301-Lot-AddInfo]	project.rs DE1_FIELD_ALIASES
+DE1-ProcurementProjectLot-TenderingTerms-AppealTerms-AppealInformationParty-PartyIdentification-ID	exact	W-ind	ROLE_REF [via DE1 alias -> OPT-301-Lot-ReviewInfo]	project.rs DE1_FIELD_ALIASES
+DE1-ProcurementProjectLot-TenderingTerms-AppealTerms-AppealInformationParty-PartyIdentification-ID	exact	W-ind	ROLE_REF (530-T role guard -> winner identity) [via DE1 alias -> OPT-301-Lot-ReviewInfo]	project.rs DE1_FIELD_ALIASES
+DE1-ProcurementProjectLot-TenderingTerms-AppealTerms-AppealReceiverParty-PartyIdentification-ID	exact	W-ind	ROLE_REF [via DE1 alias -> OPT-301-Lot-ReviewOrg]	project.rs DE1_FIELD_ALIASES
+DE1-ProcurementProjectLot-TenderingTerms-AppealTerms-AppealReceiverParty-PartyIdentification-ID	exact	W-ind	ROLE_REF (530-T role guard -> winner identity) [via DE1 alias -> OPT-301-Lot-ReviewOrg]	project.rs DE1_FIELD_ALIASES
+DE1-ProcurementProjectLot-TenderingTerms-AppealTerms-MediationParty-PartyIdentification-ID	exact	W-ind	ROLE_REF [via DE1 alias -> OPT-301-Lot-Mediator]	project.rs DE1_FIELD_ALIASES
+DE1-ProcurementProjectLot-TenderingTerms-AppealTerms-MediationParty-PartyIdentification-ID	exact	W-ind	ROLE_REF (530-T role guard -> winner identity) [via DE1 alias -> OPT-301-Lot-Mediator]	project.rs DE1_FIELD_ALIASES
+DE1-ProcurementProjectLot-TenderingTerms-DocumentProviderParty-PartyIdentification-ID	exact	W-ind	ROLE_REF [via DE1 alias -> OPT-301-Lot-DocProvider]	project.rs DE1_FIELD_ALIASES
+DE1-ProcurementProjectLot-TenderingTerms-DocumentProviderParty-PartyIdentification-ID	exact	W-ind	ROLE_REF (530-T role guard -> winner identity) [via DE1 alias -> OPT-301-Lot-DocProvider]	project.rs DE1_FIELD_ALIASES
+DE1-ProcurementProjectLot-TenderingTerms-EmploymentLegislationDocumentReference-IssuerParty-PartyIdentification-ID	exact	W-ind	ROLE_REF [via DE1 alias -> OPT-301-Lot-EmployLegis]	project.rs DE1_FIELD_ALIASES
+DE1-ProcurementProjectLot-TenderingTerms-EmploymentLegislationDocumentReference-IssuerParty-PartyIdentification-ID	exact	W-ind	ROLE_REF (530-T role guard -> winner identity) [via DE1 alias -> OPT-301-Lot-EmployLegis]	project.rs DE1_FIELD_ALIASES
+DE1-ProcurementProjectLot-TenderingTerms-EnvironmentalLegislationDocumentReference-IssuerParty-PartyIdentification-ID	exact	W-ind	ROLE_REF [via DE1 alias -> OPT-301-Lot-EnvironLegis]	project.rs DE1_FIELD_ALIASES
+DE1-ProcurementProjectLot-TenderingTerms-EnvironmentalLegislationDocumentReference-IssuerParty-PartyIdentification-ID	exact	W-ind	ROLE_REF (530-T role guard -> winner identity) [via DE1 alias -> OPT-301-Lot-EnvironLegis]	project.rs DE1_FIELD_ALIASES
+DE1-ProcurementProjectLot-TenderingTerms-FiscalLegislationDocumentReference-IssuerParty-PartyIdentification-ID	exact	W-ind	ROLE_REF [via DE1 alias -> OPT-301-Lot-FiscalLegis]	project.rs DE1_FIELD_ALIASES
+DE1-ProcurementProjectLot-TenderingTerms-FiscalLegislationDocumentReference-IssuerParty-PartyIdentification-ID	exact	W-ind	ROLE_REF (530-T role guard -> winner identity) [via DE1 alias -> OPT-301-Lot-FiscalLegis]	project.rs DE1_FIELD_ALIASES
+DE1-ProcurementProjectLot-TenderingTerms-TenderEvaluationParty-PartyIdentification-ID	exact	W-ind	ROLE_REF [via DE1 alias -> OPT-301-Lot-TenderEval]	project.rs DE1_FIELD_ALIASES
+DE1-ProcurementProjectLot-TenderingTerms-TenderEvaluationParty-PartyIdentification-ID	exact	W-ind	ROLE_REF (530-T role guard -> winner identity) [via DE1 alias -> OPT-301-Lot-TenderEval]	project.rs DE1_FIELD_ALIASES
+DE1-ProcurementProjectLot-TenderingTerms-TenderRecipientParty-PartyIdentification-ID	exact	W-ind	ROLE_REF [via DE1 alias -> OPT-301-Lot-TenderReceipt]	project.rs DE1_FIELD_ALIASES
+DE1-ProcurementProjectLot-TenderingTerms-TenderRecipientParty-PartyIdentification-ID	exact	W-ind	ROLE_REF (530-T role guard -> winner identity) [via DE1 alias -> OPT-301-Lot-TenderReceipt]	project.rs DE1_FIELD_ALIASES
+DE1-Publication-PublicationDate	exact	W-ind	CHAIN(version order)	project.rs:1009 PUBLICATION_DATE_FIELDS
+DE1-Publication-PublicationDate	exact	W-ind	CHAIN(version order) [via DE1 alias -> OPP-012-notice]	project.rs DE1_FIELD_ALIASES
+DE1-RequestedPublicationDate	exact	W-ind	CHAIN(version order)	project.rs:1013 PUBLICATION_DATE_FIELDS
+DE1-RequestedPublicationDate	exact	W-ind	CHAIN(version order) [via DE1 alias -> BT-738-notice]	project.rs DE1_FIELD_ALIASES
+DE1-TenderingTerms-AppealTerms-AppealInformationParty-PartyIdentification-ID	exact	W-ind	ROLE_REF [via DE1 alias -> OPT-301-Lot-ReviewInfo]	project.rs DE1_FIELD_ALIASES
+DE1-TenderingTerms-AppealTerms-AppealInformationParty-PartyIdentification-ID	exact	W-ind	ROLE_REF (530-T role guard -> winner identity) [via DE1 alias -> OPT-301-Lot-ReviewInfo]	project.rs DE1_FIELD_ALIASES
+DE1-TenderingTerms-AppealTerms-AppealReceiverParty-PartyIdentification-ID	exact	W-ind	ROLE_REF [via DE1 alias -> OPT-301-Lot-ReviewOrg]	project.rs DE1_FIELD_ALIASES
+DE1-TenderingTerms-AppealTerms-AppealReceiverParty-PartyIdentification-ID	exact	W-ind	ROLE_REF (530-T role guard -> winner identity) [via DE1 alias -> OPT-301-Lot-ReviewOrg]	project.rs DE1_FIELD_ALIASES
+DE1-TenderingTerms-AppealTerms-MediationParty-PartyIdentification-ID	exact	W-ind	ROLE_REF [via DE1 alias -> OPT-301-Lot-Mediator]	project.rs DE1_FIELD_ALIASES
+DE1-TenderingTerms-AppealTerms-MediationParty-PartyIdentification-ID	exact	W-ind	ROLE_REF (530-T role guard -> winner identity) [via DE1 alias -> OPT-301-Lot-Mediator]	project.rs DE1_FIELD_ALIASES
+DE1-TenderingTerms-EmploymentLegislationDocumentReference-IssuerParty-PartyIdentification-ID	exact	W-ind	ROLE_REF [via DE1 alias -> OPT-301-Lot-EmployLegis]	project.rs DE1_FIELD_ALIASES
+DE1-TenderingTerms-EmploymentLegislationDocumentReference-IssuerParty-PartyIdentification-ID	exact	W-ind	ROLE_REF (530-T role guard -> winner identity) [via DE1 alias -> OPT-301-Lot-EmployLegis]	project.rs DE1_FIELD_ALIASES
+DE1-TenderingTerms-EnvironmentalLegislationDocumentReference-IssuerParty-PartyIdentification-ID	exact	W-ind	ROLE_REF [via DE1 alias -> OPT-301-Lot-EnvironLegis]	project.rs DE1_FIELD_ALIASES
+DE1-TenderingTerms-EnvironmentalLegislationDocumentReference-IssuerParty-PartyIdentification-ID	exact	W-ind	ROLE_REF (530-T role guard -> winner identity) [via DE1 alias -> OPT-301-Lot-EnvironLegis]	project.rs DE1_FIELD_ALIASES
+DE1-TenderingTerms-FiscalLegislationDocumentReference-IssuerParty-PartyIdentification-ID	exact	W-ind	ROLE_REF [via DE1 alias -> OPT-301-Lot-FiscalLegis]	project.rs DE1_FIELD_ALIASES
+DE1-TenderingTerms-FiscalLegislationDocumentReference-IssuerParty-PartyIdentification-ID	exact	W-ind	ROLE_REF (530-T role guard -> winner identity) [via DE1 alias -> OPT-301-Lot-FiscalLegis]	project.rs DE1_FIELD_ALIASES
+DE1-TenderingTerms-TenderRecipientParty-PartyIdentification-ID	exact	W-ind	ROLE_REF [via DE1 alias -> OPT-301-Lot-TenderReceipt]	project.rs DE1_FIELD_ALIASES
+DE1-TenderingTerms-TenderRecipientParty-PartyIdentification-ID	exact	W-ind	ROLE_REF (530-T role guard -> winner identity) [via DE1 alias -> OPT-301-Lot-TenderReceipt]	project.rs DE1_FIELD_ALIASES
+OPP-012-notice	exact	W-ind	CHAIN(version order)	project.rs:1008 PUBLICATION_DATE_FIELDS
+OPP-070-notice	exact	W-ind	CHAIN(fold order)	project.rs:1547 SUBTYPE_FIELD
+OPP-090-Procedure	exact	W-ind	CHAIN	project.rs:1573 PREVIOUS_NOTICE_FIELD
+OPT-300-	prefix	W-ind	ROLE_REF (530-T role guard -> winner identity)	project.rs:10302 role_name
+OPT-300-	prefix	W-ind	ROLE_REF	project.rs:11364 de1_mark_reference
+OPT-300-	prefix	W-ind	ROLE_REF	guid_twin.rs:239 guid_twin_role_ref
+OPT-300-	prefix	W-ind	ROLE_REF (530-T role guard -> winner identity)	role_name / guid_twin_role_ref
+OPT-301-	prefix	W-ind	ROLE_REF (530-T role guard -> winner identity)	project.rs:10302 role_name
+OPT-301-	prefix	W-ind	ROLE_REF	project.rs:11364 de1_mark_reference
+OPT-301-	prefix	W-ind	ROLE_REF	guid_twin.rs:239 guid_twin_role_ref
+OPT-301-	prefix	W-ind	ROLE_REF (530-T role guard -> winner identity)	role_name / guid_twin_role_ref
+SDK01-ContractFolderID	exact	W-ind	CHAIN	project.rs:1354 SDK01_FOLDER_FIELD
+SDK01-ContractingParty-Party-PartyName-Name	exact	W-ind	WINNER_IDENTITY	project.rs:1256 SDK01_PARTY_NAME_FIELDS
+SDK01-ContractingParty-Party-PartyName-Name	exact	W-ind	WINNER_IDENTITY	project.rs:1267 ORG_NAME_FIELD_IDS
+SDK01-ContractingParty-Party-PostalAddress-Country-IdentificationCode	exact	W-ind	WINNER_IDENTITY	project.rs:1271 SDK01_PARTY_COUNTRY_FIELDS
+SDK01-IssueDate	exact	W-ind	CHAIN(version order)	project.rs:1025 DISPATCH_DATE_FIELDS
+SDK01-NoticeTypeCode	exact	W-ind	CHAIN(fold order)	project.rs:1185 EFORMS_NOTICE_TYPE_FIELDS
+SDK01-RequestedPublicationDate	exact	W-ind	CHAIN(version order)	project.rs:1014 PUBLICATION_DATE_FIELDS
+SDK01-TenderResult-WinningParty-Party-PartyName-Name	exact	W-ind	WINNER_IDENTITY	project.rs:1256 SDK01_PARTY_NAME_FIELDS
+SDK01-TenderResult-WinningParty-Party-PartyName-Name	exact	W-ind	WINNER_IDENTITY	project.rs:1268 ORG_NAME_FIELD_IDS
+SDK01-TenderResult-WinningParty-Party-PostalAddress-Country-IdentificationCode	exact	W-ind	WINNER_IDENTITY	project.rs:1272 SDK01_PARTY_COUNTRY_FIELDS
+TED-	prefix	W-ind	ROLE_REF (530-T role guard -> winner identity)	project.rs:10309 role_name
+TED-	prefix	W-ind	ROLE_REF(legacy)	role_census.rs:151 role_kind
+TED-COUNTRY	exact	W-ind	WINNER_IDENTITY	project.rs:978 ORG_COUNTRY_FIELDS
+TED-DATE_DISP	exact	W-ind	CHAIN(version order)	project.rs:1028 DISPATCH_DATE_FIELDS
+TED-DATE_DISPATCH_NOTICE	exact	W-ind	CHAIN(version order)	project.rs:1027 DISPATCH_DATE_FIELDS
+TED-DATE_PUB	exact	W-ind	CHAIN(version order)	project.rs:1010 PUBLICATION_DATE_FIELDS
+TED-DS_DATE_DISPATCH	exact	W-ind	CHAIN(version order)	project.rs:1026 DISPATCH_DATE_FIELDS
+TED-ISO_COUNTRY	exact	W-ind	WINNER_IDENTITY	project.rs:978 ORG_COUNTRY_FIELDS
+TED-NATIONALID	exact	W-ind	WINNER_IDENTITY	project.rs:979 ORG_NATIONALID_FIELD
+TED-NAT_NOTICE	exact	W-ind	CHAIN(fold order)	project.rs:1061 LEGACY_DOC_TYPE_FIELDS
+TED-NO_DOC_OJS	exact	W-ind	CHAIN	project.rs:1055 LEGACY_OWN_NUMBER_FIELDS
+TED-OFFICIALNAME	exact	W-ind	WINNER_IDENTITY	project.rs:977 ORG_NAME_FIELDS
+TED-OFFICIALNAME	exact	W-ind	WINNER_IDENTITY	project.rs:1264 ORG_NAME_FIELD_IDS
+TED-ORGANISATION	exact	W-ind	WINNER_IDENTITY	project.rs:977 ORG_NAME_FIELDS
+TED-ORGANISATION	exact	W-ind	WINNER_IDENTITY	project.rs:1265 ORG_NAME_FIELD_IDS
+TED-TD_DOCUMENT_TYPE	exact	W-ind	CHAIN(fold order)	project.rs:1061 LEGACY_DOC_TYPE_FIELDS
+TXT-AU	exact	W-ind	WINNER_IDENTITY	project.rs:977 ORG_NAME_FIELDS
+TXT-AU	exact	W-ind	WINNER_IDENTITY	project.rs:1266 ORG_NAME_FIELD_IDS
+TXT-CY	exact	W-ind	WINNER_IDENTITY	project.rs:978 ORG_COUNTRY_FIELDS
+TXT-DS	exact	W-ind	CHAIN(version order)	project.rs:1029 DISPATCH_DATE_FIELDS
+TXT-ND	exact	W-ind	CHAIN	project.rs:1055 LEGACY_OWN_NUMBER_FIELDS
+TXT-PD	exact	W-ind	CHAIN(version order)	project.rs:1011 PUBLICATION_DATE_FIELDS
+TXT-TD	exact	W-ind	CHAIN(fold order)	project.rs:1061 LEGACY_DOC_TYPE_FIELDS
+BT-105-Procedure	exact	nonW	procedure type	project.rs:9767 PROCEDURE_FIELDS
+BT-105-Procedure	exact	nonW	procedure type	project.rs:9899 procedure_type
+BT-105-Procedure	exact	nonW	procedure type (role census)	role_census.rs:1208 PROCEDURE_TYPE_FIELD
+BT-13(d)	stem	nonW	deadline/duration dates	project.rs:438 DATES
+BT-131(d)	stem	nonW	deadline/duration dates	project.rs:435 DATES
+BT-1311(d)	stem	nonW	deadline/duration dates	project.rs:436 DATES
+BT-132(d)	stem	nonW	deadline/duration dates	project.rs:437 DATES
+BT-195(	prefix	nonW	withheld declaration of a non-W source (read, never looked up for W)	project.rs:9323 withheld_source
+BT-23	stem	nonW	contract nature	project.rs:9416 NATURE_STEMS
+BT-23	stem	nonW	contract nature	project.rs:9644 contract_nature
+BT-24	stem	nonW	text fact (description/selection_criterion/tenderer_requirement/...)	project.rs:242 TEXTS
+BT-262	stem	nonW	cpv/nuts	project.rs:367 CLASSIFICATIONS
+BT-263	stem	nonW	cpv/nuts	project.rs:368 CLASSIFICATIONS
+BT-5071	stem	nonW	cpv/nuts	project.rs:369 CLASSIFICATIONS
+BT-5141-Lot	exact	nonW	place country	project.rs:9703 PLACE_COUNTRY_FIELDS
+BT-5141-Part	exact	nonW	place country	project.rs:9704 PLACE_COUNTRY_FIELDS
+BT-5141-Procedure	exact	nonW	place country	project.rs:9702 PLACE_COUNTRY_FIELDS
+BT-536	stem	nonW	deadline/duration dates	project.rs:439 DATES
+BT-537	stem	nonW	deadline/duration dates	project.rs:440 DATES
+BT-749	stem	nonW	text fact (description/selection_criterion/tenderer_requirement/...)	project.rs:310 TEXTS
+BT-749	stem	nonW	selection_criterion section filter (577 U2)	project.rs:5657 read
+BT-766-Lot	exact	nonW	dps	project.rs:9666 CONTRACTING_SYSTEM_FIELDS
+BT-766-Part	exact	nonW	dps	project.rs:9667 CONTRACTING_SYSTEM_FIELDS
+DE1-ProcurementProject-AdditionalCommodityClassification-ItemClassificationCode	exact	nonW	cpv/nuts [via DE1 alias -> BT-263-Procedure]	project.rs DE1_FIELD_ALIASES
+DE1-ProcurementProject-Description	exact	nonW	text fact (description/selection_criterion/tenderer_requirement/...) [via DE1 alias -> BT-24-Procedure]	project.rs DE1_FIELD_ALIASES
+DE1-ProcurementProject-MainCommodityClassification-ItemClassificationCode	exact	nonW	cpv/nuts [via DE1 alias -> BT-262-Procedure]	project.rs DE1_FIELD_ALIASES
+DE1-ProcurementProject-PlannedPeriod-EndDate	exact	nonW	deadline/duration dates [via DE1 alias -> BT-537-Procedure]	project.rs DE1_FIELD_ALIASES
+DE1-ProcurementProject-PlannedPeriod-StartDate	exact	nonW	deadline/duration dates [via DE1 alias -> BT-536-Procedure]	project.rs DE1_FIELD_ALIASES
+DE1-ProcurementProject-RealizedLocation-Address-Country-IdentificationCode	exact	nonW	place country [via DE1 alias -> BT-5141-Procedure]	project.rs DE1_FIELD_ALIASES
+DE1-ProcurementProject-RealizedLocation-Address-CountrySubentityCode	exact	nonW	cpv/nuts [via DE1 alias -> BT-5071-Procedure]	project.rs DE1_FIELD_ALIASES
+DE1-ProcurementProjectLot-ProcurementProject-AdditionalCommodityClassification-ItemClassificationCode	exact	nonW	cpv/nuts [via DE1 alias -> BT-263-Lot]	project.rs DE1_FIELD_ALIASES
+DE1-ProcurementProjectLot-ProcurementProject-Description	exact	nonW	text fact (description/selection_criterion/tenderer_requirement/...) [via DE1 alias -> BT-24-Lot]	project.rs DE1_FIELD_ALIASES
+DE1-ProcurementProjectLot-ProcurementProject-MainCommodityClassification-ItemClassificationCode	exact	nonW	cpv/nuts [via DE1 alias -> BT-262-Lot]	project.rs DE1_FIELD_ALIASES
+DE1-ProcurementProjectLot-ProcurementProject-PlannedPeriod-EndDate	exact	nonW	deadline/duration dates [via DE1 alias -> BT-537-Lot]	project.rs DE1_FIELD_ALIASES
+DE1-ProcurementProjectLot-ProcurementProject-PlannedPeriod-StartDate	exact	nonW	deadline/duration dates [via DE1 alias -> BT-536-Lot]	project.rs DE1_FIELD_ALIASES
+DE1-ProcurementProjectLot-ProcurementProject-RealizedLocation-Address-Country-IdentificationCode	exact	nonW	place country [via DE1 alias -> BT-5141-Lot]	project.rs DE1_FIELD_ALIASES
+DE1-ProcurementProjectLot-ProcurementProject-RealizedLocation-Address-CountrySubentityCode	exact	nonW	cpv/nuts [via DE1 alias -> BT-5071-Lot]	project.rs DE1_FIELD_ALIASES
+DE1-ProcurementProjectLot-TenderingProcess-AdditionalInformationRequestPeriod-EndDate	exact	nonW	deadline/duration dates [via DE1 alias -> BT-13(d)-Lot]	project.rs DE1_FIELD_ALIASES
+DE1-ProcurementProjectLot-TenderingProcess-ContractingSystem-ContractingSystemTypeCode	exact	nonW	dps	project.rs:9668 CONTRACTING_SYSTEM_FIELDS
+DE1-ProcurementProjectLot-TenderingProcess-OpenTenderEvent-OccurrenceDate	exact	nonW	deadline/duration dates [via DE1 alias -> BT-132(d)-Lot]	project.rs DE1_FIELD_ALIASES
+DE1-ProcurementProjectLot-TenderingProcess-ParticipationRequestReceptionPeriod-EndDate	exact	nonW	deadline/duration dates [via DE1 alias -> BT-1311(d)-Lot]	project.rs DE1_FIELD_ALIASES
+DE1-ProcurementProjectLot-TenderingProcess-TenderSubmissionDeadlinePeriod-EndDate	exact	nonW	deadline/duration dates [via DE1 alias -> BT-131(d)-Lot]	project.rs DE1_FIELD_ALIASES
+DE1-ProcurementProjectLot-TenderingTerms-SelectionCriteria-Name	stem	nonW	text fact (description/selection_criterion/tenderer_requirement/...)	project.rs:309 TEXTS
+DE1-ProcurementProjectLot-TenderingTerms-TendererQualificationRequest-SpecificTendererRequirement-Description	stem	nonW	text fact (description/selection_criterion/tenderer_requirement/...)	project.rs:306 TEXTS
+DE1-TenderingProcess-OpenTenderEvent-OccurrenceDate	exact	nonW	deadline/duration dates [via DE1 alias -> BT-132(d)-Procedure]	project.rs DE1_FIELD_ALIASES
+DE1-TenderingProcess-ProcedureCode	exact	nonW	procedure type	project.rs:9768 PROCEDURE_FIELDS
+DE1-TenderingProcess-ProcedureCode	exact	nonW	procedure type [via DE1 alias -> BT-105-Procedure]	project.rs DE1_FIELD_ALIASES
+DE1-TenderingProcess-ProcedureCode	exact	nonW	procedure type (role census) [via DE1 alias -> BT-105-Procedure]	project.rs DE1_FIELD_ALIASES
+DE1-TenderingProcess-TenderSubmissionDeadlinePeriod-EndDate	exact	nonW	deadline/duration dates [via DE1 alias -> BT-131(d)-Procedure]	project.rs DE1_FIELD_ALIASES
+SDK01-NoticeTypeCode	exact	nonW	sdk-0.1 award deadline filter	project.rs:5398 read
+SDK01-ProcurementProject-AdditionalCommodityClassification-ItemClassificationCode	stem	nonW	cpv/nuts	project.rs:403 CLASSIFICATIONS
+SDK01-ProcurementProject-Description	stem	nonW	text fact (description/selection_criterion/tenderer_requirement/...)	project.rs:287 TEXTS
+SDK01-ProcurementProject-MainCommodityClassification-ItemClassificationCode	stem	nonW	cpv/nuts	project.rs:400 CLASSIFICATIONS
+SDK01-ProcurementProject-RealizedLocation-Address-Country-IdentificationCode	exact	nonW	place country	project.rs:9705 PLACE_COUNTRY_FIELDS
+SDK01-ProcurementProject-RealizedLocation-Address-CountrySubentityCode	stem	nonW	cpv/nuts	project.rs:390 CLASSIFICATIONS
+SDK01-ProcurementProjectLot-ProcurementProject-AdditionalCommodityClassification-ItemClassificationCode	stem	nonW	cpv/nuts	project.rs:407 CLASSIFICATIONS
+SDK01-ProcurementProjectLot-ProcurementProject-Description	stem	nonW	text fact (description/selection_criterion/tenderer_requirement/...)	project.rs:288 TEXTS
+SDK01-ProcurementProjectLot-ProcurementProject-MainCommodityClassification-ItemClassificationCode	stem	nonW	cpv/nuts	project.rs:401 CLASSIFICATIONS
+SDK01-ProcurementProjectLot-ProcurementProject-RealizedLocation-Address-Country-IdentificationCode	exact	nonW	place country	project.rs:9706 PLACE_COUNTRY_FIELDS
+SDK01-ProcurementProjectLot-ProcurementProject-RealizedLocation-Address-CountrySubentityCode	stem	nonW	cpv/nuts	project.rs:391 CLASSIFICATIONS
+SDK01-ProcurementProjectLot-TenderingProcess-ContractingSystem-ContractingSystemTypeCode	exact	nonW	dps	project.rs:9669 CONTRACTING_SYSTEM_FIELDS
+SDK01-ProcurementProjectLot-TenderingProcess-TenderSubmissionDeadlinePeriod-EndDate	exact	nonW	deadline (sdk-0.1)	project.rs:1285 SDK01_DEADLINE_FIELD
+SDK01-TenderingProcess-ProcedureCode	exact	nonW	procedure type	project.rs:9769 PROCEDURE_FIELDS
+SDK01-TenderingProcess-ProcedureCode	exact	nonW	procedure type	project.rs:9900 procedure_type
+TED-CA_CE_NUTS	exact	nonW	address nuts (skipped)	project.rs:424 LEGACY_ADDRESS_NUTS_FIELDS
+TED-CPV_ADDITIONAL	stem	nonW	cpv/nuts	project.rs:374 CLASSIFICATIONS
+TED-CPV_CODE	stem	nonW	cpv/nuts	project.rs:371 CLASSIFICATIONS
+TED-CURRENT_CPV	stem	nonW	cpv/nuts	project.rs:373 CLASSIFICATIONS
+TED-CURRENT_NUTS	stem	nonW	cpv/nuts	project.rs:383 CLASSIFICATIONS
+TED-DATE_END	stem	nonW	deadline/duration dates	project.rs:452 DATES
+TED-DATE_OPENING_TENDERS	stem	nonW	deadline/duration dates	project.rs:450 DATES
+TED-DATE_RECEIPT_TENDERS	stem	nonW	deadline/duration dates	project.rs:448 DATES
+TED-DATE_START	stem	nonW	deadline/duration dates	project.rs:451 DATES
+TED-DPS	exact	nonW	dps (legacy)	project.rs:1345 LEGACY_DPS_MARKER
+TED-F03_PT_NEGOTIATED_WITHOUT_COMPETITION	exact	nonW	procedure type (legacy)	project.rs:9802 PROCEDURE_MARKERS
+TED-F06_PT_NEGOTIATED_WITHOUT_COMPETITION	exact	nonW	procedure type (legacy)	project.rs:9803 PROCEDURE_MARKERS
+TED-F15_PT_NEGOTIATED_WITHOUT_COMPETITION	exact	nonW	procedure type (legacy)	project.rs:9804 PROCEDURE_MARKERS
+TED-LOT_DESCRIPTION	stem	nonW	text fact (description/selection_criterion/tenderer_requirement/...)	project.rs:271 TEXTS
+TED-NC_CONTRACT_NATURE	stem	nonW	contract nature	project.rs:9416 NATURE_STEMS
+TED-NC_CONTRACT_NATURE	stem	nonW	contract nature	project.rs:9650 contract_nature
+TED-NEW_VALUE.DATE	exact	nonW	F14 date (legacy)	project.rs:474 F14_DATE_FIELD
+TED-NEW_VALUE.TEXT	stem	nonW	text fact (description/selection_criterion/tenderer_requirement/...)	project.rs:277 TEXTS
+TED-NO_DOC_OJS	exact	nonW	tender title fallback guard (legacy)	project.rs:5796 read
+TED-NUTS	stem	nonW	cpv/nuts	project.rs:380 CLASSIFICATIONS
+TED-NUTS	exact	nonW	nuts (legacy)	project.rs:431 LEGACY_SECTION_NUTS_FIELD
+TED-ORIGINAL_CPV	stem	nonW	cpv/nuts	project.rs:372 CLASSIFICATIONS
+TED-ORIGINAL_NUTS	stem	nonW	cpv/nuts	project.rs:382 CLASSIFICATIONS
+TED-PERFORMANCE_NUTS	stem	nonW	cpv/nuts	project.rs:381 CLASSIFICATIONS
+TED-PROC	exact	nonW	procedure type	project.rs:9771 PROCEDURE_FIELDS
+TED-PROC	exact	nonW	procedure type	project.rs:9902 procedure_type
+TED-PR_PROC	exact	nonW	procedure type	project.rs:9770 PROCEDURE_FIELDS
+TED-PR_PROC	exact	nonW	procedure type	project.rs:9902 procedure_type
+TED-PT_ACCELERATED_RESTRICTED	exact	nonW	procedure type (legacy)	project.rs:9794 PROCEDURE_MARKERS
+TED-PT_AWARD_CONTRACT_WITHOUT_CALL	exact	nonW	procedure type (legacy)	project.rs:9800 PROCEDURE_MARKERS
+TED-PT_COMPETITIVE_DIALOGUE	exact	nonW	procedure type (legacy)	project.rs:9795 PROCEDURE_MARKERS
+TED-PT_COMPETITIVE_NEGOTIATION	exact	nonW	procedure type (legacy)	project.rs:9799 PROCEDURE_MARKERS
+TED-PT_INNOVATION_PARTNERSHIP	exact	nonW	procedure type (legacy)	project.rs:9796 PROCEDURE_MARKERS
+TED-PT_NEGOTIATED_WITHOUT_PUBLICATION	exact	nonW	procedure type (legacy)	project.rs:9801 PROCEDURE_MARKERS
+TED-PT_NEGOTIATED_WITH_COMPETITION	exact	nonW	procedure type (legacy)	project.rs:9798 PROCEDURE_MARKERS
+TED-PT_NEGOTIATED_WITH_PRIOR_CALL	exact	nonW	procedure type (legacy)	project.rs:9797 PROCEDURE_MARKERS
+TED-PT_OPEN	exact	nonW	procedure type (legacy)	project.rs:9792 PROCEDURE_MARKERS
+TED-PT_RESTRICTED	exact	nonW	procedure type (legacy)	project.rs:9793 PROCEDURE_MARKERS
+TED-RECEIPT_LIMIT_DATE	stem	nonW	deadline/duration dates	project.rs:449 DATES
+TED-SHORT_CONTRACT_DESCRIPTION	stem	nonW	text fact (description/selection_criterion/tenderer_requirement/...)	project.rs:273 TEXTS
+TED-SHORT_DESCR	stem	nonW	text fact (description/selection_criterion/tenderer_requirement/...)	project.rs:272 TEXTS
+TED-SHORT_DESCRIPTION_CONTRACT	stem	nonW	text fact (description/selection_criterion/tenderer_requirement/...)	project.rs:274 TEXTS
+TED-TENDERER_NUTS	exact	nonW	address nuts (skipped)	project.rs:424 LEGACY_ADDRESS_NUTS_FIELDS
+TED-TI_DOC	exact	nonW	tender title fallback (legacy)	project.rs:238 OJ_HEADING_FIELD
+TXT-AB	stem	nonW	text fact (description/selection_criterion/tenderer_requirement/...)	project.rs:281 TEXTS
+TXT-CC	stem	nonW	cpv/nuts	project.rs:387 CLASSIFICATIONS
+TXT-DD	stem	nonW	deadline/duration dates	project.rs:460 DATES
+TXT-DT	stem	nonW	deadline/duration dates	project.rs:459 DATES
+TXT-NC	stem	nonW	contract nature	project.rs:9416 NATURE_STEMS
+TXT-NC	stem	nonW	contract nature	project.rs:9650 contract_nature
+TXT-PC	stem	nonW	cpv/nuts	project.rs:385 CLASSIFICATIONS
+TXT-PR	exact	nonW	procedure type	project.rs:9772 PROCEDURE_FIELDS
+TXT-PR	exact	nonW	procedure type	project.rs:9902 procedure_type
+TXT-RC	stem	nonW	cpv/nuts	project.rs:386 CLASSIFICATIONS
+TXT-TX	stem	nonW	text fact (description/selection_criterion/tenderer_requirement/...)	project.rs:280 TEXTS
+UBL-AppealTermsDescription	stem	nonW	text fact (description/selection_criterion/tenderer_requirement/...)	project.rs:296 TEXTS
+UBL-FundingProgram	stem	nonW	text fact (description/selection_criterion/tenderer_requirement/...)	project.rs:293 TEXTS
+UBL-SelectionCriterionName	stem	nonW	text fact (description/selection_criterion/tenderer_requirement/...)	project.rs:294 TEXTS
+UBL-TendererRequirementDescription	stem	nonW	text fact (description/selection_criterion/tenderer_requirement/...)	project.rs:295 TEXTS

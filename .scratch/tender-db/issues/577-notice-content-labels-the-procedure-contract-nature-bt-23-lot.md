@@ -1,6 +1,6 @@
 # 577 — /v1/notices/{id}/content labels the procedure-level contract nature `BT-23-Lot` on SDK 1.13/1.14 notices
 
-Status: ready-for-agent — **unit 2 BUILT and GATED 2026-10-23** (wf build-578u2-579u4-577u2: implement, 3 review lenses, a skeptic per finding, 8 findings fixed; focused 693 passed; gate green at 406529a), on main, NOT deployed: it rides the batched deploy after 539's drain and the 10-28 day-7 fetch (decision-w-on-drains: one fold-changing commit per probe P1; 577 is parse-only, W7 overlap check first), then the twin re-gate. Unit 3 (re-parse, expected 0 corrected) after 546 U4. Was: ready-for-agent — triaged 2026-10-21 (wf triage-575-578: measurer + 2 adversarial skeptics; 4 + 2 + 2 bounded /v1/sql
+Status: ready-for-agent — **unit 2 REVERTED from main 2026-10-24 (b3effc2, gate pending), because 551's W7 is NOT empty** (wf_52627394-803: an analyst and an adversarial skeptic, CONFIRMED; `551-lot-sum/b6/w7/W7.md`). Three moves the code makes on eforms-de-1.x (D577-1 (a)) land on ids the fold reads for path W: the lot estimate (its old id normalises to BT-27-Procedure), the lot framework maximum and the lot name. Reading the code says none of them changes a canonical fact (both sides normalise to the same stem; stated totals skip DE-1.x), but W7 is static by decision. So unit 2's deploy and unit 3 wait until after 551 U9 ends (11-04). NEXT (after 11-04): revert b3effc2, which re-applies 406529a unchanged; re-gate; deploy; then unit 3. Was: ready-for-agent — **unit 2 BUILT and GATED 2026-10-23** (wf build-578u2-579u4-577u2: implement, 3 review lenses, a skeptic per finding, 8 findings fixed; focused 693 passed; gate green at 406529a), on main, NOT deployed: it rides the batched deploy after 539's drain and the 10-28 day-7 fetch (decision-w-on-drains: one fold-changing commit per probe P1; 577 is parse-only, W7 overlap check first), then the twin re-gate. Unit 3 (re-parse, expected 0 corrected) after 546 U4. Was: ready-for-agent — triaged 2026-10-21 (wf triage-575-578: measurer + 2 adversarial skeptics; 4 + 2 + 2 bounded /v1/sql
 reads, 3 GETs; skeptic-corrected, `## Triage (2026-10-21 …)` below). Reproduced and widened. An alias graft whose path carries more
 predicates than the inventory's own declaration lands on a sibling branch that `Branch::matching` sorts first (index.rs:819,
 1288-1300, 1340; parse.rs:256), so 47414082's PROCEDURE serves BT-23-Lot: 2,193 of 2,201 recent eForms notices, 40/40 root rows on
@@ -423,3 +423,20 @@ first slice. A slice passes when corrected = 0, the cursor is unchanged (or one 
 its own jobs ran. Any correction triggers this issue's own stop, then gd5 class N on that slice, with every NEW/MOVED read and
 its ids registered in 551's R. Cost: 0–1 statement per clean slice. **Next step:** unit 3 is now also blocked by 576 U3, 546
 U4 and W7.
+
+**551 W7 result (2026-10-24, wf_52627394-803).** The intersection is NOT empty.
+- Set A has 631 ids. They are the 125 (old, new) pairs 577 U2 can move, from a port of `index::build` + `Index::bind`
+  that reproduces every pin of the gated tests, plus shadow.out's 155 shadow rows, its 4,811 overlap pairs and
+  shadow_extra's 24 rows.
+- Set B holds the fold's 302 field-id keys, classed W / W-ind / nonW.
+- W hits from code moves (all eforms-de-1.x):
+  - `DE1-ProcurementProject-RequestedTenderTotal-EstimatedOverallContractAmount` (→ BT-27-Procedure via normalise_de1)
+    → its Lot id (BT-27-Lot);
+  - the framework maximum (BT-271);
+  - `DE1-ProcurementProject-Name` → its Lot id (BT-21, the lot title R6 reads).
+- 14 further W hits come from the overlap list only (BT-137/27/271/21-*, BT-195(BT-720)): not moves the code makes.
+- The skeptic rebuilt set A and the literal scan independently and found no hit the analyst missed. It also found that
+  the commit's test and the port share a blind spot (parse.rs's select_by_name relaxation); that adds 53 pairs, none
+  of them W-tier.
+- Consequence: 406529a was reverted on main (b3effc2) so that 551's batched deploy (576 U2, 578 U2, 579 U4, 539's
+  caveat retirement) does not ship it.

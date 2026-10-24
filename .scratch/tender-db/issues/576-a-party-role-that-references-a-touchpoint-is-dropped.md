@@ -1,6 +1,6 @@
 # 576 — a party role whose eForms reference names a touchpoint (TPO-…) is dropped from the tender's parties
 
-Status: ready-for-agent — triaged 2026-10-21 (wf triage-575-578: measurer + 2 adversarial skeptics; 4 + 2 bounded /v1/sql reads,
+Status: ready-for-agent — **unit 2 BUILT 2026-10-24 (cb19854; gate on b3effc2 running)** in wf_52627394-803: implement, docs, three review lenses with a skeptic each, fixer; 14 findings, 5 confirmed and fixed; final focused run 138 passed, EXIT=0; the unit-3 re-mint test is mutation-checked. Country fallback: the touchpoint's BT-514, else the parent ORG's first, counted. supervisor.rs (a 551 flip file) gains the fold-summary suffix, so the switch-off twin rebuilt after the batch deploy must carry it. NEXT: the batch deploy (551 W-on decision: after the 10-28 day-7 fetch, with 578 U2, 579 U4 and 539's caveat retirement; 577 U2 is out, W7), probe P1, twin re-gate; then unit 3 (class N), after P1 PASS and the day-7 PASS. Was: ready-for-agent — triaged 2026-10-21 (wf triage-575-578: measurer + 2 adversarial skeptics; 4 + 2 bounded /v1/sql reads,
 0 GETs; skeptic-corrected, `## Triage (2026-10-21 …)` below). Reproduced: `bind_organizations` silently drops every OPT-301 Lot/Part
 role whose target is a Touchpoint (TPO-…) section (project.rs:6115-6118). Window 47408000-47415999: 1,179 TPO refs dropped on
 345-374 of 7,122 eForms notices (4.8-5.3%; corpus ≈160-175k notices, low confidence); ≥73 (6%, lower bound) print the parent
@@ -301,3 +301,42 @@ class N. Any NEW is a STOP and every one is read. More than 30 means the class p
 bar and stop the programme. MOVED or SILENT is a STOP, and switch off if it is unexplained at the end of the gap. 546 place
 moves on mixed legacy/eForms chains are NOTEs. Cost: about 25–40 statements, 1.5–2.5 h. **Next step:** unit 2's deploy waits
 for the batch slot, and unit 3 also waits for P1 and the day-7 PASS.
+
+## Unit 2 — built (2026-10-24, wf_52627394-803; commit cb19854)
+
+- **project.rs.**
+  - `touchpoint_role` (OPT-301 Lot/Part only) and `touchpoint_decision`: Alias (i) by `store::org_name_norm` over
+    every name of the touchpoint and of its parent; Mint (ii); or Drop.
+  - Drop happens when every name falls to the 510/511/520/525 classes, via `drop_decision_of(PartyShape::Touchpoint)`,
+    or to `touchpoint_gate`: `^(ORG|TPO|UBO)-\d+$` case-insensitive, `://` / `www.` / `@`, or `role_census::portal_name`,
+    which covers Portal and Platform lists, so a platform's own name such as `Mercell Norge AS` is dropped too.
+  - `Touchpoints::retarget` runs in `NoticeState::read` before the drop step. It moves aliased roles to the parent
+    section, keeps roles to minted touchpoints, and removes every other touchpoint reference (ORG-only roles included).
+  - `bind_organizations` binds results with touchpoint sections removed from the lookup.
+  - `NoticeState::touchpoint_mentions()` is read only by `build_plan`'s sweep and by `incremental_plan_rows`: the
+    census isolation of (v).
+  - `Report.touchpoint_roles`, boxed.
+- **supervisor.rs.** Fold-summary suffix `; touchpoint roles (issue 576): N aliased, N minted (N without a country of
+  their own took the organization's), N dropped`, silent at zero.
+- **Tests.**
+  - `project::tests::touchpoint_576` (9): the (f) bullets, the country fallback, winners unchanged.
+  - `a_touchpoint_role_is_served_through_the_touchpoints_own_identity` (tests/project.rs): FK, planner 4d, lots,
+    results, winners, amounts, bids and non-touchpoint parties equal to the same notices folded without the
+    references, and the unit-3 drain. The drain step resets the DB to a pre-576 fold, then requeues and incrementally
+    folds. It is mutation-checked: dropping `mentions.extend(tp_mentions)` fails it.
+  - The summary suffix; `the_docs_say_a_role_naming_a_touchpoint_is_served`.
+- **Review.** Five confirmed findings were fixed:
+  - spec-3: the drain test was vacuous; fixed as described above.
+  - spec-5 / quality-5: a misplaced rustdoc paragraph.
+  - quality-1: the docs said "portal prose", but platform names are dropped too.
+  - quality-7: "trailing punctuation" means only `.`, `,` and `;`.
+- **Reviewed and kept (the skeptics refuted them).**
+  - A minted touchpoint's head is its first name, even one the gate would drop. The Organization path does the same,
+    and D576-1 (ii) adopts it.
+  - The alias is decided before the drop classes: deliberate, and commented.
+- **Notes for the deploy.**
+  - No PROJECTION_EPOCH bump: unit 3's `refold-sections` re-folds the cohort.
+  - Aliased (i) rows appear on any re-fold straight away; minted (ii) rows need unit 3 to record the touchpoint's
+    mention first.
+  - Every touchpoint that mints nothing is handed to `retire_mentions`: one lookup, no write until something has been
+    minted at that key.
