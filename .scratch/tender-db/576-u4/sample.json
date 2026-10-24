@@ -368,8 +368,73 @@
    ],
    "served_mention_names": [
     "Vraag- en antwoordmodule in het dashboard van deze aanbesteding"
+   ],
+   "served_mention_name_equals_tp_name": true,
+   "tp_name_equals_buyer_name (casefold, accents and punctuation folded)": false,
+   "tp_mention_org_id (s08)": [
+    18044191
+   ],
+   "buyer_mention_org_ids (s08)": [
+    9003
    ]
   },
+  "notice_mentions (s08: organization_mentions of mention_notice_id)": [
+   {
+    "notice_id": 25679676,
+    "section_id": "ORG-0001",
+    "organization_id": 9003,
+    "name": "Rijksvastgoedbedrijf",
+    "country": "NL",
+    "scheme": null,
+    "raw_identifier": "552550970"
+   },
+   {
+    "notice_id": 25679676,
+    "section_id": "ORG-0002",
+    "organization_id": 20493966,
+    "name": "PHB Elst B.V.",
+    "country": "NL",
+    "scheme": null,
+    "raw_identifier": "60387319"
+   },
+   {
+    "notice_id": 25679676,
+    "section_id": "TPO-0001",
+    "organization_id": 20882145,
+    "name": "Klachtenmeldpunt Rijksvastgoedbedrijf",
+    "country": "NL",
+    "scheme": null,
+    "raw_identifier": null
+   },
+   {
+    "notice_id": 25679676,
+    "section_id": "TPO-0002",
+    "organization_id": 1209767,
+    "name": "Burgerlijke Rechter te 's-Gravenhage",
+    "country": "NL",
+    "scheme": null,
+    "raw_identifier": null
+   },
+   {
+    "notice_id": 25679676,
+    "section_id": "TPO-0003",
+    "organization_id": 1209767,
+    "name": "Burgerlijke Rechter te 's-Gravenhage",
+    "country": "NL",
+    "scheme": null,
+    "raw_identifier": null
+   },
+   {
+    "notice_id": 25679676,
+    "section_id": "TPO-0004",
+    "organization_id": 18044191,
+    "name": "Vraag- en antwoordmodule in het dashboard van deze aanbesteding",
+    "country": "NL",
+    "scheme": null,
+    "raw_identifier": null
+   }
+  ],
+  "extra_context": null,
   "how_chosen": {
    "window": {
     "statement": "s07_n6",
@@ -777,8 +842,73 @@
    ],
    "served_mention_names": [
     "Dashboard van deze aanbesteding"
+   ],
+   "served_mention_name_equals_tp_name": true,
+   "tp_name_equals_buyer_name (casefold, accents and punctuation folded)": false,
+   "tp_mention_org_id (s08)": [
+    18044192
+   ],
+   "buyer_mention_org_ids (s08)": [
+    9003
    ]
   },
+  "notice_mentions (s08: organization_mentions of mention_notice_id)": [
+   {
+    "notice_id": 24843538,
+    "section_id": "ORG-0001",
+    "organization_id": 9003,
+    "name": "Rijksvastgoedbedrijf",
+    "country": "NL",
+    "scheme": null,
+    "raw_identifier": "552550970"
+   },
+   {
+    "notice_id": 24843538,
+    "section_id": "TPO-0001",
+    "organization_id": 18044192,
+    "name": "Dashboard van deze aanbesteding",
+    "country": "NL",
+    "scheme": null,
+    "raw_identifier": null
+   },
+   {
+    "notice_id": 24843538,
+    "section_id": "TPO-0002",
+    "organization_id": 20882145,
+    "name": "Klachtenmeldpunt Rijksvastgoedbedrijf",
+    "country": "NL",
+    "scheme": null,
+    "raw_identifier": null
+   },
+   {
+    "notice_id": 24843538,
+    "section_id": "TPO-0003",
+    "organization_id": 1209767,
+    "name": "Burgerlijke Rechter te 's-Gravenhage",
+    "country": "NL",
+    "scheme": null,
+    "raw_identifier": null
+   },
+   {
+    "notice_id": 24843538,
+    "section_id": "TPO-0004",
+    "organization_id": 1209767,
+    "name": "Burgerlijke Rechter te 's-Gravenhage",
+    "country": "NL",
+    "scheme": null,
+    "raw_identifier": null
+   },
+   {
+    "notice_id": 24843538,
+    "section_id": "TPO-0005",
+    "organization_id": 18044191,
+    "name": "Vraag- en antwoordmodule in het dashboard van deze aanbesteding",
+    "country": "NL",
+    "scheme": null,
+    "raw_identifier": null
+   }
+  ],
+  "extra_context": null,
   "how_chosen": {
    "window": {
     "statement": "s07_n6",
@@ -1175,8 +1305,46 @@
    ],
    "served_mention_names": [
     "Stiching ROC Midden Nederland"
+   ],
+   "served_mention_name_equals_tp_name": true,
+   "tp_name_equals_buyer_name (casefold, accents and punctuation folded)": false,
+   "tp_mention_org_id (s08)": [
+    17395874
+   ],
+   "buyer_mention_org_ids (s08)": [
+    1226
    ]
   },
+  "notice_mentions (s08: organization_mentions of mention_notice_id)": [
+   {
+    "notice_id": 25296822,
+    "section_id": "ORG-0001",
+    "organization_id": 1226,
+    "name": "Stichting ROC Midden Nederland",
+    "country": "NL",
+    "scheme": null,
+    "raw_identifier": "25638009"
+   },
+   {
+    "notice_id": 25296822,
+    "section_id": "TPO-0001",
+    "organization_id": 17395874,
+    "name": "Stiching ROC Midden Nederland",
+    "country": "NL",
+    "scheme": null,
+    "raw_identifier": null
+   },
+   {
+    "notice_id": 25296822,
+    "section_id": "TPO-0003",
+    "organization_id": 3648710,
+    "name": "Rechtbank Midden Nederland, locatie Utrecht",
+    "country": "NL",
+    "scheme": null,
+    "raw_identifier": null
+   }
+  ],
+  "extra_context": null,
   "how_chosen": {
    "window": {
     "statement": "s03_g2",
@@ -1551,8 +1719,55 @@
    ],
    "served_mention_names": [
     "Team Inkoop gemeente Westland"
+   ],
+   "served_mention_name_equals_tp_name": true,
+   "tp_name_equals_buyer_name (casefold, accents and punctuation folded)": false,
+   "tp_mention_org_id (s08)": [
+    10359863
+   ],
+   "buyer_mention_org_ids (s08)": [
+    11441
    ]
   },
+  "notice_mentions (s08: organization_mentions of mention_notice_id)": [
+   {
+    "notice_id": 46700884,
+    "section_id": "ORG-0001",
+    "organization_id": 11441,
+    "name": "gemeente Westland",
+    "country": "NL",
+    "scheme": null,
+    "raw_identifier": "522098722"
+   },
+   {
+    "notice_id": 46700884,
+    "section_id": "ORG-0002",
+    "organization_id": 19472167,
+    "name": "AbelLeisure",
+    "country": "NL",
+    "scheme": null,
+    "raw_identifier": "08158791"
+   },
+   {
+    "notice_id": 46700884,
+    "section_id": "TPO-0001",
+    "organization_id": 1166464,
+    "name": "Rechtbank Den Haag",
+    "country": "NL",
+    "scheme": null,
+    "raw_identifier": null
+   },
+   {
+    "notice_id": 46700884,
+    "section_id": "TPO-0002",
+    "organization_id": 10359863,
+    "name": "Team Inkoop gemeente Westland",
+    "country": "NL",
+    "scheme": null,
+    "raw_identifier": null
+   }
+  ],
+  "extra_context": null,
   "how_chosen": {
    "window": {
     "statement": "s07_n6",
@@ -1920,8 +2135,55 @@
    ],
    "served_mention_names": [
     "Carlo van Acker"
+   ],
+   "served_mention_name_equals_tp_name": true,
+   "tp_name_equals_buyer_name (casefold, accents and punctuation folded)": false,
+   "tp_mention_org_id (s08)": [
+    12053613
+   ],
+   "buyer_mention_org_ids (s08)": [
+    9029691
    ]
   },
+  "notice_mentions (s08: organization_mentions of mention_notice_id)": [
+   {
+    "notice_id": 44531077,
+    "section_id": "ORG-0001",
+    "organization_id": 9029691,
+    "name": "Omroep Brabant Mediafaciliteiten C.V.",
+    "country": "NL",
+    "scheme": null,
+    "raw_identifier": "201722712"
+   },
+   {
+    "notice_id": 44531077,
+    "section_id": "ORG-0002",
+    "organization_id": 30945426,
+    "name": "ICTSLIM B.V.",
+    "country": "NL",
+    "scheme": null,
+    "raw_identifier": "80865976"
+   },
+   {
+    "notice_id": 44531077,
+    "section_id": "TPO-0001",
+    "organization_id": 9029694,
+    "name": "Rechtbank Oost-Brabant, zittingsplaats Eindhoven",
+    "country": "NL",
+    "scheme": null,
+    "raw_identifier": null
+   },
+   {
+    "notice_id": 44531077,
+    "section_id": "TPO-0002",
+    "organization_id": 12053613,
+    "name": "Carlo van Acker",
+    "country": "NL",
+    "scheme": null,
+    "raw_identifier": null
+   }
+  ],
+  "extra_context": null,
   "how_chosen": {
    "window": {
     "statement": "s07_n6",
@@ -2304,8 +2566,64 @@
    ],
    "served_mention_names": [
     "IBMN"
+   ],
+   "served_mention_name_equals_tp_name": true,
+   "tp_name_equals_buyer_name (casefold, accents and punctuation folded)": false,
+   "tp_mention_org_id (s08)": [
+    20951176
+   ],
+   "buyer_mention_org_ids (s08)": [
+    20951175
    ]
   },
+  "notice_mentions (s08: organization_mentions of mention_notice_id)": [
+   {
+    "notice_id": 25426064,
+    "section_id": "ORG-0001",
+    "organization_id": 20951175,
+    "name": "Stichting Inkoopbureau Midden Nederland",
+    "country": "NL",
+    "scheme": null,
+    "raw_identifier": "39657867"
+   },
+   {
+    "notice_id": 25426064,
+    "section_id": "TPO-0001",
+    "organization_id": 20951176,
+    "name": "IBMN",
+    "country": "NL",
+    "scheme": null,
+    "raw_identifier": null
+   },
+   {
+    "notice_id": 25426064,
+    "section_id": "TPO-0002",
+    "organization_id": 3169887,
+    "name": "Rechtbank Midden Nederland",
+    "country": "NL",
+    "scheme": null,
+    "raw_identifier": null
+   },
+   {
+    "notice_id": 25426064,
+    "section_id": "TPO-0003",
+    "organization_id": 3453018,
+    "name": "Rechtbank Midden-Nederland",
+    "country": "NL",
+    "scheme": null,
+    "raw_identifier": null
+   },
+   {
+    "notice_id": 25426064,
+    "section_id": "TPO-0004",
+    "organization_id": 20951176,
+    "name": "IBMN",
+    "country": "NL",
+    "scheme": null,
+    "raw_identifier": null
+   }
+  ],
+  "extra_context": null,
   "how_chosen": {
    "window": {
     "statement": "s07_n6",
@@ -2654,8 +2972,37 @@
    ],
    "served_mention_names": [
     "COMUNE DI VISCIANO (NA)"
+   ],
+   "served_mention_name_equals_tp_name": true,
+   "tp_name_equals_buyer_name (casefold, accents and punctuation folded)": false,
+   "tp_mention_org_id (s08)": [
+    31977976
+   ],
+   "buyer_mention_org_ids (s08)": [
+    14784
    ]
   },
+  "notice_mentions (s08: organization_mentions of mention_notice_id)": [
+   {
+    "notice_id": 25610055,
+    "section_id": "ORG-0001",
+    "organization_id": 14784,
+    "name": "Agenzia Locale di Sviluppo dei Comuni dell'Area Nolana S.C.P.A.",
+    "country": "IT",
+    "scheme": null,
+    "raw_identifier": "04525451219"
+   },
+   {
+    "notice_id": 25610055,
+    "section_id": "TPO-0001",
+    "organization_id": 31977976,
+    "name": "COMUNE DI VISCIANO (NA)",
+    "country": "IT",
+    "scheme": null,
+    "raw_identifier": null
+   }
+  ],
+  "extra_context": null,
   "how_chosen": {
    "window": {
     "statement": "s04_g3",
@@ -2987,8 +3334,64 @@
    ],
    "served_mention_names": [
     "Tribunal Administratif de Versailles"
+   ],
+   "served_mention_name_equals_tp_name": true,
+   "tp_name_equals_buyer_name (casefold, accents and punctuation folded)": false,
+   "tp_mention_org_id (s08)": [
+    1163158
+   ],
+   "buyer_mention_org_ids (s08)": [
+    7257664
    ]
   },
+  "notice_mentions (s08: organization_mentions of mention_notice_id)": [
+   {
+    "notice_id": 24069622,
+    "section_id": "ORG-0001",
+    "organization_id": 7257664,
+    "name": "Ville d'Andrésy",
+    "country": "FR",
+    "scheme": null,
+    "raw_identifier": "21780015000013"
+   },
+   {
+    "notice_id": 24069622,
+    "section_id": "ORG-0002",
+    "organization_id": 22658656,
+    "name": "papeterie PICHON",
+    "country": "FR",
+    "scheme": null,
+    "raw_identifier": "TIT 1"
+   },
+   {
+    "notice_id": 24069622,
+    "section_id": "ORG-0003",
+    "organization_id": 22658657,
+    "name": "Lacoste",
+    "country": "FR",
+    "scheme": null,
+    "raw_identifier": "TIT 2"
+   },
+   {
+    "notice_id": 24069622,
+    "section_id": "ORG-0004",
+    "organization_id": 22658658,
+    "name": "Histoire de lire",
+    "country": "FR",
+    "scheme": null,
+    "raw_identifier": "TIT 3"
+   },
+   {
+    "notice_id": 24069622,
+    "section_id": "TPO-0001",
+    "organization_id": 1163158,
+    "name": "Tribunal Administratif de Versailles",
+    "country": "FR",
+    "scheme": null,
+    "raw_identifier": null
+   }
+  ],
+  "extra_context": null,
   "how_chosen": {
    "window": {
     "statement": "s06_g5",
@@ -3316,8 +3719,55 @@
    ],
    "served_mention_names": [
     "Consejería de Economía, Hacienda y Empleo. Comunidad de Madrid"
+   ],
+   "served_mention_name_equals_tp_name": true,
+   "tp_name_equals_buyer_name (casefold, accents and punctuation folded)": false,
+   "tp_mention_org_id (s08)": [
+    31975557
+   ],
+   "buyer_mention_org_ids (s08)": [
+    391
    ]
   },
+  "notice_mentions (s08: organization_mentions of mention_notice_id)": [
+   {
+    "notice_id": 24053421,
+    "section_id": "ORG-0001",
+    "organization_id": 391,
+    "name": "Consejería de Economía, Hacienda y Empleo",
+    "country": "ES",
+    "scheme": null,
+    "raw_identifier": "S7800001E"
+   },
+   {
+    "notice_id": 24053421,
+    "section_id": "ORG-0002",
+    "organization_id": 14183824,
+    "name": "Tribunal Administrativo de la Contratación Pública de la Comunidad de Madrid",
+    "country": "ES",
+    "scheme": null,
+    "raw_identifier": "R2800828B"
+   },
+   {
+    "notice_id": 24053421,
+    "section_id": "ORG-0003",
+    "organization_id": 18337854,
+    "name": "ESCUELAS DE ESTUDIOS SUPERIORES ESIC",
+    "country": "ES",
+    "scheme": null,
+    "raw_identifier": "ESCUELAS DE ESTUDIOS SUPERIORES ESIC"
+   },
+   {
+    "notice_id": 24053421,
+    "section_id": "TPO-0001",
+    "organization_id": 31975557,
+    "name": "Consejería de Economía, Hacienda y Empleo. Comunidad de Madrid",
+    "country": "ES",
+    "scheme": null,
+    "raw_identifier": null
+   }
+  ],
+  "extra_context": null,
   "how_chosen": {
    "window": {
     "statement": "s01_g0",
@@ -3715,8 +4165,46 @@
    ],
    "served_mention_names": [
     "Tribunal Administrativo Central de Recursos Contractuales"
+   ],
+   "served_mention_name_equals_tp_name": true,
+   "tp_name_equals_buyer_name (casefold, accents and punctuation folded)": false,
+   "tp_mention_org_id (s08)": [
+    3955
+   ],
+   "buyer_mention_org_ids (s08)": [
+    4346
    ]
   },
+  "notice_mentions (s08: organization_mentions of mention_notice_id)": [
+   {
+    "notice_id": 24968208,
+    "section_id": "ORG-0001",
+    "organization_id": 4346,
+    "name": "Departamento de Salud La Fe. Dirección Económica-Gerencia",
+    "country": "ES",
+    "scheme": "ID_PLATAFORMA",
+    "raw_identifier": "20909820134742"
+   },
+   {
+    "notice_id": 24968208,
+    "section_id": "ORG-0002",
+    "organization_id": 4916241,
+    "name": "GENERAL ELECTRIC HEALTHCARE ESPAÑA SAU",
+    "country": "ES",
+    "scheme": "NIF",
+    "raw_identifier": "A28061737"
+   },
+   {
+    "notice_id": 24968208,
+    "section_id": "TPO-0001",
+    "organization_id": 3955,
+    "name": "Tribunal Administrativo Central de Recursos Contractuales",
+    "country": "ES",
+    "scheme": null,
+    "raw_identifier": null
+   }
+  ],
+  "extra_context": null,
   "how_chosen": {
    "window": {
     "statement": "s02_g1",
@@ -4142,8 +4630,46 @@
    ],
    "served_mention_names": [
     "Tribunal Administrativo Central de Recursos Contractuales – Secretaría"
+   ],
+   "served_mention_name_equals_tp_name": true,
+   "tp_name_equals_buyer_name (casefold, accents and punctuation folded)": false,
+   "tp_mention_org_id (s08)": [
+    11128836
+   ],
+   "buyer_mention_org_ids (s08)": [
+    516
    ]
   },
+  "notice_mentions (s08: organization_mentions of mention_notice_id)": [
+   {
+    "notice_id": 30069882,
+    "section_id": "ORG-0001",
+    "organization_id": 516,
+    "name": "Empresa de Transformación Agraria S.A.,S.M.E., M.P., (TRAGSA)",
+    "country": "ES",
+    "scheme": "ID_PLATAFORMA",
+    "raw_identifier": "50011840002187"
+   },
+   {
+    "notice_id": 30069882,
+    "section_id": "ORG-0002",
+    "organization_id": 22467413,
+    "name": "PREFABRICADOS FRAGA SA",
+    "country": "ES",
+    "scheme": "NIF",
+    "raw_identifier": "A22009039"
+   },
+   {
+    "notice_id": 30069882,
+    "section_id": "TPO-0001",
+    "organization_id": 11128836,
+    "name": "Tribunal Administrativo Central de Recursos Contractuales – Secretaría",
+    "country": "ES",
+    "scheme": null,
+    "raw_identifier": null
+   }
+  ],
+  "extra_context": null,
   "how_chosen": {
    "window": {
     "statement": "s01_g0",
@@ -4508,8 +5034,37 @@
    ],
    "served_mention_names": [
     "Rechtbank Overijssel"
+   ],
+   "served_mention_name_equals_tp_name": true,
+   "tp_name_equals_buyer_name (casefold, accents and punctuation folded)": false,
+   "tp_mention_org_id (s08)": [
+    3483852
+   ],
+   "buyer_mention_org_ids (s08)": [
+    21249258
    ]
   },
+  "notice_mentions (s08: organization_mentions of mention_notice_id)": [
+   {
+    "notice_id": 24747742,
+    "section_id": "ORG-0001",
+    "organization_id": 21249258,
+    "name": "mijnplein, stichting voor bijzonder primair onderwijs in Salland",
+    "country": "NL",
+    "scheme": null,
+    "raw_identifier": "355928046"
+   },
+   {
+    "notice_id": 24747742,
+    "section_id": "TPO-0001",
+    "organization_id": 3483852,
+    "name": "Rechtbank Overijssel",
+    "country": "NL",
+    "scheme": null,
+    "raw_identifier": null
+   }
+  ],
+  "extra_context": null,
   "how_chosen": {
    "window": {
     "statement": "s03_g2",
@@ -4967,8 +5522,46 @@
    ],
    "served_mention_names": [
     "concello de Mos"
+   ],
+   "served_mention_name_equals_tp_name": true,
+   "tp_name_equals_buyer_name (casefold, accents and punctuation folded)": false,
+   "tp_mention_org_id (s08)": [
+    8682116
+   ],
+   "buyer_mention_org_ids (s08)": [
+    22908484
    ]
   },
+  "notice_mentions (s08: organization_mentions of mention_notice_id)": [
+   {
+    "notice_id": 24711654,
+    "section_id": "ORG-0001",
+    "organization_id": 22908484,
+    "name": "Junta de Gobierno Local del Concello de Mos",
+    "country": "ES",
+    "scheme": "ID_PLATAFORMA",
+    "raw_identifier": "31093600153120"
+   },
+   {
+    "notice_id": 24711654,
+    "section_id": "ORG-0002",
+    "organization_id": 9527925,
+    "name": "SERVEO SOCIAL, S.L. (Anteriormente Sacyr Social, S.L.)",
+    "country": "ES",
+    "scheme": "NIF",
+    "raw_identifier": "B85621159"
+   },
+   {
+    "notice_id": 24711654,
+    "section_id": "TPO-0001",
+    "organization_id": 8682116,
+    "name": "concello de Mos",
+    "country": "ES",
+    "scheme": null,
+    "raw_identifier": null
+   }
+  ],
+  "extra_context": null,
   "how_chosen": {
    "window": {
     "statement": "s06_g5",
@@ -5378,8 +5971,46 @@
    ],
    "served_mention_names": [
     "Tribunal Administrativo de Recursos Contractuales"
+   ],
+   "served_mention_name_equals_tp_name": true,
+   "tp_name_equals_buyer_name (casefold, accents and punctuation folded)": false,
+   "tp_mention_org_id (s08)": [
+    3708
+   ],
+   "buyer_mention_org_ids (s08)": [
+    14281
    ]
   },
+  "notice_mentions (s08: organization_mentions of mention_notice_id)": [
+   {
+    "notice_id": 25020511,
+    "section_id": "ORG-0001",
+    "organization_id": 14281,
+    "name": "Presidencia de la Autoridad Portuaria de Tarragona",
+    "country": "ES",
+    "scheme": "ID_PLATAFORMA",
+    "raw_identifier": "40234810039001"
+   },
+   {
+    "notice_id": 25020511,
+    "section_id": "ORG-0002",
+    "organization_id": 11000948,
+    "name": "PORTEL LOGISTIC TECHNOLOGIES S.A.U.",
+    "country": "ES",
+    "scheme": "NIF",
+    "raw_identifier": "A81333841"
+   },
+   {
+    "notice_id": 25020511,
+    "section_id": "TPO-0001",
+    "organization_id": 3708,
+    "name": "Tribunal Administrativo de Recursos Contractuales",
+    "country": "ES",
+    "scheme": null,
+    "raw_identifier": null
+   }
+  ],
+  "extra_context": null,
   "how_chosen": {
    "window": {
     "statement": "s04_g3",
@@ -5843,6 +6474,168 @@
    ],
    "served_mention_names": [
     "Registro General de la Consejería de Hacienda, Industria y Energía"
+   ],
+   "served_mention_name_equals_tp_name": true,
+   "tp_name_equals_buyer_name (casefold, accents and punctuation folded)": false,
+   "tp_mention_org_id (s08)": [
+    12892828
+   ],
+   "buyer_mention_org_ids (s08)": [
+    22197076
+   ]
+  },
+  "notice_mentions (s08: organization_mentions of mention_notice_id)": [
+   {
+    "notice_id": 24855819,
+    "section_id": "ORG-0001",
+    "organization_id": 22197076,
+    "name": "Presidencia de la Diputación Provincial de Jaén",
+    "country": "ES",
+    "scheme": "ID_PLATAFORMA",
+    "raw_identifier": "30837010127461"
+   },
+   {
+    "notice_id": 24855819,
+    "section_id": "ORG-0002",
+    "organization_id": 7866498,
+    "name": "HALCON VIAJES S L",
+    "country": "ES",
+    "scheme": "NIF",
+    "raw_identifier": "A10005510"
+   },
+   {
+    "notice_id": 24855819,
+    "section_id": "TPO-0001",
+    "organization_id": 12892828,
+    "name": "Registro General de la Consejería de Hacienda, Industria y Energía",
+    "country": "ES",
+    "scheme": null,
+    "raw_identifier": null
+   }
+  ],
+  "extra_context": {
+   "note": "tender 306270 v10 serves this Lot-ReviewOrg on LOT-0001..LOT-0009; each lot is anchored at its own per-lot notice. The 8 sibling notices were fetched (raw/extra/content_*.json): each has one Lot section and its OPT-301-Lot-ReviewOrg points at its own TPO-0001 with the same BT-500.",
+   "sibling_notices": [
+    {
+     "notice_id": 24825775,
+     "lots": [
+      "LOT-0004"
+     ],
+     "refs_to_TPO-0001": [
+      [
+       "LOT-0004",
+       "OPT-301-Lot-ReviewOrg"
+      ]
+     ],
+     "TPO-0001_BT-500": [
+      "Registro General de la Consejería de Hacienda, Industria y Energía"
+     ]
+    },
+    {
+     "notice_id": 24860965,
+     "lots": [
+      "LOT-0002"
+     ],
+     "refs_to_TPO-0001": [
+      [
+       "LOT-0002",
+       "OPT-301-Lot-ReviewOrg"
+      ]
+     ],
+     "TPO-0001_BT-500": [
+      "Registro General de la Consejería de Hacienda, Industria y Energía"
+     ]
+    },
+    {
+     "notice_id": 24881383,
+     "lots": [
+      "LOT-0005"
+     ],
+     "refs_to_TPO-0001": [
+      [
+       "LOT-0005",
+       "OPT-301-Lot-ReviewOrg"
+      ]
+     ],
+     "TPO-0001_BT-500": [
+      "Registro General de la Consejería de Hacienda, Industria y Energía"
+     ]
+    },
+    {
+     "notice_id": 24895356,
+     "lots": [
+      "LOT-0003"
+     ],
+     "refs_to_TPO-0001": [
+      [
+       "LOT-0003",
+       "OPT-301-Lot-ReviewOrg"
+      ]
+     ],
+     "TPO-0001_BT-500": [
+      "Registro General de la Consejería de Hacienda, Industria y Energía"
+     ]
+    },
+    {
+     "notice_id": 24906409,
+     "lots": [
+      "LOT-0007"
+     ],
+     "refs_to_TPO-0001": [
+      [
+       "LOT-0007",
+       "OPT-301-Lot-ReviewOrg"
+      ]
+     ],
+     "TPO-0001_BT-500": [
+      "Registro General de la Consejería de Hacienda, Industria y Energía"
+     ]
+    },
+    {
+     "notice_id": 24912919,
+     "lots": [
+      "LOT-0006"
+     ],
+     "refs_to_TPO-0001": [
+      [
+       "LOT-0006",
+       "OPT-301-Lot-ReviewOrg"
+      ]
+     ],
+     "TPO-0001_BT-500": [
+      "Registro General de la Consejería de Hacienda, Industria y Energía"
+     ]
+    },
+    {
+     "notice_id": 24921507,
+     "lots": [
+      "LOT-0009"
+     ],
+     "refs_to_TPO-0001": [
+      [
+       "LOT-0009",
+       "OPT-301-Lot-ReviewOrg"
+      ]
+     ],
+     "TPO-0001_BT-500": [
+      "Registro General de la Consejería de Hacienda, Industria y Energía"
+     ]
+    },
+    {
+     "notice_id": 24957250,
+     "lots": [
+      "LOT-0008"
+     ],
+     "refs_to_TPO-0001": [
+      [
+       "LOT-0008",
+       "OPT-301-Lot-ReviewOrg"
+      ]
+     ],
+     "TPO-0001_BT-500": [
+      "Registro General de la Consejería de Hacienda, Industria y Energía"
+     ]
+    }
    ]
   },
   "how_chosen": {
@@ -6307,8 +7100,55 @@
    ],
    "served_mention_names": [
     "Agencja Mienia Wojskowego Oddział Regionalny w Lublinie"
+   ],
+   "served_mention_name_equals_tp_name": true,
+   "tp_name_equals_buyer_name (casefold, accents and punctuation folded)": false,
+   "tp_mention_org_id (s08)": [
+    8075131
+   ],
+   "buyer_mention_org_ids (s08)": [
+    5508
    ]
   },
+  "notice_mentions (s08: organization_mentions of mention_notice_id)": [
+   {
+    "notice_id": 25459203,
+    "section_id": "ORG-0000",
+    "organization_id": 12,
+    "name": "Publications Office of the European Union",
+    "country": "LU",
+    "scheme": null,
+    "raw_identifier": "PUBL"
+   },
+   {
+    "notice_id": 25459203,
+    "section_id": "ORG-0001",
+    "organization_id": 5508,
+    "name": "Agencja Mienia Wojskowego",
+    "country": "PL",
+    "scheme": null,
+    "raw_identifier": "526-10-38-122"
+   },
+   {
+    "notice_id": 25459203,
+    "section_id": "ORG-0002",
+    "organization_id": 36,
+    "name": "Krajowa Izba Odwoławcza",
+    "country": "PL",
+    "scheme": null,
+    "raw_identifier": "5262239325"
+   },
+   {
+    "notice_id": 25459203,
+    "section_id": "TPO-0003",
+    "organization_id": 8075131,
+    "name": "Agencja Mienia Wojskowego Oddział Regionalny w Lublinie",
+    "country": "PL",
+    "scheme": null,
+    "raw_identifier": null
+   }
+  ],
+  "extra_context": null,
   "how_chosen": {
    "window": {
     "statement": "s01_g0",
@@ -6747,8 +7587,64 @@
    ],
    "served_mention_names": [
     "Regionalny Zarząd Gospodarki Wodnej w Poznaniu"
+   ],
+   "served_mention_name_equals_tp_name": true,
+   "tp_name_equals_buyer_name (casefold, accents and punctuation folded)": false,
+   "tp_mention_org_id (s08)": [
+    1298093
+   ],
+   "buyer_mention_org_ids (s08)": [
+    1893
    ]
   },
+  "notice_mentions (s08: organization_mentions of mention_notice_id)": [
+   {
+    "notice_id": 25290510,
+    "section_id": "ORG-0000",
+    "organization_id": 12,
+    "name": "Publications Office of the European Union",
+    "country": "LU",
+    "scheme": null,
+    "raw_identifier": "PUBL"
+   },
+   {
+    "notice_id": 25290510,
+    "section_id": "ORG-0001",
+    "organization_id": 1893,
+    "name": "Państwowe Gospodarstwo Wodne Wody Polskie",
+    "country": "PL",
+    "scheme": null,
+    "raw_identifier": "368302575"
+   },
+   {
+    "notice_id": 25290510,
+    "section_id": "ORG-0002",
+    "organization_id": 36,
+    "name": "Krajowa Izba Odwoławcza",
+    "country": "PL",
+    "scheme": null,
+    "raw_identifier": "5262239325"
+   },
+   {
+    "notice_id": 25290510,
+    "section_id": "ORG-0003",
+    "organization_id": 22842093,
+    "name": "Nowak Krzysztof Sprzedaż Ryb",
+    "country": "PL",
+    "scheme": null,
+    "raw_identifier": "8281081335"
+   },
+   {
+    "notice_id": 25290510,
+    "section_id": "TPO-0001",
+    "organization_id": 1298093,
+    "name": "Regionalny Zarząd Gospodarki Wodnej w Poznaniu",
+    "country": "PL",
+    "scheme": null,
+    "raw_identifier": null
+   }
+  ],
+  "extra_context": null,
   "how_chosen": {
    "window": {
     "statement": "s04_g3",
@@ -7240,8 +8136,46 @@
    ],
    "served_mention_names": [
     "Vergabekammer Schleswig-Holstein\nMinisterium für Wissenschaft, Wirtschaft und Verkehr"
+   ],
+   "served_mention_name_equals_tp_name": true,
+   "tp_name_equals_buyer_name (casefold, accents and punctuation folded)": false,
+   "tp_mention_org_id (s08)": [
+    8946945
+   ],
+   "buyer_mention_org_ids (s08)": [
+    22503093
    ]
   },
+  "notice_mentions (s08: organization_mentions of mention_notice_id)": [
+   {
+    "notice_id": 24912640,
+    "section_id": "ORG-0001",
+    "organization_id": 22503093,
+    "name": "AKN Eisenbahn GmbH",
+    "country": "DE",
+    "scheme": null,
+    "raw_identifier": "HRB 19714 KI"
+   },
+   {
+    "notice_id": 24912640,
+    "section_id": "ORG-0002",
+    "organization_id": 28,
+    "name": "Datenservice Öffentlicher Einkauf (in Verantwortung des Beschaffungsamts des BMI)",
+    "country": "DE",
+    "scheme": "002",
+    "raw_identifier": "0204:994-DOEVD-83"
+   },
+   {
+    "notice_id": 24912640,
+    "section_id": "TPO-0002",
+    "organization_id": 8946945,
+    "name": "Vergabekammer Schleswig-Holstein\nMinisterium für Wissenschaft, Wirtschaft und Verkehr",
+    "country": "DE",
+    "scheme": null,
+    "raw_identifier": null
+   }
+  ],
+  "extra_context": null,
   "how_chosen": {
    "window": {
     "statement": "s06_g5",
@@ -7616,8 +8550,37 @@
    ],
    "served_mention_names": [
     "Secretário de Estado dos Assuntos Fiscais"
+   ],
+   "served_mention_name_equals_tp_name": true,
+   "tp_name_equals_buyer_name (casefold, accents and punctuation folded)": false,
+   "tp_mention_org_id (s08)": [
+    8134860
+   ],
+   "buyer_mention_org_ids (s08)": [
+    12805
    ]
   },
+  "notice_mentions (s08: organization_mentions of mention_notice_id)": [
+   {
+    "notice_id": 23879962,
+    "section_id": "ORG-0001",
+    "organization_id": 12805,
+    "name": "Autoridade Tributária e Aduaneira",
+    "country": "PT",
+    "scheme": null,
+    "raw_identifier": "600084779"
+   },
+   {
+    "notice_id": 23879962,
+    "section_id": "TPO-0001",
+    "organization_id": 8134860,
+    "name": "Secretário de Estado dos Assuntos Fiscais",
+    "country": "PT",
+    "scheme": null,
+    "raw_identifier": null
+   }
+  ],
+  "extra_context": null,
   "how_chosen": {
    "window": {
     "statement": "s06_g5",
@@ -8001,8 +8964,46 @@
    ],
    "served_mention_names": [
     "PICON PATRICE"
+   ],
+   "served_mention_name_equals_tp_name": true,
+   "tp_name_equals_buyer_name (casefold, accents and punctuation folded)": false,
+   "tp_mention_org_id (s08)": [
+    31977562
+   ],
+   "buyer_mention_org_ids (s08)": [
+    23293284
    ]
   },
+  "notice_mentions (s08: organization_mentions of mention_notice_id)": [
+   {
+    "notice_id": 25036645,
+    "section_id": "ORG-0001",
+    "organization_id": 23293284,
+    "name": "NAUTISME MER DEVELOPPEMENT",
+    "country": "FR",
+    "scheme": null,
+    "raw_identifier": "81515268100012"
+   },
+   {
+    "notice_id": 25036645,
+    "section_id": "ORG-0004",
+    "organization_id": 2347,
+    "name": "TRIBUNAL ADMINISTRATIF MARSEILLE",
+    "country": "FR",
+    "scheme": null,
+    "raw_identifier": "171 300 056 00024"
+   },
+   {
+    "notice_id": 25036645,
+    "section_id": "TPO-0001",
+    "organization_id": 31977562,
+    "name": "PICON PATRICE",
+    "country": "FR",
+    "scheme": null,
+    "raw_identifier": null
+   }
+  ],
+  "extra_context": null,
   "how_chosen": {
    "window": {
     "statement": "s06_g5",
@@ -8393,7 +9394,76 @@
    ],
    "served_mention_names": [
     "Stadt Erlangen - EBE"
+   ],
+   "served_mention_name_equals_tp_name": true,
+   "tp_name_equals_buyer_name (casefold, accents and punctuation folded)": true,
+   "tp_mention_org_id (s08)": [
+    31976959
+   ],
+   "buyer_mention_org_ids (s08)": [
+    22208093
    ]
+  },
+  "notice_mentions (s08: organization_mentions of mention_notice_id)": [
+   {
+    "notice_id": 24590568,
+    "section_id": "ORG-0001",
+    "organization_id": 1062,
+    "name": "Stadt Erlangen - Zentrale Vergabestelle",
+    "country": "DE",
+    "scheme": null,
+    "raw_identifier": "09562-AMT30-61"
+   },
+   {
+    "notice_id": 24590568,
+    "section_id": "ORG-0002",
+    "organization_id": 234,
+    "name": "Vergabekammer Nordbayern, Regierung von Mittelfranken",
+    "country": "DE",
+    "scheme": null,
+    "raw_identifier": "09-0358002-61"
+   },
+   {
+    "notice_id": 24590568,
+    "section_id": "ORG-0007",
+    "organization_id": 22208093,
+    "name": "Stadt Erlangen - EBE",
+    "country": "DE",
+    "scheme": null,
+    "raw_identifier": "09562-EBE-87"
+   },
+   {
+    "notice_id": 24590568,
+    "section_id": "ORG-0008",
+    "organization_id": 28,
+    "name": "Datenservice Öffentlicher Einkauf (in Verantwortung des Beschaffungsamts des BMI)",
+    "country": "DE",
+    "scheme": "002",
+    "raw_identifier": "0204:994-DOEVD-83"
+   },
+   {
+    "notice_id": 24590568,
+    "section_id": "TPO-0001",
+    "organization_id": 31976959,
+    "name": "Stadt Erlangen - EBE",
+    "country": "DE",
+    "scheme": null,
+    "raw_identifier": null
+   }
+  ],
+  "extra_context": {
+   "note": "The notice's buyer section ORG-0007 'Stadt Erlangen - EBE' resolves to org 22208093 (identifier 09562EBE87); the touchpoint TPO-0001 under ORG-0001 (Zentrale Vergabestelle) prints the same name and was minted as identifier-less org 31976959. The served Procedure-Buyer is org 1062 (ORG-0001's name).",
+   "org_22208093": {
+    "country": "DE",
+    "id": 22208093,
+    "identifier": "09562EBE87",
+    "identifier_kind": "national",
+    "identifier_status": null,
+    "mentions": 65,
+    "merged_identifiers": [],
+    "name": "Stadt Erlangen - EBE",
+    "provisional": false
+   }
   },
   "how_chosen": {
    "window": {
@@ -8774,8 +9844,46 @@
    ],
    "served_mention_names": [
     "ΕΝΙΑΙΑ ΑΡΧΗ ΔΗΜΟΣΙΩΝ ΣΥΜΒΑΣΕΩΝ (ΕΑΔΗΣΥ / ΟΡΓΑΝΙΣΜΟΣ\nΠΡΟΣΦΥΓΗΣ)"
+   ],
+   "served_mention_name_equals_tp_name": true,
+   "tp_name_equals_buyer_name (casefold, accents and punctuation folded)": false,
+   "tp_mention_org_id (s08)": [
+    31976178
+   ],
+   "buyer_mention_org_ids (s08)": [
+    22564784
    ]
   },
+  "notice_mentions (s08: organization_mentions of mention_notice_id)": [
+   {
+    "notice_id": 24418993,
+    "section_id": "ORG-0000",
+    "organization_id": 12,
+    "name": "Publications Office of the European Union",
+    "country": "LU",
+    "scheme": null,
+    "raw_identifier": "PUBL"
+   },
+   {
+    "notice_id": 24418993,
+    "section_id": "ORG-0001",
+    "organization_id": 22564784,
+    "name": "ΓΕΝΙΚΟ ΝΟΣΟΚΟΜΕΙΟ ΗΜΑΘΙΑΣ (ΥΓ. ΜΟΝΑΔΑ ΒΕΡΟΙΑΣ)",
+    "country": "GR",
+    "scheme": null,
+    "raw_identifier": "1015.E00210.0001"
+   },
+   {
+    "notice_id": 24418993,
+    "section_id": "TPO-0001",
+    "organization_id": 31976178,
+    "name": "ΕΝΙΑΙΑ ΑΡΧΗ ΔΗΜΟΣΙΩΝ ΣΥΜΒΑΣΕΩΝ (ΕΑΔΗΣΥ / ΟΡΓΑΝΙΣΜΟΣ\nΠΡΟΣΦΥΓΗΣ)",
+    "country": "GR",
+    "scheme": null,
+    "raw_identifier": null
+   }
+  ],
+  "extra_context": null,
   "how_chosen": {
    "window": {
     "statement": "s02_g1",
@@ -9152,8 +10260,55 @@
    ],
    "served_mention_names": [
     "Państwowe Gospodarstwo Wodne Wody Polskie Regionalny Zarząd Gospodarki Wodnej w Gdańsku"
+   ],
+   "served_mention_name_equals_tp_name": true,
+   "tp_name_equals_buyer_name (casefold, accents and punctuation folded)": false,
+   "tp_mention_org_id (s08)": [
+    14122634
+   ],
+   "buyer_mention_org_ids (s08)": [
+    1551
    ]
   },
+  "notice_mentions (s08: organization_mentions of mention_notice_id)": [
+   {
+    "notice_id": 28927254,
+    "section_id": "ORG-0000",
+    "organization_id": 12,
+    "name": "Publications Office of the European Union",
+    "country": "LU",
+    "scheme": null,
+    "raw_identifier": "PUBL"
+   },
+   {
+    "notice_id": 28927254,
+    "section_id": "ORG-0001",
+    "organization_id": 1551,
+    "name": "Państwowe Gospodarstwo Wodne Wody Polskie",
+    "country": "PL",
+    "scheme": null,
+    "raw_identifier": "NIP: 5272825616, REGON: 368302575"
+   },
+   {
+    "notice_id": 28927254,
+    "section_id": "ORG-0003",
+    "organization_id": 409,
+    "name": "Krajowa Izba Odwoławcza",
+    "country": "PL",
+    "scheme": null,
+    "raw_identifier": "NIP: 5262239325, REGON: 010828091"
+   },
+   {
+    "notice_id": 28927254,
+    "section_id": "TPO-0001",
+    "organization_id": 14122634,
+    "name": "Państwowe Gospodarstwo Wodne Wody Polskie Regionalny Zarząd Gospodarki Wodnej w Gdańsku",
+    "country": "PL",
+    "scheme": null,
+    "raw_identifier": null
+   }
+  ],
+  "extra_context": null,
   "how_chosen": {
    "window": {
     "statement": "s02_g1",
@@ -9569,7 +10724,85 @@
    ],
    "served_mention_names": [
     "Prokuratoria Generalna Rzeczpospolitej Polskiej"
+   ],
+   "served_mention_name_equals_tp_name": true,
+   "tp_name_equals_buyer_name (casefold, accents and punctuation folded)": false,
+   "tp_mention_org_id (s08)": [
+    11005609
+   ],
+   "buyer_mention_org_ids (s08)": [
+    49
    ]
+  },
+  "notice_mentions (s08: organization_mentions of mention_notice_id)": [
+   {
+    "notice_id": 25710042,
+    "section_id": "ORG-0000",
+    "organization_id": 12,
+    "name": "Publications Office of the European Union",
+    "country": "LU",
+    "scheme": null,
+    "raw_identifier": "PUBL"
+   },
+   {
+    "notice_id": 25710042,
+    "section_id": "ORG-0001",
+    "organization_id": 49,
+    "name": "Uniwersytet Warszawski",
+    "country": "PL",
+    "scheme": null,
+    "raw_identifier": "NIP 5262239325"
+   },
+   {
+    "notice_id": 25710042,
+    "section_id": "ORG-0002",
+    "organization_id": 12541865,
+    "name": "Simedu Sp. z o. o.",
+    "country": "PL",
+    "scheme": null,
+    "raw_identifier": "NIP 929-195-21-57"
+   },
+   {
+    "notice_id": 25710042,
+    "section_id": "ORG-0003",
+    "organization_id": 23299566,
+    "name": "FANTOM-FW A. Miętkiewicz Spółka Komandytowa",
+    "country": "PL",
+    "scheme": null,
+    "raw_identifier": "NIP 986 026 59 03"
+   },
+   {
+    "notice_id": 25710042,
+    "section_id": "TPO-0001",
+    "organization_id": 1617,
+    "name": "Krajowa Izba Odwoławcza",
+    "country": "PL",
+    "scheme": null,
+    "raw_identifier": null
+   },
+   {
+    "notice_id": 25710042,
+    "section_id": "TPO-0002",
+    "organization_id": 11005609,
+    "name": "Prokuratoria Generalna Rzeczpospolitej Polskiej",
+    "country": "PL",
+    "scheme": null,
+    "raw_identifier": null
+   }
+  ],
+  "extra_context": {
+   "note": "Not a touchpoint matter: the served Procedure-Buyer (mention 'Uniwersytet Warszawski', NIP 5262239325) is organization 49, whose name is 'Krajowa Izba Odwoławcza' and whose identifier is that NIP.",
+   "org_49": {
+    "country": "PL",
+    "id": 49,
+    "identifier": "5262239325",
+    "identifier_kind": "national",
+    "identifier_status": null,
+    "mentions": 30567,
+    "merged_identifiers": [],
+    "name": "Krajowa Izba Odwoławcza",
+    "provisional": false
+   }
   },
   "how_chosen": {
    "window": {
@@ -9926,8 +11159,55 @@
    ],
    "served_mention_names": [
     "Staatsanzeiger eServices GmbH"
+   ],
+   "served_mention_name_equals_tp_name": true,
+   "tp_name_equals_buyer_name (casefold, accents and punctuation folded)": false,
+   "tp_mention_org_id (s08)": [
+    31975167
+   ],
+   "buyer_mention_org_ids (s08)": [
+    22502613
    ]
   },
+  "notice_mentions (s08: organization_mentions of mention_notice_id)": [
+   {
+    "notice_id": 24065603,
+    "section_id": "ORG-0000",
+    "organization_id": 22502613,
+    "name": "Stadt Bad Neustadt an der Saale",
+    "country": "DE",
+    "scheme": null,
+    "raw_identifier": "DE194655717"
+   },
+   {
+    "notice_id": 24065603,
+    "section_id": "ORG-0001",
+    "organization_id": 1448,
+    "name": "Regierung von Unterfranken",
+    "country": "DE",
+    "scheme": null,
+    "raw_identifier": "DE811335517"
+   },
+   {
+    "notice_id": 24065603,
+    "section_id": "ORG-0002",
+    "organization_id": 28,
+    "name": "Datenservice Öffentlicher Einkauf (in Verantwortung des Beschaffungsamts des BMI)",
+    "country": "DE",
+    "scheme": "002",
+    "raw_identifier": "0204:994-DOEVD-83"
+   },
+   {
+    "notice_id": 24065603,
+    "section_id": "TPO-0000",
+    "organization_id": 31975167,
+    "name": "Staatsanzeiger eServices GmbH",
+    "country": "DE",
+    "scheme": null,
+    "raw_identifier": null
+   }
+  ],
+  "extra_context": null,
   "how_chosen": {
    "window": {
     "statement": "s03_g2",
@@ -10306,8 +11586,37 @@
    ],
    "served_mention_names": [
     "Tribunal Administratif de Melun"
+   ],
+   "served_mention_name_equals_tp_name": true,
+   "tp_name_equals_buyer_name (casefold, accents and punctuation folded)": false,
+   "tp_mention_org_id (s08)": [
+    1165479
+   ],
+   "buyer_mention_org_ids (s08)": [
+    3060278
    ]
   },
+  "notice_mentions (s08: organization_mentions of mention_notice_id)": [
+   {
+    "notice_id": 24815364,
+    "section_id": "ORG-0001",
+    "organization_id": 3060278,
+    "name": "OFFICE NATIONAL DES FORETS",
+    "country": "FR",
+    "scheme": null,
+    "raw_identifier": "66204311601453"
+   },
+   {
+    "notice_id": 24815364,
+    "section_id": "TPO-0001",
+    "organization_id": 1165479,
+    "name": "Tribunal Administratif de Melun",
+    "country": "FR",
+    "scheme": null,
+    "raw_identifier": null
+   }
+  ],
+  "extra_context": null,
   "how_chosen": {
    "window": {
     "statement": "s04_g3",
@@ -10700,8 +12009,64 @@
    ],
    "served_mention_names": [
     "Afd. Inkoop"
+   ],
+   "served_mention_name_equals_tp_name": true,
+   "tp_name_equals_buyer_name (casefold, accents and punctuation folded)": false,
+   "tp_mention_org_id (s08)": [
+    19463077
+   ],
+   "buyer_mention_org_ids (s08)": [
+    8029
    ]
   },
+  "notice_mentions (s08: organization_mentions of mention_notice_id)": [
+   {
+    "notice_id": 25856080,
+    "section_id": "ORG-0001",
+    "organization_id": 8029,
+    "name": "Stichting 113 Zelfmoordpreventie",
+    "country": "NL",
+    "scheme": null,
+    "raw_identifier": "936295933"
+   },
+   {
+    "notice_id": 25856080,
+    "section_id": "ORG-0002",
+    "organization_id": 18439685,
+    "name": "Stichting Geestelijke Gezondheidszorg Oost-Brabant",
+    "country": "NL",
+    "scheme": null,
+    "raw_identifier": "41085846"
+   },
+   {
+    "notice_id": 25856080,
+    "section_id": "TPO-0001",
+    "organization_id": 19103122,
+    "name": "Afd. klachten procedure",
+    "country": "NL",
+    "scheme": null,
+    "raw_identifier": null
+   },
+   {
+    "notice_id": 25856080,
+    "section_id": "TPO-0002",
+    "organization_id": 1164161,
+    "name": "Rechtbank Amsterdam",
+    "country": "NL",
+    "scheme": null,
+    "raw_identifier": null
+   },
+   {
+    "notice_id": 25856080,
+    "section_id": "TPO-0003",
+    "organization_id": 19463077,
+    "name": "Afd. Inkoop",
+    "country": "NL",
+    "scheme": null,
+    "raw_identifier": null
+   }
+  ],
+  "extra_context": null,
   "how_chosen": {
    "window": {
     "statement": "s07_n6",
@@ -11043,8 +12408,64 @@
    ],
    "served_mention_names": [
     "Krajowa Izba Odwoławcza"
+   ],
+   "served_mention_name_equals_tp_name": true,
+   "tp_name_equals_buyer_name (casefold, accents and punctuation folded)": false,
+   "tp_mention_org_id (s08)": [
+    1617
+   ],
+   "buyer_mention_org_ids (s08)": [
+    3466
    ]
   },
+  "notice_mentions (s08: organization_mentions of mention_notice_id)": [
+   {
+    "notice_id": 24414920,
+    "section_id": "ORG-0000",
+    "organization_id": 12,
+    "name": "Publications Office of the European Union",
+    "country": "LU",
+    "scheme": null,
+    "raw_identifier": "PUBL"
+   },
+   {
+    "notice_id": 24414920,
+    "section_id": "ORG-0001",
+    "organization_id": 3466,
+    "name": "ENEA Operator sp. z o.o.",
+    "country": "PL",
+    "scheme": null,
+    "raw_identifier": "7822377160"
+   },
+   {
+    "notice_id": 24414920,
+    "section_id": "ORG-0002",
+    "organization_id": 36,
+    "name": "Krajowa Izba Odwoławcza",
+    "country": "PL",
+    "scheme": null,
+    "raw_identifier": "5262239325"
+   },
+   {
+    "notice_id": 24414920,
+    "section_id": "ORG-0003",
+    "organization_id": 10860047,
+    "name": "Sopockie Towarzystwo Ubezpieczeń ERGO Hestia SA",
+    "country": "PL",
+    "scheme": null,
+    "raw_identifier": "5850001690"
+   },
+   {
+    "notice_id": 24414920,
+    "section_id": "TPO-0001",
+    "organization_id": 1617,
+    "name": "Krajowa Izba Odwoławcza",
+    "country": "PL",
+    "scheme": null,
+    "raw_identifier": null
+   }
+  ],
+  "extra_context": null,
   "how_chosen": {
    "window": {
     "statement": "s04_g3",
@@ -11467,8 +12888,37 @@
    ],
    "served_mention_names": [
     "Tribunal Administrativo Central de Recursos Contractuales (TACRC)"
+   ],
+   "served_mention_name_equals_tp_name": true,
+   "tp_name_equals_buyer_name (casefold, accents and punctuation folded)": false,
+   "tp_mention_org_id (s08)": [
+    2720295
+   ],
+   "buyer_mention_org_ids (s08)": [
+    22474082
    ]
   },
+  "notice_mentions (s08: organization_mentions of mention_notice_id)": [
+   {
+    "notice_id": 24171168,
+    "section_id": "ORG-0001",
+    "organization_id": 22474082,
+    "name": "Departamento de Salud de Gandía. Dirección Económica-Gerencia",
+    "country": "ES",
+    "scheme": "ID_PLATAFORMA",
+    "raw_identifier": "20909620134722"
+   },
+   {
+    "notice_id": 24171168,
+    "section_id": "TPO-0001",
+    "organization_id": 2720295,
+    "name": "Tribunal Administrativo Central de Recursos Contractuales (TACRC)",
+    "country": "ES",
+    "scheme": null,
+    "raw_identifier": null
+   }
+  ],
+  "extra_context": null,
   "how_chosen": {
    "window": {
     "statement": "s02_g1",
@@ -11838,8 +13288,55 @@
    ],
    "served_mention_names": [
     "Vergabeprüfstelle (Emscher)"
+   ],
+   "served_mention_name_equals_tp_name": true,
+   "tp_name_equals_buyer_name (casefold, accents and punctuation folded)": false,
+   "tp_mention_org_id (s08)": [
+    31975627
+   ],
+   "buyer_mention_org_ids (s08)": [
+    1316688
    ]
   },
+  "notice_mentions (s08: organization_mentions of mention_notice_id)": [
+   {
+    "notice_id": 27017752,
+    "section_id": "ORG-0001",
+    "organization_id": 1316688,
+    "name": "Emschergenossenschaft",
+    "country": "DE",
+    "scheme": null,
+    "raw_identifier": "Leitweg-ID: 05113-99003-97; USt.-ID: DE 119 823 752"
+   },
+   {
+    "notice_id": 27017752,
+    "section_id": "ORG-9000",
+    "organization_id": 23164352,
+    "name": "Geo-Bau GmbH&Co.KG",
+    "country": "DE",
+    "scheme": null,
+    "raw_identifier": "DE173454419"
+   },
+   {
+    "notice_id": 27017752,
+    "section_id": "ORG-9001",
+    "organization_id": 28,
+    "name": "Datenservice Öffentlicher Einkauf (in Verantwortung des Beschaffungsamts des BMI)",
+    "country": "DE",
+    "scheme": "002",
+    "raw_identifier": "0204:994-DOEVD-83"
+   },
+   {
+    "notice_id": 27017752,
+    "section_id": "TPO-0001",
+    "organization_id": 31975627,
+    "name": "Vergabeprüfstelle (Emscher)",
+    "country": "DE",
+    "scheme": null,
+    "raw_identifier": null
+   }
+  ],
+  "extra_context": null,
   "how_chosen": {
    "window": {
     "statement": "s02_g1",

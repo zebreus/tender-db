@@ -1,6 +1,6 @@
 # 576 — a party role whose eForms reference names a touchpoint (TPO-…) is dropped from the tender's parties
 
-Status: ready-for-agent — **unit 3 DRAINED 2026-10-24** (refold-sections 2758 + project 2759 on a63cf23, 11:46→12:32Z): 198,857 Touchpoint carriers re-queued, 106,091 Tenders stamped; the fold wrote 106,091 and corrected 103,852 (compare); touchpoint roles 67,434 aliased, 491,287 minted (50,094 took the parent organization's country), 27,378 dropped; 0 Tenders retired by regrouping (the issue-580 suffix is silent at zero). NEXT: unit 4 (Verify 8851944 / 8851996, then the salted read of 30, 0-W bar). Was: ready-for-agent — **unit 2 BUILT and GATED 2026-10-24 (cb19854; gate green at b3effc2, 1,384 s; on main)** in wf_52627394-803: implement, docs, three review lenses with a skeptic each, fixer; 14 findings, 5 confirmed and fixed; final focused run 138 passed, EXIT=0; the unit-3 re-mint test is mutation-checked. Country fallback: the touchpoint's BT-514, else the parent ORG's first, counted. supervisor.rs (a 551 flip file) gains the fold-summary suffix, so the switch-off twin rebuilt after the batch deploy must carry it. NEXT: the batch deploy (551 W-on decision: after the 10-28 day-7 fetch, with 578 U2, 579 U4 and 539's caveat retirement; 577 U2 is out, W7), probe P1, twin re-gate; then unit 3 (class N), after P1 PASS and the day-7 PASS. Was: ready-for-agent — triaged 2026-10-21 (wf triage-575-578: measurer + 2 adversarial skeptics; 4 + 2 bounded /v1/sql reads,
+Status: ready-for-agent — **unit 4 read-back FAILED its 0-W bar 2026-10-24 (10 R / 18 N / 2 W; wf_a3ca374b-a30); unit 5 BUILT (6ff7bed, on the session branch, focused tests green)**: the 2 W are TenderNed dashboard labels minted/bound as organizations ("Dashboard van deze aanbesteding", "Vraag- en antwoordmodule in het dashboard van deze aanbesteding"); U5 adds the portal phrase `deze aanbesteding`. Verify read DONE (8851944 Lot-ReviewOrg 22077939 TACRC/TSJ; 8851996 ReviewOrg×4 2261 + AddInfo×4 22213489). NEXT: U5 rides deploy #3 (gate with 581/583/573/575), then re-run `refold-sections` Touchpoint (job file 576-u3/refold_sections.json), then re-read items 1–2 (both must drop) and a fresh salted 30 (salt 576-u5-) with the same rubric; DONE on 0 W. Was: ready-for-agent — **unit 3 DRAINED 2026-10-24** (refold-sections 2758 + project 2759 on a63cf23, 11:46→12:32Z): 198,857 Touchpoint carriers re-queued, 106,091 Tenders stamped; the fold wrote 106,091 and corrected 103,852 (compare); touchpoint roles 67,434 aliased, 491,287 minted (50,094 took the parent organization's country), 27,378 dropped; 0 Tenders retired by regrouping (the issue-580 suffix is silent at zero). NEXT: unit 4 (Verify 8851944 / 8851996, then the salted read of 30, 0-W bar). Was: ready-for-agent — **unit 2 BUILT and GATED 2026-10-24 (cb19854; gate green at b3effc2, 1,384 s; on main)** in wf_52627394-803: implement, docs, three review lenses with a skeptic each, fixer; 14 findings, 5 confirmed and fixed; final focused run 138 passed, EXIT=0; the unit-3 re-mint test is mutation-checked. Country fallback: the touchpoint's BT-514, else the parent ORG's first, counted. supervisor.rs (a 551 flip file) gains the fold-summary suffix, so the switch-off twin rebuilt after the batch deploy must carry it. NEXT: the batch deploy (551 W-on decision: after the 10-28 day-7 fetch, with 578 U2, 579 U4 and 539's caveat retirement; 577 U2 is out, W7), probe P1, twin re-gate; then unit 3 (class N), after P1 PASS and the day-7 PASS. Was: ready-for-agent — triaged 2026-10-21 (wf triage-575-578: measurer + 2 adversarial skeptics; 4 + 2 bounded /v1/sql reads,
 0 GETs; skeptic-corrected, `## Triage (2026-10-21 …)` below). Reproduced: `bind_organizations` silently drops every OPT-301 Lot/Part
 role whose target is a Touchpoint (TPO-…) section (project.rs:6115-6118). Window 47408000-47415999: 1,179 TPO refs dropped on
 345-374 of 7,122 eForms notices (4.8-5.3%; corpus ≈160-175k notices, low confidence); ≥73 (6%, lower bound) print the parent
@@ -354,4 +354,38 @@ Posted on a63cf23 (the batch deploy, 11:32Z) under the owner's velocity ruling, 
 - The 103,852 corrections are this unit's intended change (touchpoint parties gained), not drift: the cohort is exactly the
   stamped Tenders that carry a Touchpoint section. Their ids are in the change rows of 2759 for 551's switch-off list.
 - Unit 4 next: the Verify reads and the salted 30.
+
+## Unit 4 — Verify and read-back (2026-10-24)
+
+- **Verify: done.** 8851944 serves `Lot-ReviewOrg` 22077939 ("Tribunal Administrativo Central de Recursos Contractuales
+  (TACRC) o Tribunal Superior de Justicia (TSJ).", ES) at LOT-0000. 8851996 serves `Lot-ReviewOrg` ×4 (2261, the Madrid
+  tribunal) and `Lot-AddInfo` ×4 (22213489, the buyer's own organization) on LOT-0001…0004.
+- **Read-back (wf_a3ca374b-a30): 10 R / 18 N / 2 W — FAIL (bar 0 W).** 30 salted, stratified minted parties (`576-u4/`
+  `sample.json`, `fetch-notes.md`): 7 NL AddInfo/TenderReceipt, 10 Lot-ReviewOrg, 5 country-fallback; 8 SQL statements, 139
+  serial GETs. Three judges (identity; role and scope; country and naming) and a skeptic on every W vote.
+  - **W (items 1, 2):** TenderNed template labels, not bodies — 346591 `Lot-AddInfo` → 18044191 "Vraag- en
+    antwoordmodule in het dashboard van deze aanbesteding"; 361790 `Lot-TenderReceipt` → 18044192 "Dashboard van deze
+    aanbesteding". BT-505 is tenderned.nl, the address is the buyer's. `touchpoint_gate` reads only BT-500 and these hold
+    none of the listed portal phrases. Fix: unit 5.
+  - **N (18):** the accepted costs D576-1 names — a buyer department under its own name ("Team Inkoop gemeente Westland",
+    "Afd. Inkoop" pooled across buyers), buyer variants that defeat the same-name alias (a typo "Stiching ROC Midden
+    Nederland", an acronym "IBMN", "… Comunidad de Madrid"), a person printed as the touchpoint ("Carlo van Acker",
+    skeptic: N under D576-1), a platform operator in ReviewInfo ("Staatsanzeiger eServices GmbH", deliberately unlisted
+    per 483's eSender test).
+  - Out of scope, filed: **584** (306091's buyer "Uniwersytet Warszawski" prints NIP 5262239325 and is served as org 49
+    "Krajowa Izba Odwoławcza"), **585** (the dashboard labels also exist as ORG-path organizations).
+  - Noted, not filed: item 21 (306251) — a touchpoint under a non-buyer ORG that prints the buyer's name mints a second
+    "Stadt Erlangen - EBE" (31976959 beside 22208093), because the alias compares only with the parent; raw newlines
+    survive in two served names.
+
+## Unit 5 — built (6ff7bed, 2026-10-24)
+
+- `role_census::NAME_PATTERNS` gains `("NL TenderNed", "deze aanbesteding", NameList::Portal)`. `portal_name` feeds it to
+  `touchpoint_gate`, so both labels Drop; `portal_label` also refuses to promote such a party to buyer (no census class
+  reads Portal).
+- Tests: both labels in `the_touchpoint_gate_drops_prose_section_ids_and_void_names_and_no_tribunal`; a `portal_label` pin
+  and a negative control ("Aanbestedingsdienst Utrecht") in role_census; `the_name_patterns_are_folded_whole_word_phrases`
+  holds. Focused runs (gate flags): role_census 14+1, touchpoint_576 9, EXIT 0.
+- Apply after deploy #3: `refold-sections` `{"kind":"refold-sections","profiles":["Touchpoint"]}` (198,857 carriers,
+  ~45 min); the fold retires the two labels' touchpoint mentions through `retire_mentions`.
 

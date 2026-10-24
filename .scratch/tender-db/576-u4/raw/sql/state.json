@@ -1,7 +1,7 @@
 {
- "used": 7,
+ "used": 8,
  "stop": null,
- "last": 1792846410.7210665,
+ "last": 1792846881.4284801,
  "log": [
   {
    "name": "s01_g0",
@@ -64,6 +64,15 @@
    "secs": 1.56,
    "ok": true,
    "rows": 17,
+   "truncated": false
+  },
+  {
+   "name": "s08_mentions",
+   "sha256": "f19446c3341b62b0b7ebb5e213bea736c2de4511363771d16b79eb06efc2d398",
+   "sent_at": "2026-10-24T13:01:21Z",
+   "secs": 0.38,
+   "ok": true,
+   "rows": 113,
    "truncated": false
   }
  ]
