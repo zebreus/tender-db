@@ -16630,6 +16630,41 @@ impl Supervisor {
         }
     }
 
+    /// Issue 575 U1: the dry hex-census (`Spec::HexCensus`), its own fn so `run_census_spec` reaches it through
+    /// [`off_frame`] and its future never sits in that family's poll frame (issue 467).
+    async fn run_hex_census(&self, job: &Job, stable_mentions: u64, samples: usize) -> Result<String, String> {
+        // Reached through `off_frame` (issue 467: a boxed arm in `run_census_spec` still builds its future
+        // in that poll frame, and this one tipped it over its budget); the store future is boxed inside it and
+        // the body and the summary are sync free fns, off this frame.
+        let job_id = job.id;
+        let stop = || self.cancelled(job_id);
+        self.set_phase("walking", None, None, "issue 575: reading 32-hex organizations".to_owned());
+        let progress = |done: u64, detail: &str| {
+            self.set_phase("walking", Some(done), None, detail.to_owned());
+        };
+        let r = Box::pin(self.db.hex_census(store::HexCensusArgs {
+            hex_hash: hex_hash_class,
+            is_v4: ingest::idgate::uuid_v4,
+            role_class: guid_role_class,
+            keep: ingest::project::guid_twin::keep_530(),
+            stable_mentions,
+            samples,
+            window: store::HEX_CENSUS_WINDOW,
+            batch: store::HEX_CENSUS_BATCH,
+            canaries: HEX_CENSUS_CANARIES,
+            stop: &stop,
+            progress: &progress,
+        }))
+        .await
+        .map_err(|e| e.to_string())?;
+        if r.stopped {
+            return Ok("hex-census STOPPED by cancel — no report stored".to_owned());
+        }
+        let body = hex_census_json(&r)?;
+        self.db.put_report(HEX_CENSUS_REPORT, &body, store::now_unix()).await.map_err(|e| e.to_string())?;
+        Ok(hex_census_summary(&r))
+    }
+
     /// `run_spec`'s family of the read-only censuses and probes that store a report. Issue 467:
     /// one family per fn, reached through `off_frame`, so its poll frame holds only these arms'
     /// locals.
@@ -17326,37 +17361,9 @@ impl Supervisor {
                 self.db.put_report(GUID_CENSUS_REPORT, &body, store::now_unix()).await.map_err(|e| e.to_string())?;
                 Ok(guid_census_summary(&r))
             }).await,
-            Spec::HexCensus { stable_mentions, samples } => Box::pin(async move {
-                // BOXED, as every census arm here, and the store future boxed inside it; the body and the summary
-                // are sync free fns, off this frame.
-                let job_id = job.id;
-                let stop = || self.cancelled(job_id);
-                self.set_phase("walking", None, None, "issue 575: reading 32-hex organizations".to_owned());
-                let progress = |done: u64, detail: &str| {
-                    self.set_phase("walking", Some(done), None, detail.to_owned());
-                };
-                let r = Box::pin(self.db.hex_census(store::HexCensusArgs {
-                    hex_hash: hex_hash_class,
-                    is_v4: ingest::idgate::uuid_v4,
-                    role_class: guid_role_class,
-                    keep: ingest::project::guid_twin::keep_530(),
-                    stable_mentions: *stable_mentions,
-                    samples: *samples,
-                    window: store::HEX_CENSUS_WINDOW,
-                    batch: store::HEX_CENSUS_BATCH,
-                    canaries: HEX_CENSUS_CANARIES,
-                    stop: &stop,
-                    progress: &progress,
-                }))
-                .await
-                .map_err(|e| e.to_string())?;
-                if r.stopped {
-                    return Ok("hex-census STOPPED by cancel — no report stored".to_owned());
-                }
-                let body = hex_census_json(&r)?;
-                self.db.put_report(HEX_CENSUS_REPORT, &body, store::now_unix()).await.map_err(|e| e.to_string())?;
-                Ok(hex_census_summary(&r))
-            }).await,
+            Spec::HexCensus { stable_mentions, samples } => {
+                off_frame(|| self.run_hex_census(job, *stable_mentions, *samples)).await
+            }
             Spec::DissolveGuidTwins { dry_run, stable_mentions, samples, extra_unsafe_names } => Box::pin(async move {
                 // BOXED, as every census arm here (CLAUDE.md: `run_spec`'s arms share one future), and the
                 // store future boxed inside it. The stored body and the summary are sync free fns.
