@@ -111,3 +111,10 @@ adds a store write path inside retirement and needs B4's W-on probe. Neither mov
 - Write the /v1/sql example with a literal id.
 - Put "Tender id" and "retired" on one /docs source line (Verify greps by line).
 
+
+**Unit 2b (audit 2026-10-24 05:5xZ): the fold's job row never prints how many Tenders it retired.** `Report.absorbed`
+(project.rs:59) is set by both retire paths (`retire_regrouped_nonlegacy_tenders`, project.rs:2232;
+`retire_regrouped_tenders`, :3796), but `fold_summary` (supervisor.rs ~5940-5990) never prints it, so 580's sizing had to
+count `tender removed` change rows. Add a suffix that is silent at zero, `; N tender(s) retired (notices regrouped, issue
+580)`, with a pin test beside `the_touchpoint_suffix_names_every_class`. It rides 580 U2's commit. supervisor.rs is a
+flip file, so it is carried into the twin.
