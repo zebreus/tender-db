@@ -1,0 +1,48 @@
+== tender 8860958: source ted, top published_at 2025-11-10, version 16, 16 versions
+  seq  1 doe 2025-07-21                a76734d0-54ae-4aef-93cd-5d51ee1d4b0a-01      n26711981
+  seq  2 ted 2025-07-23                00481395-2025                                n24854404
+  seq  3 doe 2025-08-13                36391aa8-6e93-4085-a6e2-88f10e8c19e9-01      n26731937
+  seq  4 doe 2025-08-13                77e457ac-3380-4eba-8e7b-68ab1e455fc4-01      n26731797  (same instant as previous: tie-break publication_id)
+  seq  5 doe 2025-08-13                9aae70ae-c7ff-41fb-b40e-d2228fcdc023-01      n26731804  (same instant as previous: tie-break publication_id)
+  seq  6 ted 2025-08-14                00533712-2025                                n24908303
+  seq  7 ted 2025-08-14                00534123-2025                                n24908065  (same instant as previous: tie-break publication_id)
+  seq  8 ted 2025-08-14                00534259-2025                                n24907344  (same instant as previous: tie-break publication_id)
+  seq  9 doe 2025-10-13                98783ab2-1536-49b8-9ac2-5c53a26d0c20-01      n26781813
+  seq 10 doe 2025-10-13                e9f79c19-5655-4f7a-8df7-c3df2030c255-01      n26781868  (same instant as previous: tie-break publication_id)
+  seq 11 ted 2025-10-15                00676178-2025                                n25233679
+  seq 12 ted 2025-10-15                00678122-2025                                n25234295  (same instant as previous: tie-break publication_id)
+  seq 13 doe 2025-10-29                a196580e-d8ac-4257-9ebd-e6a85cbe589d-01      n26795088
+  seq 14 ted 2025-10-30                00718417-2025                                n25158268
+  seq 15 doe 2025-11-07                8d1174c3-c845-4c96-af06-fe27080c9117-01      n26803832
+  seq 16 ted 2025-11-10                00744610-2025                                n25303785
+  seqs contiguous 1..n: True; violations: 0; head published_at == last version: True
+== tender 248260: source ted, top published_at 2025-08-18, version 20, 20 versions
+  seq  1 doe 2025-04-16                51f70765-09f5-47c4-a77f-34bdab2b3d0c-01      n26633429
+  seq  2 doe 2025-04-16                cb442f27-41ed-42f0-b992-97ef59d51758-01      n26633436  (same instant as previous: tie-break publication_id)
+  seq  3 ted 2025-04-18                00256803-2025                                n24731002
+  seq  4 ted 2025-04-18                00256830-2025                                n24734314  (same instant as previous: tie-break publication_id)
+  seq  5 doe 2025-05-07                89d8aaae-80b2-4a58-94f5-83c1cae4d5ca-01      n26646391
+  seq  6 doe 2025-05-07                cc40fe1d-8b38-4704-9ad8-416638d9540b-01      n26646988  (same instant as previous: tie-break publication_id)
+  seq  7 ted 2025-05-08                00296169-2025                                n24775696
+  seq  8 ted 2025-05-12                00299072-2025                                n24751780
+  seq  9 doe 2025-06-11                9b92556d-a2f8-48c6-b93a-9e92f9e50dac-01      n26676738
+  seq 10 ted 2025-06-13                00384054-2025                                n44502809
+  seq 11 doe 2025-07-15                229fb8c7-1d36-428a-84b6-92c863807ad5-01      n26705793
+  seq 12 doe 2025-07-15                e54b79f4-01f4-45fe-89a9-105b53c982ee-01      n26706446  (same instant as previous: tie-break publication_id)
+  seq 13 ted 2025-07-16                00462947-2025                                n24839626
+  seq 14 ted 2025-07-16                00464677-2025                                n24841436  (same instant as previous: tie-break publication_id)
+  seq 15 doe 2025-07-30                8c8a7fa6-0b30-48c8-bd94-3be91bcd2ce8-01      n26720915
+  seq 16 doe 2025-07-30                8fa9f01a-7a35-41af-8239-5deae7d91553-01      n26720926  (same instant as previous: tie-break publication_id)
+  seq 17 ted 2025-08-01                00505043-2025                                n24918492
+  seq 18 ted 2025-08-01                00506415-2025                                n24917251  (same instant as previous: tie-break publication_id)
+  seq 19 doe 2025-08-14                19ebead5-78a9-42b7-b6e5-48a62f717947-01      n26734184
+  seq 20 ted 2025-08-18                00535419-2025                                n24979528
+  seqs contiguous 1..n: True; violations: 0; head published_at == last version: True
+== tender 250367: source ted, top published_at 2024-07-18, version 6, 6 versions
+  seq  1 doe 2024-03-15                5484e842-3313-4a14-9c5d-7c6f059b539d-01      n26299391
+  seq  2 ted 2024-03-18                00159793-2024                                n23818860
+  seq  3 doe 2024-04-19                023bb893-c111-4502-815b-9c3f8d41590f-01      n26327905
+  seq  4 ted 2024-04-22                00235584-2024                                n23882821
+  seq  5 doe 2024-07-16                cdbcba3a-dc2d-4738-ba4a-a51991901bae-01      n26404874
+  seq  6 ted 2024-07-18                00432443-2024                                n24074057
+  seqs contiguous 1..n: True; violations: 0; head published_at == last version: True

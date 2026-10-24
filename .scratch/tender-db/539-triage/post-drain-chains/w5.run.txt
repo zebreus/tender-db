@@ -1,0 +1,3 @@
+jobs: current null queued []
+2026-10-24T03:59:32Z sql w5 rc=0 secs=.918828889 bytes=250121 sql_sha256=57748428c8fe30ab
+row_count 4894 truncated False cols ['tid', 'cur_seq', 'nv', 'min_seq', 'max_seq', 'n_nonotice', 'n_doe', 'n_ted', 'n_sdk01', 'head_pub_delta', 'pairs', 'pairs_sdk01', 'pairs_doe', 'pairs_same_instant', 'pairs_cross_source', 'vd_doe', 'vt_doe', 'vd_non', 'vt_non', 'first_viol_seq']

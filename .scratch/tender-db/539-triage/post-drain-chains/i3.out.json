@@ -1,0 +1,1 @@
+{"columns":["min_tid","max_tid","versions","no_notice","doe_versions","doe_pub_mismatch","doe_disp_mismatch","doe_notice_pub_null","doe_mm_min_tid","doe_mm_max_tid","non_versions","non_pub_mismatch","non_disp_mismatch","non_mm_min_tid","non_mm_max_tid"],"row_count":1,"rows":[[248001,253000,11703,0,2190,0,0,0,null,null,9513,0,0,null,null]],"truncated":false}

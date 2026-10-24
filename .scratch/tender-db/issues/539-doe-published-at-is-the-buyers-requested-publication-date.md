@@ -408,3 +408,24 @@ plans reused, 7 statements, queue idle, no 408). They cover all 135 baseline fet
   and not an inversion. It also explains the dry run's 1,359 against the 1,360 measured.
 - **0 real inversions remain.**
 
+**Chain-order audit (2026-10-24 03:45–04:20Z, wf_41e00ab3-eb4: an auditor and an adversarial skeptic, CONFIRMED;
+`539-triage/post-drain-chains/`).**
+- **Invariant, from code.** The fold orders versions by (published_at, source rank with TED 1 and others 0,
+  publication_id, notice id), ascending: `BucketRow::sort_key`, matching `next_plan_batch`'s ORDER BY. seq = i + 1.
+  The served detail lists versions `ORDER BY seq`. dispatched_at is never a tie-breaker.
+- **Statements.** 7 bounded statements, each a PK range of ≤ 5,000 tender ids over 5 windows. They pinned
+  `INDEXED BY sqlite_autoindex_tender_versions_1`; plans are SEARCH only; queue idle; no retry.
+- **Result.**
+  - 23,574 live Tenders, 6,203 of them with a DÖE version; 26,639 adjacent pairs, 12,798 of them DÖE.
+  - 0 violations, 0 seq gaps, 0 head mismatches.
+  - Stored instant vs notice instant: 0 mismatches over 22,629 versions.
+  - 3 API spot checks are in order.
+- **Skeptic's correction.** The 93 Tenders of window w1 (8,860,949–8,861,041) are NEW: run c created them when it
+  retired 93 Tenders whose notices regrouped (issue 93's retire-and-mint; 8811451 now answers 404). So the evidence
+  for re-sorts below the head is 21 Tenders, 103 pairs (97 DÖE), all in order.
+- **Not measured.** The ~3,800 reorder estimate was not verified: version-level change rows came on only 470
+  Tenders across the three runs, 93 of them new. Folds between the 10-19 deploy and the drain had already applied the
+  new dates to many chains.
+- A served-docs gap may exist: no sentence says a Tender id can be retired on regroup. It is being checked
+  adversarially before filing.
+

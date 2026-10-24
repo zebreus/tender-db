@@ -1,0 +1,12 @@
+-- EXPLAIN QUERY PLAN, python sqlite3 3.45.1 on post-drain-chains/plan.db (copy of 539-triage/plan.db)
+(13, 0, 0, 'SEARCH t USING INTEGER PRIMARY KEY (rowid>? AND rowid<?)')
+(18, 0, 0, 'SEARCH a USING INDEX sqlite_autoindex_tender_versions_1 (tender_id=?)')
+(23, 0, 0, 'SEARCH na USING INTEGER PRIMARY KEY (rowid=?) LEFT-JOIN')
+(28, 0, 0, 'SEARCH b USING INDEX sqlite_autoindex_tender_versions_1 (tender_id=? AND seq=?) LEFT-JOIN')
+(40, 0, 0, 'SEARCH nb USING INTEGER PRIMARY KEY (rowid=?) LEFT-JOIN')
+-- turso plan-probe (rc=0) 50a8094ed7de7ed9
+PLAN	w3	SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	w3	SEARCH a USING INDEX sqlite_autoindex_tender_versions_1 (tender_id=?)
+PLAN	w3	SEARCH na USING INTEGER PRIMARY KEY (rowid=?) LEFT-JOIN
+PLAN	w3	SEARCH b USING INDEX sqlite_autoindex_tender_versions_1 (tender_id=? AND seq=?) LEFT-JOIN
+PLAN	w3	SEARCH nb USING INTEGER PRIMARY KEY (rowid=?) LEFT-JOIN

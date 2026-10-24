@@ -1,0 +1,3 @@
+jobs: current null queued []
+2026-10-24T04:01:30Z sql i2 rc=0 secs=.368027930 bytes=361 sql_sha256=f58487b9c6f73f6a
+row_count 1 truncated False cols ['min_tid', 'max_tid', 'versions', 'no_notice', 'doe_versions', 'doe_pub_mismatch', 'doe_disp_mismatch', 'doe_notice_pub_null', 'doe_mm_min_tid', 'doe_mm_max_tid', 'non_versions', 'non_pub_mismatch', 'non_disp_mismatch', 'non_mm_min_tid', 'non_mm_max_tid']

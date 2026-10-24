@@ -1,0 +1,129 @@
+# Raw body rows (verbatim arrays) of every Tender in the windows that carries version-level change rows from runs a/b/c
+# (= its chain was re-announced below the head by the refold: the compared prefix ended before the head).
+# change rows: run letter -> [seq + a(dded)/c(hanged)]
+
+## w1 [8857001, 8862000]: 93 Tenders with version-level change rows; columns ['tid', 'cur_seq', 'nv', 'min_seq', 'max_seq', 'n_nonotice', 'n_doe', 'n_ted', 'head_pub_delta', 'pairs', 'pairs_doe', 'pairs_same_instant', 'pairs_cross_source', 'vd_doe', 'vt_doe', 'vd_non', 'vt_non', 'first_viol_seq']
+[8860949, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c']} | violations 0
+[8860950, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c']} | violations 0
+[8860951, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c']} | violations 0
+[8860952, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c']} | violations 0
+[8860953, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c']} | violations 0
+[8860954, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c']} | violations 0
+[8860955, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c']} | violations 0
+[8860956, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c']} | violations 0
+[8860957, 8, 8, 1, 8, 0, 4, 4, 0, 7, 5, 3, 3, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c', '5c', '6c', '7c', '8c']} | violations 0
+[8860958, 16, 16, 1, 16, 0, 8, 8, 0, 15, 12, 6, 9, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c', '5c', '6c', '7c', '8c', '9c', '10c', '11c', '12c', '13c', '14c', '15c', '16c']} | violations 0
+[8860959, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c']} | violations 0
+[8860960, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c']} | violations 0
+[8860961, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c']} | violations 0
+[8860962, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c']} | violations 0
+[8860963, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c']} | violations 0
+[8860964, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c']} | violations 0
+[8860965, 8, 8, 1, 8, 0, 4, 4, 0, 7, 6, 1, 5, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c', '5c', '6c', '7c', '8c']} | violations 0
+[8860966, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c']} | violations 0
+[8860967, 10, 10, 1, 10, 0, 5, 5, 0, 9, 6, 6, 3, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c', '5c', '6c', '7c', '8c', '9c', '10c']} | violations 0
+[8860968, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c']} | violations 0
+[8860969, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c']} | violations 0
+[8860970, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c']} | violations 0
+[8860971, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c']} | violations 0
+[8860972, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c']} | violations 0
+[8860973, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c']} | violations 0
+[8860974, 10, 10, 1, 10, 0, 5, 5, 0, 9, 8, 1, 7, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c', '5c', '6c', '7c', '8c', '9c', '10c']} | violations 0
+[8860975, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c']} | violations 0
+[8860976, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c']} | violations 0
+[8860977, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c']} | violations 0
+[8860978, 16, 16, 1, 16, 0, 8, 8, 0, 15, 11, 8, 7, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c', '5c', '6c', '7c', '8c', '9c', '10c', '11c', '12c', '13c', '14c', '15c', '16c']} | violations 0
+[8860979, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c']} | violations 0
+[8860980, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c']} | violations 0
+[8860981, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c']} | violations 0
+[8860982, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c']} | violations 0
+[8860983, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c']} | violations 0
+[8860984, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c']} | violations 0
+[8860985, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c']} | violations 0
+[8860986, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c']} | violations 0
+[8860987, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c']} | violations 0
+[8860988, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c']} | violations 0
+[8860989, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c']} | violations 0
+[8860990, 12, 12, 1, 12, 0, 6, 6, 0, 11, 9, 4, 7, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c', '5c', '6c', '7c', '8c', '9c', '10c', '11c', '12c']} | violations 0
+[8860991, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c']} | violations 0
+[8860992, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c']} | violations 0
+[8860993, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c']} | violations 0
+[8860994, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c']} | violations 0
+[8860995, 6, 6, 1, 6, 0, 3, 3, 0, 5, 5, 0, 5, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c', '5c', '6c']} | violations 0
+[8860996, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c']} | violations 0
+[8860997, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c']} | violations 0
+[8860998, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c']} | violations 0
+[8860999, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c']} | violations 0
+[8861000, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c']} | violations 0
+[8861001, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c']} | violations 0
+[8861002, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c']} | violations 0
+[8861003, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c']} | violations 0
+[8861004, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c']} | violations 0
+[8861005, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c']} | violations 0
+[8861006, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c']} | violations 0
+[8861007, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c']} | violations 0
+[8861008, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c']} | violations 0
+[8861009, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c']} | violations 0
+[8861010, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c']} | violations 0
+[8861011, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c']} | violations 0
+[8861012, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c']} | violations 0
+[8861013, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c']} | violations 0
+[8861014, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c']} | violations 0
+[8861015, 14, 14, 1, 14, 0, 7, 7, 0, 13, 10, 6, 7, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c', '5c', '6c', '7c', '8c', '9c', '10c', '11c', '12c', '13c', '14c']} | violations 0
+[8861016, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c']} | violations 0
+[8861017, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c']} | violations 0
+[8861018, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c']} | violations 0
+[8861019, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c']} | violations 0
+[8861020, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c']} | violations 0
+[8861021, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c']} | violations 0
+[8861022, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c']} | violations 0
+[8861023, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c']} | violations 0
+[8861024, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c']} | violations 0
+[8861025, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c']} | violations 0
+[8861026, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c']} | violations 0
+[8861027, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c']} | violations 0
+[8861028, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c']} | violations 0
+[8861029, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c']} | violations 0
+[8861030, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c']} | violations 0
+[8861031, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c']} | violations 0
+[8861032, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c']} | violations 0
+[8861033, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c']} | violations 0
+[8861034, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c']} | violations 0
+[8861035, 6, 6, 1, 6, 0, 3, 3, 0, 5, 4, 1, 3, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c', '5c', '6c']} | violations 0
+[8861036, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c']} | violations 0
+[8861037, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c']} | violations 0
+[8861038, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c']} | violations 0
+[8861039, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c']} | violations 0
+[8861040, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c']} | violations 0
+[8861041, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c']} | violations 0
+
+## w2 [8811001, 8816000]: 8 Tenders with version-level change rows; columns ['tid', 'cur_seq', 'nv', 'min_seq', 'max_seq', 'n_nonotice', 'n_doe', 'n_ted', 'head_pub_delta', 'pairs', 'pairs_doe', 'pairs_same_instant', 'pairs_cross_source', 'vd_doe', 'vt_doe', 'vd_non', 'vt_non', 'first_viol_seq']
+[8811364, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['2c', '3c', '4c']} | violations 0
+[8811769, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['2c', '3c', '4c']} | violations 0
+[8812091, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['2c', '3c', '4c']} | violations 0
+[8812349, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['2c', '3c', '4c']} | violations 0
+[8812632, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['2c', '3c', '4c']} | violations 0
+[8813920, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['2c', '3c', '4c']} | violations 0
+[8814353, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['2c', '3c', '4c']} | violations 0
+[8814721, 16, 16, 1, 16, 0, 8, 8, 0, 15, 13, 2, 11, 0, 0, 0, 0, null] | change rows {'b': ['3c', '4c', '5c', '6c', '7c', '8c', '9c', '10c', '11c', '12c', '13c', '14c', '15c', '16c']} | violations 0
+
+## w3 [248001, 253000]: 7 Tenders with version-level change rows; columns ['tid', 'cur_seq', 'nv', 'min_seq', 'max_seq', 'n_nonotice', 'n_doe', 'n_ted', 'head_pub_delta', 'pairs', 'pairs_doe', 'pairs_same_instant', 'pairs_cross_source', 'vd_doe', 'vt_doe', 'vd_non', 'vt_non', 'first_viol_seq']
+[248073, 6, 6, 1, 6, 0, 3, 3, 0, 5, 5, 0, 5, 0, 0, 0, 0, null] | change rows {'c': ['2c', '3c', '4c', '5c', '6c']} | violations 0
+[248260, 20, 20, 1, 20, 0, 10, 10, 0, 19, 15, 7, 11, 0, 0, 0, 0, null] | change rows {'c': ['2c', '3c', '4c', '5c', '6c', '7c', '8c', '9c', '10c', '11c', '12c', '13c', '14c', '15c', '16c', '17c', '18c', '19c', '20c']} | violations 0
+[248813, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['2c', '3c', '4c']} | violations 0
+[249576, 7, 7, 1, 7, 0, 7, 0, 0, 6, 6, 1, 0, 0, 0, 0, 0, null] | change rows {'a': ['2c', '3c', '4c', '5c', '6c', '7c']} | violations 0
+[249960, 6, 6, 1, 6, 0, 3, 3, 0, 5, 5, 0, 5, 0, 0, 0, 0, null] | change rows {'b': ['2c', '3c', '4c', '5c', '6c']} | violations 0
+[250367, 6, 6, 1, 6, 0, 3, 3, 0, 5, 5, 0, 5, 0, 0, 0, 0, null] | change rows {'b': ['1a', '2c', '3c', '4c', '5c', '6c']} | violations 0
+[252837, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['1a', '2c', '3c', '4c']} | violations 0
+
+## w4 [178001, 183000]: 5 Tenders with version-level change rows; columns ['tid', 'cur_seq', 'nv', 'min_seq', 'max_seq', 'n_nonotice', 'n_doe', 'n_ted', 'head_pub_delta', 'pairs', 'pairs_doe', 'pairs_same_instant', 'pairs_cross_source', 'vd_doe', 'vt_doe', 'vd_non', 'vt_non', 'first_viol_seq']
+[178116, 4, 4, 1, 4, 0, 4, 0, 0, 3, 3, 0, 0, 0, 0, 0, 0, null] | change rows {'a': ['2c', '3c', '4c']} | violations 0
+[179628, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'b': ['2c', '3c', '4c']} | violations 0
+[180331, 5, 5, 1, 5, 0, 5, 0, 0, 4, 4, 0, 0, 0, 0, 0, 0, null] | change rows {'a': ['2c', '3c', '4c', '5c']} | violations 0
+[181678, 4, 4, 1, 4, 0, 2, 2, 0, 3, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['2c', '3c', '4c']} | violations 0
+[182752, 6, 6, 1, 6, 0, 5, 1, 0, 5, 5, 0, 1, 0, 0, 0, 0, null] | change rows {'a': ['2c', '3c', '4c', '5c', '6c']} | violations 0
+
+## w5 [1016501, 1021500]: 1 Tenders with version-level change rows; columns ['tid', 'cur_seq', 'nv', 'min_seq', 'max_seq', 'n_nonotice', 'n_doe', 'n_ted', 'n_sdk01', 'head_pub_delta', 'pairs', 'pairs_sdk01', 'pairs_doe', 'pairs_same_instant', 'pairs_cross_source', 'vd_doe', 'vt_doe', 'vd_non', 'vt_non', 'first_viol_seq']
+[1019998, 4, 4, 1, 4, 0, 2, 2, 0, 0, 3, 0, 3, 0, 3, 0, 0, 0, 0, null] | change rows {'c': ['2c', '3c', '4c']} | violations 0
+
+total 114
