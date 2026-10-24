@@ -1755,3 +1755,4 @@ Full record: `551-lot-sum/b6/decision-b6.md` (three judges — risk-first, value
 
   The derived-at-v leg (path V) and the rest of 561's tests do not depend on path W. Until twin-6 gates green, 551 has
   no switch-off artifact for the deploy #4 base, and C7 is open for it.
+- **21:31Z: deploy #4 live (7b1ef3e = 546 caveat retired + 561 U4 epoch 5 + 591).** Twin-5 (9622bd0) must NOT be deployed now (it would roll 561 back to epoch 4). Twin-6 = deploy #4's sha with e718684 reverted; hand-resolve head_election_agreement.rs hunks 4 and 11 and split those tests by epoch (deploy #4 review d4-ops-perf-2). Until twin-6 is gated, the switch-off is a forward revert built then.
