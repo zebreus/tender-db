@@ -1,0 +1,9 @@
+SCOPE: PASS
+   note: all-kind rows {'bid/added': 2781, 'bid/removed': 854, 'contract/added': 848, 'contract/removed': 8, 'lot/added': 1574, 'lot/changed': 15176, 'lot/removed': 64, 'lot_result/added': 1590, 'lot_result/removed': 148, 'organization/added': 141, 'tender/added': 1119, 'tender/changed': 2801, 'tender/removed': 13}
+NEW: PASS
+   note: daily fires 0 (counted, registered chain-2026-10-24); A_d 174; expected 1.91; 3x 5.73
+R (MOVED/LOST/SILENT): PASS
+PINS: PASS
+BAND: PASS
+   note: band route sql; 29 rows; B_R 29
+chain-1024: PASS -- registry.py advance chain-1024 (K -> 959250385; NEW 0, moved 0, lost 0)

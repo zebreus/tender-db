@@ -1,0 +1,24 @@
+{
+ "A": 174,
+ "at": "2026-10-24T07:45:30Z",
+ "cap_W": 11.909465020576132,
+ "complete": true,
+ "expected_fires": 1.9094650205761317,
+ "ids_sha256": "a683c24698294444155f76869f7719c0cd46e3ac16c64855894e2c243cf4893d",
+ "n": 2440,
+ "n_named": 2440,
+ "name": "chain-1024",
+ "per_job": [
+  {
+   "found": 174,
+   "job": "A01",
+   "n": 2440,
+   "not_admitted": 2266,
+   "notices": 2379,
+   "problems": [],
+   "summary_sha256": "81ce9a571db09d765ca7e57847e2a8e24442d2b196c185d222bc53b449255b96"
+  }
+ ],
+ "source": "gd5 read of chain-1024: /home/user/tender-db/.scratch/tender-db/551-lot-sum/b6/u9/segments/chain-1024/read/changed_live_ids.json",
+ "three_x": 5.728395061728395
+}

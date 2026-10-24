@@ -1,0 +1,2 @@
+chain-1024 (chain 2026-10-24, tick 2026-10-24T07:35Z): READY for gd5 over (K 959223268, CA 959250385]; 8 jobs after the tick {'fetch-rates': 1, 'probe': 2, 'process': 2, 'project': 1, 'rederive-eur-recent': 1, 'reveal-recheck': 1}; gap ends 2026-10-25T01:05:00Z
+NOTE: dry refold-lot-sum jobs since the mark (write nothing): [2745, 2744, 2743, 2742]

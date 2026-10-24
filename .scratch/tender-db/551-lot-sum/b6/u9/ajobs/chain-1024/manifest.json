@@ -1,0 +1,13 @@
+{
+ "at": "2026-10-24T07:45:17Z",
+ "ids_sha256": "a683c24698294444155f76869f7719c0cd46e3ac16c64855894e2c243cf4893d",
+ "jobs": [
+  {
+   "job": "A01",
+   "n": 2440
+  }
+ ],
+ "n": 2440,
+ "name": "chain-1024",
+ "source": "gd5 read of chain-1024: /home/user/tender-db/.scratch/tender-db/551-lot-sum/b6/u9/segments/chain-1024/read/changed_live_ids.json"
+}

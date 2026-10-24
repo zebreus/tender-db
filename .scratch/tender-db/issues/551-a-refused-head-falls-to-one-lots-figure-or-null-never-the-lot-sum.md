@@ -1680,3 +1680,13 @@ Full record: `551-lot-sum/b6/decision-b6.md` (three judges — risk-first, value
   - The twin rebuilt on the deployed base must carry the supervisor.rs hunks of 576 and 580 and the docs/openapi
     hunks of 539, 576 and 580 (C7).
 
+- **U9 day 3: chain 2026-10-24 PASS (segment chain-1024; first gd5 class-chain check).**
+  - Tick 07:35Z: probes 2746/2748, process 2747/2749, fetch-rates 2750, rederive-eur-recent 2751, project 2752 (07:39–07:43),
+    reveal-recheck 2753, all ok. Saturday, so no catch-up loop.
+  - Read over (959223268, 959250385] (07:44–07:45Z, 11 statements, E1 all-kind): 2,453 Tenders with tender rows, 2,440
+    live changed, 13 retired (the ~12/day of issue 580's sizing).
+  - A_d = 174 admitted of 2,440 (dry 2754); expected 1.91, 3× = 5.73.
+  - **Daily fires 0**, registered chain-2026-10-24. NEW 0; R MOVED/LOST/SILENT 0; pins PASS; band 29 = B_R.
+  - Advanced: K → 959250385, R 3,478, entries_sha256 e0de2c09e36c992e….
+  - Fires so far in U9: 3 (days 1–2). The next check is 10-25 08:35Z, after the 02:10Z weekly tick (RUNBOOK-W §6, class
+    weekly).

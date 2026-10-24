@@ -38,3 +38,5 @@
 2026-10-24T02:49:01Z op-0250 rev=512b2976f8c5d65de6b72d642202311e3308349a cursor=959223268 last_job_kind=None last_job_outcome=None last_job_started_at=None last_job_finished_at=None
 2026-10-24T03:44:10Z op-0344 rev=512b2976f8c5d65de6b72d642202311e3308349a cursor=959223268 last_job_kind=None last_job_outcome=None last_job_started_at=None last_job_finished_at=None
 2026-10-24T05:44:08Z op-0544 rev=512b2976f8c5d65de6b72d642202311e3308349a cursor=959223268 last_job_kind=None last_job_outcome=None last_job_started_at=None last_job_finished_at=None
+2026-10-24T07:44:21Z CA-chain-1024 rev=512b2976f8c5d65de6b72d642202311e3308349a cursor=959250385 last_job_kind=None last_job_outcome=None last_job_started_at=None last_job_finished_at=None
+2026-10-24T07:44:22Z CA-chain-1024b rev=512b2976f8c5d65de6b72d642202311e3308349a cursor=959250385 last_job_kind=None last_job_outcome=None last_job_started_at=None last_job_finished_at=None

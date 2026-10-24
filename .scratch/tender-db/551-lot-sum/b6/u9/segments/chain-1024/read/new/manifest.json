@@ -1,0 +1,41 @@
+{
+ "absent_expected": [],
+ "at": "2026-10-24T07:44:56Z",
+ "chunks": [
+  {
+   "chunk": 0,
+   "n": 2000,
+   "ok": true,
+   "rows": 2000
+  },
+  {
+   "chunk": 1,
+   "n": 440,
+   "ok": true,
+   "rows": 440
+  }
+ ],
+ "complete": true,
+ "failures": [],
+ "ids_sha256": "a683c24698294444155f76869f7719c0cd46e3ac16c64855894e2c243cf4893d",
+ "label": "chain-1024_new",
+ "missing_ids": [],
+ "n_ids": 2440,
+ "n_rows": 2440,
+ "parts": {
+  "1920_8861418_2000": {
+   "at": "2026-10-24T07:44:53Z",
+   "n": 2000,
+   "ok": true,
+   "rows": 2000,
+   "sha256": "99134232dbee4df24bc6b26bd85f14b2611c256db48f801dbd10ac1c6835e759"
+  },
+  "8861419_8861858_440": {
+   "at": "2026-10-24T07:44:56Z",
+   "n": 440,
+   "ok": true,
+   "rows": 440,
+   "sha256": "0835bce791de919880c5cd7493e2a33ee694b0341daf7d79466144fa5ff27bd5"
+  }
+ }
+}

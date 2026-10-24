@@ -1,0 +1,149 @@
+{
+ "CA": 959250385,
+ "CB": null,
+ "K_open": 959223268,
+ "allowed_missing": [],
+ "ca_health": [
+  "2026-10-24T07:44:21Z CA-chain-1024 rev=512b2976f8c5d65de6b72d642202311e3308349a cursor=959250385 last_job_kind=None last_job_outcome=None last_job_started_at=None last_job_finished_at=None",
+  "2026-10-24T07:44:22Z CA-chain-1024b rev=512b2976f8c5d65de6b72d642202311e3308349a cursor=959250385 last_job_kind=None last_job_outcome=None last_job_started_at=None last_job_finished_at=None"
+ ],
+ "ca_jobs": {
+  "current": null,
+  "file_sha256": "4ed6c84f1dd88c2ecd4d6ac82c7eecbb27f482a5fe74edf6f29c14f3f22d138f",
+  "max_job_id": 2753,
+  "measured_at": 1792827861,
+  "queued": []
+ },
+ "catchup": null,
+ "class": "chain",
+ "closed_at": "2026-10-24T07:44:22Z",
+ "date": "2026-10-24",
+ "foreign": [],
+ "jobs_mark": {
+  "max_job_id": 2741,
+  "measured_at": 1792809272,
+  "seg": "w539-c"
+ },
+ "jobs_verdict": "PASS",
+ "missing_own": [],
+ "next_tick": "2026-10-25T02:10:00Z",
+ "non_ok": [],
+ "pre_tick_dry": [
+  {
+   "counts": "refold-lot-sum (issue 551) DRY RUN — nothing written: 23 of 3453 named Tender(s) whose head could serve a derived lot sum, 30 notice(s); 3430 named Tender(s) not in the cohort (no such Tender, or a head no lot sum can reach): 8857496,8857497,8857498,8857499,8857500,8857501,8857502,8857503,8857504,8857505,8857506,8857507,8857508,8857509,8857510,8857511,8857512,8857513,8857514,8857515,…; run it with \"dry_run\":false,\"expect\":23 with the same tender_ids to stamp and re-queue them (a `project` is queued behind the wet run)",
+   "finished_at": 1792810290,
+   "job_id": 2745,
+   "kind": "refold-lot-sum",
+   "outcome": "ok",
+   "params": "refold-lot-sum dry-run tender_ids=3453 [8857496,8857497,8857498,8857499,8857500,8857501,8857502,8857503,…]",
+   "started_at": 1792810290
+  },
+  {
+   "counts": "refold-lot-sum (issue 551) DRY RUN — nothing written: 1378 of 5000 named Tender(s) whose head could serve a derived lot sum, 6913 notice(s); 3622 named Tender(s) not in the cohort (no such Tender, or a head no lot sum can reach): 7921423,7921457,7921801,7921808,7921843,7921848,7921864,7921903,7921938,7921944,7922032,7922129,7922168,7922205,7922287,7922359,7922360,7922403,7922457,7922471,…; run it with \"dry_run\":false,\"expect\":1378 with the same tender_ids to stamp and re-queue them (a `project` is queued behind the wet run)",
+   "finished_at": 1792810279,
+   "job_id": 2744,
+   "kind": "refold-lot-sum",
+   "outcome": "ok",
+   "params": "refold-lot-sum dry-run tender_ids=5000 [6826783,6827132,6827298,6827792,6829113,6829935,6830559,6830575,…]",
+   "started_at": 1792810277
+  },
+  {
+   "counts": "refold-lot-sum (issue 551) DRY RUN — nothing written: 2704 of 5000 named Tender(s) whose head could serve a derived lot sum, 15736 notice(s); 2296 named Tender(s) not in the cohort (no such Tender, or a head no lot sum can reach): 1813,1920,2275,2606,3794,3873,4073,4470,4794,4837,6271,6706,8279,8833,10757,10784,11974,12044,12046,12168,…; run it with \"dry_run\":false,\"expect\":2704 with the same tender_ids to stamp and re-queue them (a `project` is queued behind the wet run)",
+   "finished_at": 1792810273,
+   "job_id": 2743,
+   "kind": "refold-lot-sum",
+   "outcome": "ok",
+   "params": "refold-lot-sum dry-run tender_ids=5000 [909,1813,1920,2275,2606,3296,3794,3873,…]",
+   "started_at": 1792810269
+  },
+  {
+   "counts": "refold-lot-sum (issue 551) DRY RUN — nothing written: 12 of 2289 named Tender(s) whose head could serve a derived lot sum, 30 notice(s); 2277 named Tender(s) not in the cohort (no such Tender, or a head no lot sum can reach): 1016,2231,2782,3253,5057,5304,5387,6020,6295,6837,12957,13475,13792,14396,14819,14890,15575,16078,16780,16833,…; run it with \"dry_run\":false,\"expect\":12 with the same tender_ids to stamp and re-queue them (a `project` is queued behind the wet run)",
+   "finished_at": 1792809314,
+   "job_id": 2742,
+   "kind": "refold-lot-sum",
+   "outcome": "ok",
+   "params": "refold-lot-sum dry-run tender_ids=2289 [1016,2231,2782,3253,5057,5304,5387,6020,…]",
+   "started_at": 1792809314
+  }
+ ],
+ "seg": "chain-1024",
+ "started": [
+  {
+   "counts": "reveal recheck: 316501 withheld field(s) in corpus; slice 0..25535052: 100008 section(s), 2623 due, of 2623 checked 243 revealed at head, 1210 awaiting a later version, 1170 BROKEN (later version still withholds)",
+   "finished_at": 1792827799,
+   "job_id": 2753,
+   "kind": "reveal-recheck",
+   "outcome": "ok",
+   "params": "reveal recheck (daily slice)",
+   "started_at": 1792827792
+  },
+  {
+   "counts": "7673 notices → 2452 tenders (475 islands), 2751 versions; 2440 tenders written, 12 verified unchanged, 0 relabelled (issue 562); compare (issue 495): 10 tenders verified, 863 corrected; tables 68604 skipped / 567 rewritten; rows 45781244 skipped / 4369 rewritten; 7239 correction rows; 45785613 stored rows of 6096 versions read in 104.1s: 2.27 us per row, 17079.3 us per version; issue-448 alias asked 57 bound 55 refused 2 (poisoned 0, no owner 0, veto 1, names 1, generic 0); issue-469 register alias asked 7 bound 7 refused 0 (poisoned 0, no owner 0, shared 0, veto 0, names 0, generic 0); dropped parties (issue 511): 0 void, 1 placeholder (0 with an identifier), 2 blank; issue-481 tender links joined: 70 (previous-notice 65 of which cross-source 10, logical-notice 5, matched 0); refused: 25 (not-earlier 0, shared-kind 0, buyer-disjoint 10, pin-fan-in 15, fan-in 0, not-one-to-one 0, keyed-weld 0, oversized 0); deferred: 0; largest component: 29 key(s) at notice 24465351; issue-479 procedure type: eforms 5924 folded / 1 unmapped / 1917 none, eforms-de-2x 954 folded / 0 unmapped / 447 none, eforms-de-1x 16 folded / 0 unmapped / 309 none, doe-sdk01 336 folded / 25 unmapped / 107 none, fts 313 folded / 0 unmapped / 610 none",
+   "finished_at": 1792827792,
+   "job_id": 2752,
+   "kind": "project",
+   "outcome": "ok",
+   "params": "rebuild=false",
+   "started_at": 1792827571
+  },
+  {
+   "counts": "eur_cents re-derived from 278286 cached rates over 21128 tender(s) whose head was published since 2026-10-16 (issue 504): 325572 of 3137193 money rows changed, 7274 correction row(s) announced (ADR-0017 D5), 873 tender(s) stamped epoch-stale and 6096 of their notice(s) re-queued for the fold",
+   "finished_at": 1792827571,
+   "job_id": 2751,
+   "kind": "rederive-eur-recent",
+   "outcome": "ok",
+   "params": "rederive-eur, heads published in the last 8 days",
+   "started_at": 1792827558
+  },
+  {
+   "counts": "rates: 221557 daily rows upserted from 2026-10-24 (Fetched, 641786 bytes) + 21 irrevocable conversion rates seeded; 0 stale rows reconciled away; 278286 rows cached",
+   "finished_at": 1792827558,
+   "job_id": 2750,
+   "kind": "fetch-rates",
+   "outcome": "ok",
+   "params": "ecb eurofxref-hist (daily)",
+   "started_at": 1792827553
+  },
+  {
+   "counts": "531 members → 530 notices (530 parsed, 0 quarantined, 0 unrecognised, 1 dup); skipped 52 clean package(s) at their current fetch (issue 419)",
+   "finished_at": 1792827553,
+   "job_id": 2749,
+   "kind": "process",
+   "outcome": "ok",
+   "params": "fts daily (all)",
+   "started_at": 1792827550
+  },
+  {
+   "counts": "probed 1 day(s), 1 new",
+   "finished_at": 1792827550,
+   "job_id": 2748,
+   "kind": "probe",
+   "outcome": "ok",
+   "params": "fts daily (probe)",
+   "started_at": 1792827306
+  },
+  {
+   "counts": "1047 members → 1047 notices (1047 parsed, 0 quarantined, 0 unrecognised, 0 dup); skipped 95 clean package(s) at their current fetch (issue 419)",
+   "finished_at": 1792827306,
+   "job_id": 2747,
+   "kind": "process",
+   "outcome": "ok",
+   "params": "doe daily (all)",
+   "started_at": 1792827300
+  },
+  {
+   "counts": "probed 1 day(s), 1 new",
+   "finished_at": 1792827300,
+   "job_id": 2746,
+   "kind": "probe",
+   "outcome": "ok",
+   "params": "doe daily (probe)",
+   "started_at": 1792827300
+  }
+ ],
+ "status": "closed",
+ "switchoff_by": "2026-10-25T01:05:00Z",
+ "tag": "chain-2026-10-24",
+ "tick": "2026-10-24T07:35:00Z",
+ "weekly_unclosed": []
+}
