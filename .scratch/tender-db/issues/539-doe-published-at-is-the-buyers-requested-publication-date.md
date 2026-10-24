@@ -395,3 +395,16 @@ on PASS.
 **Verify (2026-10-24 02:3xZ, rev 512b297):** `GET /v1/tenders/65023` → `[65023, "2023-01-31", "2023-01-31T14:02:48+01:00"]`
 (was `2022-10-19`). The served openapi `Tender.dispatched_at` description carries the DÖE IssueDate exception. Both halves
 of `done` hold. The only thing left is retiring the pre-drain caveats, which waits on a gated deploy.
+
+**Post-drain audit (2026-10-24 02:55–03:10Z, wf_ee1f8a9b-9b6: an auditor and an adversarial re-tabulator, CONFIRMED;
+`539-triage/post-drain/`).** The seven unit-1 per-fetch reads (q03–q09) were re-sent byte-identical (sha256-checked,
+plans reused, 7 statements, queue idle, no 408). They cover all 135 baseline fetches and all 128 that had inversions.
+- Inversions went from 16,344 to 1. Notices per fetch were unchanged (1,162,607).
+- The stale share of regular exports fell from 9.50 % to 8.43 %; notices 30+ days stale fell from 5,669 to 41.
+- The 444 backlog is identical row for row.
+- The post-drain buckets equal option (a)'s pre-drain prediction (q20–q23) in every cell.
+- The one residual is notice 26250418 (de-1.1): date-only 2024-01-17 with a −05:00 offset, which the read's civil-day
+  formula shifts to 01-16. It is served as "2024-01-17", the same day as its dispatch, so it is a measurement artifact
+  and not an inversion. It also explains the dry run's 1,359 against the 1,360 measured.
+- **0 real inversions remain.**
+

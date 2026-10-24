@@ -1,0 +1,4 @@
+-- EXPLAIN QUERY PLAN, python sqlite3 3.45.1 on ../plan.db
+(4, 0, 0, 'SEARCH n USING INDEX notices_fetch_id (fetch_id=?)')
+-- turso plan-probe (rc=0)
+PLAN	q30_resid	SEARCH n USING INDEX notices_fetch_id (fetch_id=?)
