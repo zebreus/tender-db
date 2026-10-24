@@ -774,11 +774,9 @@ enum Spec {
     /// (the default) walks the cohort and writes nothing; a wet run needs `expect`, the dry run's
     /// count, and aborts before any write when the cohort is off by more than a quarter. The wet
     /// run queues `project` behind itself. When unit 4b's B5 switched path W on again (v2, every
-    /// sum vouched by a buyer-stated total), it was also the way forward; when B5's stop rule
+    /// sum vouched by a buyer-stated total), it was also the way forward; since B5's stop rule
     /// switched path W off again (2026-10-19), a run scoped by `tender_ids` to the heads B5's
-    /// drains corrected (2622, 2625, 2627) was the way back (2630). Issue 551 B6 switches path W on
-    /// again with two guards on R10's vouching total, and its drain is the same run scoped by
-    /// `tender_ids` to those 3,502 heads (B6 point 9: no corpus walk). B5: `tender_ids` restricts
+    /// drains corrected (2622, 2625, 2627) is the way back once more. B5: `tender_ids` restricts
     /// the finder to those Tenders (`Db::lot_sum_cohort_named_tender_ids`: the same predicate, one
     /// id at a time), so an id cohort drains, and is checked against the port, before the corpus;
     /// dry and wet read as without it (`expect` is then the named cohort's dry count).

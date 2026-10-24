@@ -202,7 +202,7 @@ meaningful to it (see <a href="#applies">which filters apply where</a> below):</
   <tr><td class="ep">winner</td><td>Organization id that won at least one Lot &mdash; excluding awards where the winner is the tender's own buyer (<code>is_buyer</code>, see the <a href="#tender-detail-buyer">tender detail</a>).</td></tr>
   <tr><td class="ep">bidder</td><td>Organization id named as a tenderer on a published bid (TED eForms, eForms-DE), won or not. On FTS, an award supplier only: FTS publishes no losing bidders. The pre-eForms TED formats (text, internal-ojs, r2.0.8, r2.0.9) and DÖE sdk-0.1 publish winners without bids, so a win there appears under <code>winner</code> only. To find every tender where an organization is named as a tenderer or a winner, query both; on the formats without bids, an award to the tender's own buyer is in neither (issue 531).</td></tr>
   <tr><td class="ep">status</td><td><code>open</code> or <code>closed</code>, by submission deadline <strong>and by what the newest notice says</strong> (issue 533). <code>open</code>: a submission deadline in the future, and the procedure not closed by its newest notice. <code>closed</code>: everything else &mdash; no deadline in the future, or a newest notice that published results when every result the procedure has published is a no-award (all <code>clos-nw</code>: a cancellation, an FTS UK12 termination) and together they decide every lot of kind <code>Lot</code> (lots groups and parts need no result; a Tender-scoped result decides no lot, so it closes only a Tender with no <code>Lot</code>-kind lot), because a result notice usually publishes no deadline and the Tender carries its contract notice's (see <a href="#caveats">caveats &rarr; Dates</a>). Not where the Tender declares an open-ended scheme, whose no-award result reports one round: a dynamic purchasing system, procedure <code>oth-single</code>/<code>oth-mult</code>, a qualification-system (eForms 15) or dynamic-market (UK13&ndash;UK16) notice, or a current deadline more than a year after the publication of the first notice that published a deadline (an admission window; an explicit r2.0.9 <em>discontinued</em>/<em>unsuccessful</em> no-award closes even then). A winner, or a decision the notice withheld, never closes a Tender here; a later notice that publishes no results of its own (a re-launch contract notice, but also e.g. a corrigendum) reopens it. On <code>/v1/lots</code> a lot is closed with its Tender: a no-award for some lots of a Tender that stays open does not close those lots. The deadline may be the procedure's rather than the lot's &mdash; see <a href="#caveats">caveats &rarr; Dates</a>. <code>sort=deadline</code> and <code>deadline_after</code>/<code>deadline_before</code> still read the deadline alone.</td></tr>
-  <tr><td class="ep"><code>min_value</code> / <code>max_value</code></td><td>Value in <strong>EUR cents</strong>, compared against the TENDER's head value in EUR: its elected headline figure converted to EUR at its publication date or, where <code>value_derivation</code> is set, the sum of its lots converted the same way (on <code>/v1/lots</code> too: the bound reads the Tender's value, not the lot's own <code>value</code>) (the derived <code>eur_cents</code> — see <a href="#caveats">caveats</a>). A tender with no convertible amount matches no value bound unless its lot awards are summed (<code>lot-sum-awards</code>, only where a total the buyer stated vouches for the sum, past the two guards issue 551 B6 put on that total: see <a href="#caveats">caveats</a>): then the bound compares that sum.</td></tr>
+  <tr><td class="ep"><code>min_value</code> / <code>max_value</code></td><td>Value in <strong>EUR cents</strong>, compared against the TENDER's head value in EUR: its elected headline figure converted to EUR at its publication date or, where <code>value_derivation</code> is set, the sum of its lots converted the same way (on <code>/v1/lots</code> too: the bound reads the Tender's value, not the lot's own <code>value</code>) (the derived <code>eur_cents</code> — see <a href="#caveats">caveats</a>). A tender with no convertible amount matches no value bound. Summing its lot awards instead (<code>lot-sum-awards</code>, only where a total the buyer stated vouches for the sum: issue 551 unit 4b) is <strong>switched off</strong> since 19 October 2026 (see <a href="#caveats">caveats</a>); a Tender not refolded since still compares the sum stored for it.</td></tr>
   <tr><td class="ep">currency</td><td>ISO&nbsp;4217 code, case-insensitive (e.g. <code>EUR</code>, <code>sek</code>) — Tenders/Lots whose current version publishes at least one amount in that currency, <em>as published</em> &mdash; any amount row, including the partner-only award-notice framework values (issue 506).</td></tr>
   <tr><td class="ep">procedure_type</td><td>The <strong>procedure type</strong> (eForms BT-105, <code>procurement-procedure-type</code>): one or more codes, comma-separated, case-insensitive, at most 10 &mdash; <code>open</code>, <code>restricted</code>, <code>neg-w-call</code>, <code>neg-wo-call</code>, <code>comp-dial</code>, <code>innovation</code>, <code>oth-single</code>, <code>oth-mult</code>, and the German national codes as published (eForms-DE&rsquo;s below-threshold <code>us-*</code>, DÖE sdk-0.1&rsquo;s <code>de-*</code>; not cross-walked onto the EU list). Exact match on the current version&rsquo;s procedure type &mdash; the latest <em>mapped</em> type a notice of the Tender stated; lots inherit their Tender&rsquo;s. The pre-eForms TED eras fold the form&rsquo;s own procedure checkbox where it names one type, else the <code>PR</code> code through a closed table (1 open, 2/3 restricted, 4 neg-w-call, T neg-wo-call); any other value or a silent notice folds nothing, so the earlier type stays in place (it can predate the latest notice), and a Tender no notice typed matches no code. E.g. <code>procedure_type=neg-wo-call</code> for awards without a prior call &mdash; complete for eForms, <em>not</em> before it: a legacy award is typed only when its form ticked a without-call box, and FTS&rsquo;s Procurement Act routes (<em>Direct award</em>, <em>Competitive flexible procedure</em>, &hellip;) are not mapped. Tenders/Lots.</td></tr>
   <tr><td class="ep">lang</td><td>Preferred language for the <em>picked</em> text values (the <code>title</code> on tenders, lots and the detail header): ISO&nbsp;639 code, case-insensitive (<code>de</code> and <code>DEU</code> both work). Fallback chain: requested &rarr; English &rarr; the notice's original language &rarr; any labelled &rarr; unlabelled. A <em>selector</em>, not a filter &mdash; it changes which title a row serves, never which rows match, so it is never reported in <code>ignored_filters</code>. The detail's <code>texts</code> array always carries every stored language variant regardless.</td></tr>
@@ -680,8 +680,8 @@ against a view that cannot answer it at all.</p>
 <p><strong>Values.</strong> A Tender's headline value is
 <code>tenders.current_value_eur_cents</code> (indexed). Where it is a derived lot sum (issue
 551: <code>'lot-sum-vouched'</code>, or <code>'lot-sum-awards'</code> with the stated total that
-vouches for it in the detail's <code>vouched_by</code>, served again since issue 551 B6 after its
-switch-off on 19 October 2026),
+vouches for it in the detail's <code>vouched_by</code>, written only while <code>lot-sum-awards</code> is
+switched on: off since 19 October 2026),
 <code>tenders.current_value_derivation</code> says so and
 <code>current_value_cents</code> / <code>current_value_currency</code> hold the sum as money
 (no amount row carries it; NULL on every elected head). A lot's is stored per version
@@ -1107,18 +1107,13 @@ rates and the quarantine resolution ledger.</p>
   one lot; when a lot is restated under a second key or an award was resolved through another lot's
   tender; and, R10, when no stated total vouches for the sum. Measured before it was switched on, 29
   of a fresh uniform 30 of these sums read right against their notices, and all 20 at &euro;100m or
-  more did. It was <strong>switched off again</strong> on 19 October 2026, when its rollout changed
-  about twice as many Tenders as projected, past the stop rule set before it ran; read against
-  their notices, 59 of 61 of the sums it had served read right, one neutral and one wrong, vouched
-  by a single-lot award notice's own total that the sum did not include. It is <strong>served again
-  with two guards on the vouching total</strong> (issue 551 B6): a total from a notice whose round
-  has exactly one result does not vouch, and an award notice's total, or either end of a
-  <code>VAL_RANGE_TOTAL</code>, vouches only if that notice has a result on at least one of the
-  summed lots (a result that closes the lot or awards nothing counts). The two refuse 35 of the
-  3,502 sums served before (of 31 of those read, 4 were wrong), and a fresh sample of 30 of the
-  sums they keep all read right. So a Tender with several lots, no
-  procedure figure and no vouching total serves ONE figure (an award's copy, or null), and one
-  whose only figures are lot <em>estimates</em> or
+  more did. It is <strong>switched off again</strong> since 19 October 2026, pending an
+  investigation: its rollout changed about twice as many Tenders as projected, past the stop rule
+  set before it ran (nothing has been read wrong yet). So <code>lot-sum-awards</code> is not served
+  while path W is off: no fold derives it, and the Tenders it changed are refolded back to one
+  figure (an award's copy, or null); one not yet refolded may still show it. A Tender with
+  several lots and no procedure figure therefore serves ONE figure (an award's copy, or null), and one whose
+  only figures are lot <em>estimates</em> or
   framework maxima still serves ONE lot's figure, never their sum (summed estimates moved 3 of 20
   adjudicated heads the wrong way: sums insured, a &times;1000 slip on every lot, a pseudo-lot
   restating the whole). A figure with neither such a partner nor such a lot sum is served as published,
@@ -1136,9 +1131,9 @@ rates and the quarantine resolution ledger.</p>
   nine or more identical digits, which is a form-width maximum rather than a
   figure (&euro;999,999,999.99 on street cleaning in a town of 47,000), and
   anything above &euro;100bn EUR-equivalent. A Tender whose only published
-  amounts fall in those classes has <em>no known value</em> unless its lot
-  awards are summed (<code>lot-sum-awards</code>, above, where a stated total vouches for the
-  sum): otherwise its <code>value</code> is null and NEITHER bound returns it (issue 366).</li>
+  amounts fall in those classes has <em>no known value</em>: its
+  <code>value</code> is null and NEITHER bound returns it (issue 366). Its lot
+  awards are not summed instead while <code>lot-sum-awards</code> is switched off (above).</li>
 </ul>
 
 <h3>Dates</h3>
@@ -2671,14 +2666,10 @@ mod tests {
     /// them say path W (`lot-sum-awards`) was withdrawn; unit 4b's B4 says it was re-enabled with
     /// its guards (R1–R10), that every awards sum, at any size, needs a total the buyer stated
     /// within 1 % of it, and that `vouched_by` names that total — keeping the read that withdrew
-    /// it on `/docs`. B5's stop rule (2026-10-19) switched path W off again; issue 551 B6 serves it
-    /// again with two guards on the vouching total (G-single, G-cover): every surface checked here
-    /// says `lot-sum-awards` is served. `/docs` (the caveat, the value-bound row, the SQL Values
-    /// paragraph), OpenAPI `min_value` / `value` / `value_derivation` / `method` and the
-    /// `current_value_derivation` note name the switch-off and B6; `vouched_by` and the detail note
-    /// name B6's guarded vouching total; `/docs` and OpenAPI state both guards and what the reads
-    /// found. No surface checked here may still say it is switched off, served only while switched
-    /// on, or withdrawn (unit 4a's wording). One phrase per sentence, lowercase (`plain`).
+    /// it on `/docs`. B5's stop rule (2026-10-19) switched path W off again, pending the
+    /// investigation: every surface says `lot-sum-awards` is not served while path W is off, and
+    /// keeps the guards and `vouched_by` it is served with when on. No surface may still say it is
+    /// served now. One phrase per sentence, lowercase (`plain`).
     #[test]
     fn the_docs_say_a_head_can_be_a_derived_lot_sum() {
         let start = PAGE.find("<h3>Amounts</h3>").expect("/docs has the amount caveats");
@@ -2702,42 +2693,33 @@ mod tests {
                 "ten refusal families (r1&ndash;r10)",
                 "and, r10, when no stated total vouches for the sum",
                 "29 of a fresh uniform 30 of these sums read right against their notices",
-                "it was <strong>switched off again</strong> on 19 october 2026, when its rollout changed about twice as many tenders as projected",
-                "59 of 61 of the sums it had served read right, one neutral and one wrong, vouched by a single-lot award notice's own total that the sum did not include",
-                "it is <strong>served again with two guards on the vouching total</strong> (issue 551 b6)",
-                "a total from a notice whose round has exactly one result does not vouch",
-                "an award notice's total, or either end of a val_range_total, vouches only if that notice has a result on at least one of the summed lots (a result that closes the lot or awards nothing counts)",
-                "the two refuse 35 of the 3,502 sums served before (of 31 of those read, 4 were wrong)",
-                "a fresh sample of 30 of the sums they keep all read right",
-                "no procedure figure and no vouching total serves one figure (an award's copy, or null)",
+                "it is <strong>switched off again</strong> since 19 october 2026, pending an investigation",
+                "past the stop rule set before it ran (nothing has been read wrong yet)",
+                "so lot-sum-awards is not served while path w is off: no fold derives it",
+                "a tender with several lots and no procedure figure therefore serves one figure (an award's copy, or null)",
                 "still serves one lot's figure, never their sum",
                 "the elected figure's derived eur value or, where value_derivation is set, the lot sum's (above)",
-                "has <em>no known value</em> unless its lot awards are summed (lot-sum-awards, above, where a stated total vouches for the sum)",
-                "otherwise its value is null and neither bound returns it (issue 366)",
+                "has <em>no known value</em>: its value is null and neither bound returns it (issue 366)",
+                "awards are not summed instead while lot-sum-awards is switched off (above)",
             ],
         );
-        // Unit 4a's withdrawal text, unit 3's unvouched wording and B5's stop-rule switch-off
-        // wording are gone.
+        // Unit 4a's withdrawal text, unit 3's unvouched wording and B5's served-now wording are gone.
         for gone in [
             "is <strong>withdrawn</strong>",
             "refolded back to one figure (an award's copy, or null) until a redesign",
             "no longer summed",
             "lot-sum-awards, when the tender publishes",
             "unless its lots' awards are summed",
+            "unless its lot awards are summed",
             "no figure repeated across the lots",
             "it is <strong>re-enabled",
-            "it is <strong>switched off again</strong> since",
-            "pending an investigation",
-            "nothing has been read wrong yet",
-            "is not served while path w is off",
-            "not summed instead while lot-sum-awards is switched off",
         ] {
             assert!(!plain(caveats).contains(gone), "/docs's amount caveat still says an earlier path W: {gone:?}");
         }
         // The filter table's value-bound row, and the OpenAPI parameter (unit 3's third review: both
         // still said a Tender with no convertible amount never matches, which path W broke; unit 4a
-        // withdrew path W, so it never matched again; unit 4b's B5 switched it back on, vouched, B5's
-        // stop rule switched it off again on 2026-10-19, and issue 551 B6 serves it again, guarded).
+        // withdrew path W, so it never matched again; unit 4b's B5 switched it back on, vouched, and
+        // B5's stop rule switched it off again on 2026-10-19).
         let start = PAGE.find("<td class=\"ep\"><code>min_value</code> / <code>max_value</code></td>").expect("/docs has the value-bound row");
         let row = &PAGE[start..start + PAGE[start..].find("</tr>").expect("row end")];
         assert_says(
@@ -2745,14 +2727,12 @@ mod tests {
             row,
             &[
                 "where value_derivation is set, the sum of its lots converted the same way",
-                "a tender with no convertible amount matches no value bound unless its lot awards are summed (lot-sum-awards, only where a total the buyer stated vouches for the sum, past the two guards issue 551 b6 put on that total",
-                "then the bound compares that sum.",
+                "a tender with no convertible amount matches no value bound.",
+                "summing its lot awards instead (lot-sum-awards, only where a total the buyer stated vouches for the sum: issue 551 unit 4b) is <strong>switched off</strong> since 19 october 2026",
+                "a tender not refolded since still compares the sum stored for it.",
             ],
         );
-        // B5's switch-off and unit 4a's withdrawal (the B5 on-state test's guard) are gone from the row.
-        for gone in ["switched off", "withdrawn"] {
-            assert!(!plain(row).contains(gone), "/docs's min_value/max_value row still says path W is off ({gone:?})");
-        }
+        assert!(!plain(row).contains("then the bound compares that sum"), "/docs's min_value/max_value row still says path W is served");
         assert_says(
             "/docs's served-values bullet",
             caveats,
@@ -2763,12 +2743,8 @@ mod tests {
         assert_says(
             "/docs's SQL Values paragraph",
             values,
-            &["where it is a derived lot sum (issue 551: 'lot-sum-vouched', or 'lot-sum-awards' with the stated total that vouches for it in the detail's vouched_by, served again since issue 551 b6 after its switch-off on 19 october 2026), tenders.current_value_derivation says so"],
+            &["where it is a derived lot sum (issue 551: 'lot-sum-vouched', or 'lot-sum-awards' with the stated total that vouches for it in the detail's vouched_by, written only while lot-sum-awards is switched on: off since 19 october 2026), tenders.current_value_derivation says so"],
         );
-        // B5's switch-off clause sat in this paragraph, outside the Amounts caveat's slice.
-        for gone in ["written only while lot-sum-awards is switched on", "off since 19 october 2026"] {
-            assert!(!plain(values).contains(gone), "/docs's SQL Values paragraph still says path W is switched off: {gone:?}");
-        }
         let spec: serde_json::Value = serde_json::from_str(SPEC).expect("openapi.json is valid JSON");
         let min_value = spec["components"]["parameters"]["min_value"]["description"].as_str().expect("min_value is described");
         assert_says(
@@ -2776,7 +2752,7 @@ mod tests {
             min_value,
             &[
                 "where value_derivation is set, the sum of its lots converted the same way",
-                "rows with no convertible amount match only when their lot awards are summed (lot-sum-awards, where a total the buyer stated vouches for the sum: issue 551 unit 4b; switched off on 2026-10-19 and served again since issue 551 b6, with two guards on that total)",
+                "rows with no convertible amount match no value bound: lot-sum-awards, which sums their lot awards where a total the buyer stated vouches for the sum (issue 551 unit 4b), is switched off since 2026-10-19 (pending an investigation)",
             ],
         );
         let tender = &spec["components"]["schemas"]["Tender"]["properties"];
@@ -2786,9 +2762,9 @@ mod tests {
             &described("value"),
             &[
                 "it can instead be a derived lot sum, in the lots' own currency, when value_derivation is set",
-                "or the lots' latest awards added up on a tender with no procedure figure, served only where a total the buyer stated, within 1% of the sum, vouches for it (lot-sum-awards, issue 551 unit 4b",
-                "switched off on 2026-10-19 and served again since issue 551 b6, with two guards on that total)",
-                "a multi-lot tender with no procedure figure and no such total serves one figure, an award's copy or null.",
+                "or the lots' latest awards added up on a tender with no procedure figure, served only where a total the buyer stated, within 1% of the sum, vouches for it (lot-sum-awards, issue 551 unit 4b)",
+                "and only while lot-sum-awards is switched on: it is switched off since 2026-10-19",
+                "so lot-sum-awards is not served while it is off.",
                 "still serves one lot's figure, never their sum",
             ],
         );
@@ -2802,11 +2778,8 @@ mod tests {
                 "re-enabled with its guards r1-r10 (issue 551 unit 4b, 2026-10-18)",
                 "no award 10x its lot's estimate, 10x or a tenth of its earlier award, or 10x the next largest award",
                 "every awards sum, at any size, needs a total the buyer stated within 1% of it, which vouched_by names",
-                "it was switched off again on 2026-10-19 (issue 551, b5's stop rule",
-                "and is served again since issue 551 b6 with two guards on the total that vouches",
-                "a total from a notice whose round in the version has exactly one result does not vouch (g-single",
-                "it also removes a one-result notice's total when that one lot is summed)",
-                "an award notice's total or either end of a ted val_range_total vouches only if its notice has a result on at least one summed lot, even one that closes the lot or awards nothing (g-cover)",
+                "it is switched off again since 2026-10-19 (issue 551, b5's stop rule",
+                "so lot-sum-awards is not served while path w is off: no fold derives it",
                 "no amount row is invented",
             ],
         );
@@ -2814,13 +2787,13 @@ mod tests {
         assert_says(
             "OpenAPI Tender.value_derivation.method",
             method,
-            &["both are served", "lot-sum-awards since issue 551 unit 4b, switched off on 2026-10-19 and served again since issue 551 b6, always with vouched_by"],
+            &["lot-sum-vouched, the one method served while lot-sum-awards is switched off", "lot-sum-awards (issue 551 unit 4b, always with vouched_by) is not served while it is switched off"],
         );
         let vouched_by = &tender["value_derivation"]["properties"]["vouched_by"];
         assert_says(
             "OpenAPI Tender.value_derivation.vouched_by",
             vouched_by["description"].as_str().expect("value_derivation.vouched_by is described"),
-            &["lot-sum-awards only", "the buyer-stated total that vouches for the sum", "within 1% of it", "since issue 551 b6, the first such total, in chain order, that both of its guards keep"],
+            &["lot-sum-awards only", "the buyer-stated total that vouches for the sum", "within 1% of it", "written only while lot-sum-awards is switched on"],
         );
         for key in ["field", "notice_id", "cents"] {
             assert!(vouched_by["properties"][key].is_object(), "value_derivation.vouched_by.{key} is declared");
@@ -2830,21 +2803,10 @@ mod tests {
             ("OpenAPI Tender.value", described("value")),
             ("OpenAPI Tender.value_derivation", described("value_derivation")),
             ("OpenAPI Tender.value_derivation.method", method.to_owned()),
-            ("OpenAPI Tender.value_derivation.vouched_by", vouched_by["description"].as_str().expect("value_derivation.vouched_by is described").to_owned()),
         ] {
-            // A bare "withdrawn" would match value_derivation's history of unit 4a, which stays.
             assert!(!plain(&text).contains("withdrawn (issue 551 unit 4a)"), "{surface} still says unit 4a withdrew path W: {text}");
-            for gone in [
-                "is not served while",
-                "not currently served",
-                "switched off since",
-                "off since 2026-10-19",
-                "pending an investigation",
-                "under investigation",
-                "only while lot-sum-awards is switched on",
-            ] {
-                assert!(!plain(&text).contains(gone), "{surface} still says path W is switched off ({gone:?}): {text}");
-            }
+            assert!(!plain(&text).contains("both are served"), "{surface} still says path W is served: {text}");
+            assert!(!plain(&text).contains("match only when their lot awards are summed"), "{surface} still says path W is served: {text}");
         }
         let note = |column: &str| crate::v1::sql::column_note("tenders", column).unwrap_or_else(|| panic!("tenders.{column} is described"));
         assert_says("/v1/sql tenders.current_value_eur_cents", note("current_value_eur_cents"), &["it can be a derived lot sum's eur value"]);
@@ -2855,24 +2817,17 @@ mod tests {
                 "null when the head value is one published figure",
                 "'lot-sum-vouched' when",
                 "'lot-sum-awards' when it is the lots' latest awards added up on a head with no procedure figure, vouched by a total the buyer stated within 1% of the sum (issue 551 unit 4b",
-                "b5's stop rule switched it off again on 2026-10-19, and issue 551 b6 writes it again with two guards on the vouching total",
+                "written only while lot-sum-awards is switched on: it is switched off again since 2026-10-19",
+                "so no fold writes 'lot-sum-awards' now and refold-lot-sum re-elects the heads that carry it",
             ],
         );
-        // "no fold writes" covers unit 4a's "no fold writes it" and B5's "no fold writes
-        // 'lot-sum-awards' now"; a bare "withdrawn" would match the note's unit 4a history.
-        for gone in ["no fold writes", "switched off again since 2026-10-19", "written only while lot-sum-awards is switched on"] {
-            assert!(!plain(note("current_value_derivation")).contains(gone), "the /v1/sql note still says path W is switched off: {gone:?}");
-        }
         assert_says("/v1/sql tenders.current_value_cents", note("current_value_cents"), &["a derived head's lot sum in minor units"]);
         assert_says("/v1/sql tenders.current_value_currency", note("current_value_currency"), &["the currency of current_value_cents"]);
         assert_says(
             "/v1/sql tenders.current_value_derivation_detail",
             note("current_value_derivation_detail"),
-            &["served as value_derivation", "vouched_by {field, notice_id, cents} for 'lot-sum-awards'", "since issue 551 b6 the first such total both of its guards keep"],
+            &["served as value_derivation", "vouched_by {field, notice_id, cents} for 'lot-sum-awards'", "written only while lot-sum-awards is switched on, off since 2026-10-19"],
         );
-        for gone in ["written only while lot-sum-awards is switched on", "off since 2026-10-19"] {
-            assert!(!plain(note("current_value_derivation_detail")).contains(gone), "the /v1/sql detail note still says path W is switched off: {gone:?}");
-        }
     }
 
     /// Issue 547 re-review: a date bound implies its sort on a page only, and every text that

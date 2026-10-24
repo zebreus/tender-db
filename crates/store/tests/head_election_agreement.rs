@@ -865,14 +865,14 @@ async fn a_derived_lot_sum_head_is_stored_and_served_as_the_fold_derived_it() {
 /// (`ValueBy::Version`), and a derived head is a sum no amount row carries, so the superset reads
 /// the version's lot figures too. Without them a later version that moves a derived head out of
 /// a bound probed `(false, false)` on both sides, the change was dropped, and the subscriber kept
-/// a ghost. Path W under `min_value`: lot awards of EUR 1.2 m and EUR 1.0 m beside the EUR 1.2 m
-/// award's copy derive EUR 2.2 m, vouched (unit 4b's R10, path W switched on again by issue 551
-/// B6: `canonical::LOT_SUM_AWARDS_PATH`) by the award notice's own BT-161 total of EUR 2.2 m, each
-/// lot won by one tenderer; that notice's round holds two LotResults, each on a summed lot, so
-/// both of R10's B6 guards (G-single, G-cover) keep the total. The fold stores it marked
-/// `lot-sum-awards` with `vouched_by` in the detail. (Unit 4a's withdrawal, and B5's stop rule
-/// from 2026-10-19, had left v1 on the copy, read inside only as a superset.) A second notice
-/// admits a EUR 1.5 m estimate. Path V under
+/// a ghost. Path W's shape under `min_value`: lot awards of EUR 1.2 m and EUR 1.0 m beside the
+/// EUR 1.2 m award's copy, vouched (unit 4b's R10) by the award notice's own BT-161 total of
+/// EUR 2.2 m, each lot won by one tenderer: path W v2 derives EUR 2.2 m from it, marked
+/// `lot-sum-awards` with `vouched_by` in the detail, while it is switched on (B5 had it on).
+/// B5's stop rule switched path W off again on 2026-10-19 (`canonical::LOT_SUM_AWARDS_PATH`), as
+/// unit 4a's withdrawal did: v1 keeps the max election, the copy, unmarked, and the probe's lot
+/// legs (kept for path V and path W) still read v1's lots as a superset, an idempotent
+/// over-delivered `removed`. A second notice admits a EUR 1.5 m estimate. Path V under
 /// `max_value`: six awards of EUR 500 k vouched by a refused EUR 3 bn (no copy) derive EUR 3 m;
 /// a second notice admits a EUR 5 m estimate.
 #[tokio::test]
@@ -926,8 +926,9 @@ async fn an_earlier_derived_head_is_read_inside_the_bound_it_was_in() {
     let min = |eur_cents: i64| Filter { min_value: Some(eur_cents), ..Filter::default() };
     let max = |eur_cents: i64| Filter { max_value: Some(eur_cents), ..Filter::default() };
 
-    // Path W under min_value (EUR 2 m): v1's award notice states the EUR 2.2 m total that vouches
-    // for the sum (R10, at any size since the "vouched everywhere" fallback; both B6 guards keep it).
+    // Path W's shape under min_value (EUR 2 m): v1's award notice states the EUR 2.2 m total that
+    // would vouch for the sum (R10, at any size since the "vouched everywhere" fallback). B5's stop
+    // rule: path W is off, so v1 serves the EUR 1.2 m copy, unmarked.
     let (db, conn) = open("derived-at-w").await;
     let copy = || vec![amount("result_value", 120_000_000)];
     let awards = [120_000_000, 100_000_000];
@@ -944,15 +945,10 @@ async fn an_earlier_derived_head_is_read_inside_the_bound_it_was_in() {
         ..v
     };
     db.apply_tenders(&[tender(vec![vouched(version(1, copy(), &awards))])], PUBLISHED_AT, false).await.unwrap();
-    let detail = "{\"summed\":\"awards\",\"lots\":2,\"vouched_by\":{\"field\":\"BT-161-NoticeResult\",\"notice_id\":1,\"cents\":220000000}}";
-    assert_eq!(
-        marker(&conn).await,
-        (Some(220_000_000), Some("lot-sum-awards".into()), Some(220_000_000), Some("EUR".into()), Some(detail.into())),
-        "v1 derives the vouched awards sum (path W on: B6), and the detail names the total that vouched"
-    );
+    assert_eq!(marker(&conn).await, (Some(120_000_000), None, None, None, None), "v1 keeps the max election (path W off: B5's stop rule)");
     let row = only_row(&conn).await;
-    assert_eq!((row.value_cents, row.value_derivation.as_deref()), (Some(220_000_000), Some("lot-sum-awards")), "the read layer serves the sum");
-    assert_eq!(row.value_derivation_detail.as_deref(), Some(detail));
+    assert_eq!((row.value_cents, row.value_derivation.as_deref()), (Some(120_000_000), None), "the read layer serves the copy, unmarked");
+    assert_eq!(row.value_derivation_detail, None);
     let estimated = {
         let mut facts = copy();
         facts.push(amount("estimated_value", 150_000_000));
@@ -961,7 +957,7 @@ async fn an_earlier_derived_head_is_read_inside_the_bound_it_was_in() {
     db.apply_tenders(&[tender(vec![vouched(version(1, copy(), &awards)), estimated])], PUBLISHED_AT, false).await.unwrap();
     assert_eq!(marker(&conn).await, (Some(150_000_000), None, None, None, None), "v2 elects the estimate");
     assert!(!at(conn.clone(), min(200_000_000), 2).await, "the new head is below EUR 2 m");
-    assert!(at(conn.clone(), min(200_000_000), 1).await, "v1's EUR 2.2 m was inside it: the probe pair reads `removed`");
+    assert!(at(conn.clone(), min(200_000_000), 1).await, "v1's lots total EUR 2.2 m: the superset reads it inside (an idempotent `removed`)");
     assert!(!at(conn.clone(), min(250_000_000), 1).await, "the superset is bounded: v1's lots total EUR 2.2 m");
     drop((db, conn));
     let _ = std::fs::remove_file(path("derived-at-w"));
@@ -990,16 +986,15 @@ async fn an_earlier_derived_head_is_read_inside_the_bound_it_was_in() {
 
 /// Issue 551 unit 4a's refold back: 4e5eaf7's `refold-lot-sum` drain left path-W heads stored as
 /// their awards' sum, marked `lot-sum-awards`, and nothing else rewrites them. Path W's shape (a
-/// EUR 1.2 m award copy beside awards of EUR 1.2 m and EUR 1.0 m) is folded two ways, each one
-/// production refuses with path W switched on again (issue 551 B6, both of R10's guards:
-/// `canonical::LOT_SUM_AWARDS_PATH`), so the fold keeps the copy. `v1`, as unit 3's rows carry
-/// it: no stated total and no winner (v2 refuses it, R5.1: no winner; R10: nothing vouches).
-/// `g-cover`, a head B5 served that B6 refuses: each lot won by one tenderer and a BT-161 of
-/// EUR 2.2 m that vouched for the sum under v2, stated by notice 2, a notice with no round in the
-/// version, so it names no summed lot and G-cover removes it (R10; 7202436's shape, one of the 35
-/// heads of the 3,502 B5 served that the guards refuse). Its planted detail carries that
-/// `vouched_by`, as B5 stored it: `refold-lot-sum` (whose `tender_ids` scoping only picks the
-/// Tenders) re-elects a B5-shaped head the guards refuse too. The drained head is planted over it
+/// EUR 1.2 m award copy beside awards of EUR 1.2 m and EUR 1.0 m) is folded two ways. `v1`, as
+/// unit 3's rows carry it: no stated total and no winner, so the fold keeps the copy, path W
+/// switched off or on (v2 refuses it, R5.1: no winner; R10: nothing vouches). `v2`, as B5's drain
+/// served it: each lot won by one tenderer and the award notice's BT-161 stating EUR 2.2 m, which
+/// path W v2 sums to EUR 2.2 m (`an_earlier_derived_head_is_read_inside_the_bound_it_was_in` had it
+/// so while B5 had it on), so the fold keeps the copy only because B5's stop rule switched path W
+/// off on 2026-10-19 (`canonical::LOT_SUM_AWARDS_PATH`), and the planted detail carries
+/// `vouched_by`: the refold B5's drain back runs (`refold-lot-sum`, whose `tender_ids` scoping only
+/// picks the Tenders) re-elects a B5-shaped head too. The drained head is planted over it
 /// (`drained`), or only its four marker columns with the EUR figure left alone (`marker-only`).
 /// Stamped epoch-stale and refolded with the compare `On`, every version compares identical, but
 /// the stored head differs from the fresh one (its EUR column, or its marker alone), so the head
@@ -1008,7 +1003,7 @@ async fn an_earlier_derived_head_is_read_inside_the_bound_it_was_in() {
 #[tokio::test]
 async fn a_drained_awards_sum_head_is_refolded_back_to_the_max_election() {
     use store::canonical::{LotResultState, LotState, Round, StatedTotal, StatedTotalKind};
-    let award = |lot: usize, cents: i64, won: bool| LotResultState {
+    let award = |lot: usize, cents: i64, b5: bool| LotResultState {
         key: format!("RES-{lot}"),
         lot_key: Some(format!("LOT-{lot}")),
         decision: None,
@@ -1016,14 +1011,13 @@ async fn a_drained_awards_sum_head_is_refolded_back_to_the_max_election() {
         awarded_cents: Some(cents),
         awarded_currency: Some("EUR".into()),
         decided: None,
-        winners: if won { vec![10 + lot as i64] } else { Vec::new() },
+        winners: if b5 { vec![10 + lot as i64] } else { Vec::new() },
         buyer_winners: Vec::new(),
         statistics: Vec::new(),
         published_lot_no: None,
         group: false,
     };
     let awards = [120_000_000, 100_000_000];
-    // `b5`: each lot won by one tenderer, and the EUR 2.2 m total stated by notice 2 (no round).
     let chain = |b5: bool| TenderProjection {
         source: "ted".into(),
         procedure_key: Some("pk-551-back".into()),
@@ -1048,7 +1042,7 @@ async fn a_drained_awards_sum_head_is_refolded_back_to_the_max_election() {
             group_members: Vec::new(),
             stated_totals: if b5 {
                 vec![StatedTotal {
-                    notice_id: 2,
+                    notice_id: 1,
                     logical_notice_id: None,
                     field: "BT-161-NoticeResult".into(),
                     kind: StatedTotalKind::Award,
@@ -1062,8 +1056,8 @@ async fn a_drained_awards_sum_head_is_refolded_back_to_the_max_election() {
         }],
     };
     let v1_detail = "{\"summed\":\"awards\",\"lots\":2}";
-    let b5_detail = "{\"summed\":\"awards\",\"lots\":2,\"vouched_by\":{\"field\":\"BT-161-NoticeResult\",\"notice_id\":2,\"cents\":220000000}}";
-    let cases = [("v1", false, v1_detail), ("g-cover", true, b5_detail)].into_iter().flat_map(|(shape, b5, detail)| {
+    let v2_detail = "{\"summed\":\"awards\",\"lots\":2,\"vouched_by\":{\"field\":\"BT-161-NoticeResult\",\"notice_id\":1,\"cents\":220000000}}";
+    let cases = [("v1", false, v1_detail), ("v2", true, v2_detail)].into_iter().flat_map(|(shape, b5, detail)| {
         [("drained", 220_000_000), ("marker-only", 120_000_000)].map(move |(drain, eur_cents)| (shape, b5, detail, drain, eur_cents))
     });
     for (shape, b5, detail, drain, drained_eur_cents) in cases {
@@ -1072,7 +1066,7 @@ async fn a_drained_awards_sum_head_is_refolded_back_to_the_max_election() {
         // The compare refuses to run without the by-version indexes.
         db.build_tender_indexes().await.unwrap();
         db.apply_tenders(&[chain(b5)], PUBLISHED_AT, false).await.unwrap();
-        let why = if b5 { "path W on (B6), and G-cover removes the vouch" } else { "path W on (B6), and v2 refuses the unvouched sum" };
+        let why = if b5 { "path W off (B5's stop rule)" } else { "path W off, and v2 refuses the unvouched sum" };
         assert_eq!(marker(&conn).await, (Some(120_000_000), None, None, None, None), "{name}: {why}: the copy");
         db.execute_for_test(&format!(
             "UPDATE tenders SET current_value_eur_cents = {drained_eur_cents}, current_value_derivation = 'lot-sum-awards', \
@@ -1200,12 +1194,14 @@ async fn an_earlier_version_whose_lot_figures_overflow_a_sum_still_probes() {
 /// Round 3's `BETWEEN 1` dropped them: the earlier version probed outside a bound its served head
 /// was inside, the pair read `(false, false)`, and a `max_value` subscriber kept a ghost. IDR at
 /// 17,000/EUR. Unit 3 summed IDR 80.00 and 84.00 on two lots (each EUR 0, S EUR 0.01). Path W v2
-/// (on again since issue 551 B6: `canonical::LOT_SUM_AWARDS_PATH`) refuses a sum below 1,000.00 in
-/// its own currency (R5.13), so v1 here awards twelve lots IDR 83.00 to 84.65 (each EUR 0) that
-/// sum to IDR 1,005.90, EUR 0.06, each lot won by one tenderer and the sum vouched by the award
-/// notice's BT-161 (R10; its notice's round holds twelve LotResults, each on a summed lot, so both
-/// B6 guards keep it): v1 serves EUR 0.06 marked `lot-sum-awards`; v2 admits a EUR 1.5 m estimate.
-/// The bounds sit on S's own EUR 0.06, so v1's served head is just inside both.
+/// refuses a sum below 1,000.00 in its own currency (R5.13), so v1 here awards twelve lots IDR
+/// 83.00 to 84.65 (each EUR 0) that sum to IDR 1,005.90, EUR 0.06, each lot won by one tenderer
+/// and the sum vouched by the award notice's BT-161 (R10): switched on (as B5 had it), v1 serves
+/// EUR 0.06 marked `lot-sum-awards`. B5's stop rule switched path W off again on 2026-10-19
+/// (`canonical::LOT_SUM_AWARDS_PATH`), so v1's head is null, unmarked, and the probe's legs, kept
+/// for path W, still read v1 inside both bounds as a superset (twelve EUR 0 rows); v2 admits a
+/// EUR 1.5 m estimate. The bounds sit on S's own EUR 0.06, so v1 would be just inside both
+/// switched on.
 #[tokio::test]
 async fn an_earlier_derived_head_of_zero_euro_summands_is_read_inside_its_bound() {
     use store::canonical::{LotResultState, LotState, Round, StatedTotal, StatedTotalKind};
@@ -1266,12 +1262,7 @@ async fn an_earlier_derived_head_of_zero_euro_summands_is_read_inside_its_bound(
     db.upsert_currency_rates(&[("IDR".into(), store::rates::civil_date(PUBLISHED_AT), 17_000.0, "ecb".into())]).await.unwrap();
     db.reload_rates_lookup().await.unwrap();
     db.apply_tenders(&[tender(vec![version(1, Vec::new())])], PUBLISHED_AT, false).await.unwrap();
-    let derived = marker(&conn).await;
-    assert_eq!(
-        (derived.0, derived.1.as_deref(), derived.2, derived.3.as_deref()),
-        (Some(6), Some("lot-sum-awards"), Some(sum), Some("IDR")),
-        "v1 serves the vouched sum, EUR 0.06 (path W on: B6)"
-    );
+    assert_eq!(marker(&conn).await, (None, None, None, None, None), "v1 serves null, unmarked (path W off: B5's stop rule)");
     db.apply_tenders(&[tender(vec![version(1, Vec::new()), version(2, vec![amount("estimated_value", 150_000_000)])])], PUBLISHED_AT, false)
         .await
         .unwrap();
