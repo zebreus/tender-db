@@ -405,3 +405,7 @@ Posted on a63cf23 (the batch deploy, 11:32Z) under the owner's velocity ruling, 
   `Lot-TenderReceipt` + 175 legacy `tender-receipt`. Apply after deploy #3: `{"kind":"refold-notices","notices":[12400937]}`
   beside the Touchpoint `refold-sections`. Expected after the refold: the touchpoint (`Lot-*`) rows on 18044191/18044192
   go to 0; the legacy ORG-path rows stay (issue 585).
+- **U5 drained 2026-10-24 (deploy #3 6cb4408):** refold-notices 2766/2767 [12400937] corrected 1 Tender (4592524, the buyer
+  promotion); refold-sections Touchpoint 2768/2769 (with 586 U3): touchpoint roles 101,191 aliased, 448,163 minted, 36,745
+  dropped; 9,160 Tenders corrected; 23,495 mentions retired; sweep-orphan-orgs 2772 queued. Read-back wf_0fa63db1-03e running
+  (items 1–2 gone, label orgs' Lot-* rows → 0, fresh salted 30 minted, salt 576-u5-).
