@@ -27,8 +27,8 @@ All paths in this file are relative to `.scratch/tender-db/586-u1/` unless they 
 
 - **Two fresh notice windows.** In the window over notices 24,020,000–24,039,999, 173 of 2,081 touchpoint mentions
   alias (8.3%) and 24 are dropped. In the window over notices 47,420,000–47,439,999, 74 of 904 alias (8.2%) and 16
-  are dropped. About 90% of the aliased mentions bound an OLDER identifier-less row that names the parent. The alias
-  moves them to the identified parent organization.
+  are dropped. About 85% of the aliased mentions bound an OLDER identifier-less row that names the parent (150 of 173,
+  and 62 of 74). The alias moves them to the identified parent organization.
 - **W: 0.** Every salted read is 40 R / 0 W:
   - fold.md's two reads (salts `586-u1-tierA`, `586-u1-tierC`);
   - the check's four reads (salt `586-u1-check-*`: tier A, tier C and both windows);
@@ -228,7 +228,7 @@ their reasons here:
   1246716 "Secretaría General", 13863806, 17553080 and 18120239 (prose), plus the C4 rows above, which alias instead.
 - **Bars:**
   - R3's top 60: 0 hits.
-  - Class N rebuilds exactly (18 clusters / 37 orgs / 853 mentions).
+  - Class N rebuilds exactly (18 clusters / 37 orgs / 853 mentions). All 16 cluster hits fall inside class N.
   - The tribunal pool (28 clusters / 62 orgs): 0 hits.
   - 576 U4's 330 served touchpoint parties: 0 hits.
   - `MUST_KEEP`: 0 of 55 hit. `MUST_DROP`: 0 of 35 missed.
@@ -324,7 +324,7 @@ canonicalisation also applies when the synonym is all of T, which `fold._organ_s
 
 ### The counter and its job-row line
 
-`touchpoint_suffix` keeps every word the drain greps:
+`touchpoint_suffix` keeps every word the drain greps (the numbers are illustrative):
 
     ; touchpoint roles (issue 576): 108123 aliased (issue 586: 3012 by spelling, 37677 by organ), 444051 minted (… without a country of their own took the organization's), 34210 dropped
 
