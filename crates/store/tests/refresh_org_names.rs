@@ -1715,7 +1715,9 @@ async fn the_planner_plans_a_wrap_collapse_and_the_written_head_holds() {
 /// Rule v14 end to end: a DROPPED-ACCENT head printed within 3 years of the plan (22441088's shape) is planned
 /// `change:R0d` to the accented top spelling, where v13 held it `head_current`; an ordinary rename of the same
 /// shape stays `hold:head_current`. The wet run applies it under its own rule, and the re-plan keeps the written
-/// head (its top cluster's spelling: `keep:S1`).
+/// head (its top cluster's spelling: `keep:S1`). R0d never asks the junk exemption: a dropped-accent head the
+/// exemption would release `unfit` is planned R0d with no `recent_released`, where the same shape with no drop is
+/// released `unfit` (R1).
 #[tokio::test]
 async fn a_dropped_accent_head_is_planned_r0d_past_head_current_and_the_written_head_keeps() {
     let (db, conn) = open("ron-v14").await;
@@ -1750,4 +1752,31 @@ async fn a_dropped_accent_head_is_planned_r0d_past_head_current_and_the_written_
     let again = plan(&db, 2_000, Some(&[95]), &[]).await;
     assert!(again.planned.is_empty() && again.held.is_empty(), "{:?} {:?}", ids(&again.planned), ids(&again.held));
     assert_eq!(again.by_keep["S1"], count(1, 11));
+    // No junk exemption asked: 97's head ends in a C0 control no collapse removes (no control-only head, so
+    // the exemption WOULD release it `unfit`), and its top cluster holds the accented spelling with that
+    // control beside the fit one: planned R0d, nothing read `recent_released`. 98 is the same shape without
+    // that spelling, so its head is a drop of no top spelling: R1, released `unfit` from `head_current`.
+    let (junk, junk_top) = ("Tribunal administratif d'Orlans\u{1}", "Tribunal administratif d'Orléans\u{1}");
+    let mut ninety_seven = spread(junk, 9_700, today - 400, 2);
+    ninety_seven.extend(spread(elected, 9_750, today - 300, 9));
+    ninety_seven.extend(spread(junk_top, 9_790, today - 200, 1));
+    let mut ninety_eight = spread(junk, 9_800, today - 400, 2);
+    ninety_eight.extend(spread(elected, 9_850, today - 300, 9));
+    for (id, rows) in [(97, ninety_seven), (98, ninety_eight)] {
+        let mentions: Vec<(&str, &[(i64, i64)])> = rows.iter().map(|(name, v)| (*name, v.as_slice())).collect();
+        dated_org(&conn, id, junk, &mentions).await;
+    }
+    let junked = plan(&db, 2_000, Some(&[97, 98]), &[]).await;
+    assert_eq!(ids(&junked.planned), vec![97, 98]);
+    let (repair, released) = (&junked.planned[0], &junked.planned[1]);
+    assert_eq!(
+        (repair.reason, repair.new_name.as_deref(), repair.recent_released, repair.release_withheld),
+        ("R0d", Some(elected), None, None),
+        "no junk exemption asked"
+    );
+    assert_eq!(
+        (released.reason, released.new_name.as_deref(), released.recent_released),
+        ("R1", Some(elected), Some("unfit")),
+        "the exemption R0d skips"
+    );
 }

@@ -366,8 +366,10 @@ pub fn head_wraps(head: &str, fns: &HeadElectFns) -> bool {
 /// - no word of `spelling` is 2 or more non-ASCII letters with no ASCII letter: that is an omitted word, not a
 ///   dropped accent (11221362 `Johnson & Johnson Hellas` against `… HELLAS ΑΕΒΕ`).
 ///
-/// A letter is [`char::is_alphabetic`]. A decomposed accent (a combining mark) is not one: a head that lost
-/// only marks is the diacritic-folded spelling, which the vote key already joins to it.
+/// A letter is [`char::is_alphabetic`]. A decomposed Latin accent (a combining mark of U+0300–U+0362, all but
+/// the Greek U+0345) is not one: a head that lost only those marks is the diacritic-folded spelling, which the
+/// vote key already joins to it. The Other_Alphabetic marks are letters to it (U+0345, and the combining Latin
+/// letters U+0363–U+036F).
 pub fn head_dropped_accent(head: &str, spelling: &str) -> bool {
     let stripped: String = spelling.chars().filter(char::is_ascii).collect();
     if !collapse_whitespace(&stripped).eq_ignore_ascii_case(&collapse_whitespace(head)) {
@@ -4641,8 +4643,19 @@ mod tests {
         assert_eq!(e.verdict, r0d(elected));
         assert_eq!(e.verdict.label(), "change:R0d");
         assert_eq!((e.voting, e.top, e.head_votes), (7, 5, 2));
-        assert_eq!(e.recent.map(|r| (r.released, r.release_withheld)), Some((None, None)), "no junk exemption asked");
         assert_eq!(dated_at(&forward("Acme Works", "Acme Group"), "Acme Works", 20 * DAY).verdict, current("Acme Group"));
+        // No junk exemption is asked: a head it WOULD release `unfit` (a trailing C0 control no collapse
+        // removes, so no control-only head either) whose top cluster also holds the accented spelling with
+        // that control changes R0d, nothing read `released`. Without that spelling the head is no drop of any
+        // top spelling, and the same shape changes R1, released `unfit` from `head_current`.
+        let (junk, junk_top) = ("Tribunal administratif d'Orlans\u{1}", "Tribunal administratif d'Orléans\u{1}");
+        assert!(super::head_dropped_accent(junk, junk_top) && !super::head_dropped_accent(junk, elected));
+        let both = [forward(junk, elected), items(junk_top, 200, 15, 1)].concat();
+        let e = dated_at(&both, junk, 20 * DAY);
+        assert_eq!(e.verdict, r0d(elected));
+        assert_eq!(e.recent.map(|r| (r.released, r.release_withheld)), Some((None, None)), "no junk exemption asked");
+        let e = dated_at(&forward(junk, elected), junk, 20 * DAY);
+        assert_eq!((e.verdict, e.recent.unwrap().released), (r1(elected), Some("unfit")), "the exemption R0d skips");
         // A serve hold (the exhibit 22435268's review_body) is not asked; an ordinary R1 change is held by it.
         let review = HeadElectFns { serve_hold: |_, _, _| Some(super::HEAD_HOLD_REVIEW_BODY), ..FNS };
         assert_eq!(elect_head(&[(head, 1), (elected, 8)], &org(head), &review), r0d(elected));

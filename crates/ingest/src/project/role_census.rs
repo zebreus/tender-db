@@ -1676,9 +1676,16 @@ mod tests {
             ]),
             (s(&["Raad van State"]), s(&["PSI BV"]))
         );
-        // A free-text sentence in a name field is no organization to promote.
+        // A free-text sentence in a name field is no organization to promote. This one names "deze aanbesteding",
+        // so the portal label refuses it before the word count (issue 576 unit 5).
         let sentence = "Inhoudelijke en procedurele aspecten rond deze aanbesteding dienen via de digitale omgeving van het \
                         aanbestedingsplatform te worden gesteld door middel van de vragenmodule";
+        assert!(portal_label(&fold(sentence)));
+        assert_eq!(fix(&[(BUYER, "ORG-1", "Raad van State"), ("OPT-301-Lot-AddInfo", "ORG-2", sentence)]), NONE);
+        // A portal-free sentence of 21 words: only the more-than-16-words guard refuses it.
+        let sentence = "Inhoudelijke en procedurele aspecten rond de opdracht dienen via de berichtenmodule te worden \
+                        gesteld door alle geïnteresseerde partijen in dit traject";
+        assert!(!portal_label(&fold(sentence)) && fold(sentence).split(' ').count() == 21);
         assert_eq!(fix(&[(BUYER, "ORG-1", "Raad van State"), ("OPT-301-Lot-AddInfo", "ORG-2", sentence)]), NONE);
         // 20408347: the Raad van State with only "Digitaal via TenderNed" elsewhere — a
         // portal label, never promoted, so the role stays as published.

@@ -390,14 +390,16 @@ pub struct HexRowSample {
     pub tenders: u64,
     /// The first three of its distinct Tenders.
     pub tender_ids: Vec<i64>,
+    /// The first cf35 mention's notice — `None` when phase 2 met none of the row's cf35 mentions (an unseen
+    /// row, not an unkeyed one: `raw`, `scheme`, `section_id` and every `target_*` are then `None` too).
     pub notice_id: Option<i64>,
     pub section_id: Option<String>,
     pub roles: Vec<String>,
     pub stratum: &'static str,
     pub first_year: Option<i64>,
     pub twin: bool,
-    /// The first cf35 mention's fallback key (`None` only when unkeyed) and its found row (`None` when
-    /// missing or unkeyed).
+    /// The first cf35 mention's fallback key (`None` when unkeyed) and its found row (`None` when missing or
+    /// unkeyed). All three are `None` when phase 2 met none of the row's cf35 mentions (`notice_id` `None`).
     pub target_name_norm: Option<String>,
     pub target_country: Option<String>,
     pub target_id: Option<i64>,

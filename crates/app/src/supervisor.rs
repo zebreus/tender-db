@@ -2851,6 +2851,8 @@ fn hex_census_summary(r: &store::HexCensusReport) -> String {
                 match (&s.target_name_norm, s.target_id) {
                     (_, Some(target)) => format!(" target {target}"),
                     (Some(_), None) => " target missing".to_owned(),
+                    // Phase 2 met none of its cf35 mentions: no first mention, so no key was read at all.
+                    (None, None) if s.notice_id.is_none() => " unseen".to_owned(),
                     (None, None) => " unkeyed".to_owned(),
                 }
             ),
@@ -2868,8 +2870,8 @@ fn hex_census_summary(r: &store::HexCensusReport) -> String {
          eSender row(s). Rows by stratum: {strata}. By country: {countries}. By first year: {years}. Targets: {} \
          key(s), {} found ({} mention(s)), {} missing ({}), {} unkeyed mention(s); A6: {} city-absent mention(s) \
          at {} target(s), {} multi-city target(s), {} planned multi-city key(s); {} CCIRA key(s). Tenderer keys \
-         (U5): {} mention(s) on {} row(s), {} procedure(s), {} dash-strip collision(s). Canaries: {canaries}. \
-         NOTHING IS WRITTEN.",
+         in the cf35 notices (U5): {} mention(s) on {} row(s), {} procedure(s), {} dash-strip collision(s). \
+         Canaries: {canaries}. NOTHING IS WRITTEN.",
         r.hex32_rows,
         r.id_rows_16plus,
         r.hex_hash_rows,
@@ -25684,7 +25686,7 @@ mod tests {
             "within-notice twins 1 group(s) in 1 notice(s), 2 row(s), 0 eSender row(s)",
             "Rows by stratum: sprovider 1, review 2, mediator 0, add_info 0, buyer 0",
             "Targets: 2 key(s), 1 found (2 mention(s)), 1 missing (1), 0 unkeyed mention(s)",
-            "Tenderer keys (U5): 1 mention(s) on 1 row(s), 1 procedure(s), 0 dash-strip collision(s)",
+            "Tenderer keys in the cf35 notices (U5): 1 mention(s) on 1 row(s), 1 procedure(s), 0 dash-strip collision(s)",
             "859 sprovider 1 mention(s) 1 tender(s) target missing",
             "862 review 1 mention(s) 1 tender(s) twin target 1163000",
             "22763203 absent",
@@ -25692,6 +25694,19 @@ mod tests {
             assert!(msg.contains(needle), "missing `{needle}`: {msg}");
         }
         assert!(msg.ends_with("NOTHING IS WRITTEN."), "{msg}");
+        // A canary phase 2 met none of the cf35 mentions of (no first mention, no notice) reads `unseen`, never
+        // `unkeyed`, which names a first mention with no fallback key.
+        let seen = |org_id: i64, notice_id: Option<i64>| store::HexRowSample {
+            org_id,
+            stratum: "other",
+            notice_id,
+            ..Default::default()
+        };
+        let canaries =
+            store::HexCensusReport { canaries: vec![seen(859, None), seen(861, Some(277))], ..Default::default() };
+        let msg = hex_census_summary(&canaries);
+        let needle = "859 other 0 mention(s) 0 tender(s) unseen; 861 other 0 mention(s) 0 tender(s) unkeyed;";
+        assert!(msg.contains(needle), "missing `{needle}`: {msg}");
         let (body, _) = db.latest_report(HEX_CENSUS_REPORT).await.unwrap().expect("report");
         let report: serde_json::Value = serde_json::from_str(&body).unwrap();
         assert_eq!(report["class"]["all"]["rows"], 3, "{body}");
@@ -30965,6 +30980,9 @@ mod tests {
         gauge("run_analyze", std::mem::size_of_val(&sup.run_analyze(&j)), 512);
         gauge("run_audit_fts_ids", std::mem::size_of_val(&sup.run_audit_fts_ids(&j, true, None, None)), 1_024);
         gauge("run_repair_member_twins", std::mem::size_of_val(&sup.run_repair_member_twins(&j, true)), 1_024);
+        // Issue 575 U1: the hex census, reached through `off_frame` from `run_census_spec` (1,816 bytes
+        // measured 2026-10-24).
+        gauge("run_hex_census", std::mem::size_of_val(&sup.run_hex_census(&j, 100, 30)), 2_048);
         gauge(
             "refuse_without_org_fk_indexes",
             std::mem::size_of_val(&sup.refuse_without_org_fk_indexes("k")),
@@ -31098,6 +31116,10 @@ mod tests {
         poll_once_within("run_analyze", 330 * 1024, || sup.run_analyze(&j));
         // Issue 487: the deep path measured 336 KiB (2026-10-05, the paint above).
         poll_once_within("run_audit_fts_ids", 360 * 1024, || sup.run_audit_fts_ids(&j, true, None, None));
+        // Issue 575 U1: the hex census refuses at its first read (the scratch DB lacks the mention-key indexes
+        // `Db::open` defers). Its deep path measured 333 KiB (2026-10-24, the paint above, which read
+        // `run_audit_fts_ids` at its 336 KiB in the same run), plus ~24 KiB.
+        poll_once_within("run_hex_census", 360 * 1024, || sup.run_hex_census(&j, 100, 30));
         assert!(
             over.is_empty(),
             "issue 467: future(s) over their stack budget — {}. Each is built on the caller's \
