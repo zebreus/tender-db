@@ -1690,3 +1690,8 @@ Full record: `551-lot-sum/b6/decision-b6.md` (three judges — risk-first, value
   - Advanced: K → 959250385, R 3,478, entries_sha256 e0de2c09e36c992e….
   - Fires so far in U9: 3 (days 1–2). The next check is 10-25 08:35Z, after the 02:10Z weekly tick (RUNBOOK-W §6, class
     weekly).
+- **Code-drift ledger (C1): 572 unit 2** (2026-10-24, gate pending at writing).
+  - U2a is docs.rs and sql.rs served notes (flip files, so the twin carries them).
+  - U2b is crates/ingest/src/fts/checklist.rs, metadata only: not a fold input, 0 notices re-queued, no job.
+  - It joins the 10-28 batch, and P1 covers its ingest touch. No W input.
+

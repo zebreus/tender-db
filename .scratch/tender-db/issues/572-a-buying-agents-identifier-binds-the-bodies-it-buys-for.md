@@ -1,6 +1,6 @@
 # 572 — a buying agent's or consortium's identifier binds the member bodies it buys for (and vice versa)
 
-Status: ready-for-agent — unit 1 MEASURED and DECIDED 2026-10-19 (rule 572-L: leave as published under 456 design 3, so a buying agent's identifier keeps binding the member body printed beside it, and document that; 5 545-F-shaped mentions move to 545's follow-up cohort; adopted after the critic's amendments, harm re-measured per principal; .scratch/tender-db/572-triage/decision.md). NEXT: unit 2 — U2a the /docs caveat, the `v_tender_buyers` note in sql.rs and their test (crates/app, any deploy), U2b the FTS checklist's two "owed" entries and the `parties[].roles` reword (crates/ingest, after 551's flip or held as a gated patch), U2c the tracker edits DONE 2026-10-19 (545's cohort of 5 plus guard G-A, 456, the 513/519/473/524 side notes appended), then read bars R1–R3 and monitor M0. Was: ready-for-agent — filed 2026-10-19 from issue 545 unit 2a (wf_fde95594-dbf: `.scratch/tender-db/545-triage/u2a/`, class "A", 52 kept rows / 53 keys / 79 mentions in the GB-PPON half alone). Next: unit 1, measure the class and decide its semantics (it is NOT 545's one-off copy-paste class, so 545's reviewed rehoming does not apply).
+Status: ready-for-agent — **unit 2 BUILT 2026-10-24** (wf_9f0ea8c2-9c7). Read bars first: R1 40 R / 0 W / 0 N and R2 6 of 6, re-scored independently (1 SQL, 54 GETs; `572-triage/u2/`). Then U2a: the /docs caveat, the sql.rs v_tender_buyers note, the test and the CONTEXT.md "Buying agent" entry. U2b: checklist.rs owes roleDetails and details.classifications, rewords parties[].roles, and adds a unit test; metadata only, 0 notices re-queued, and 551's C1 code-drift ledger records it. Review confirmed 3 findings, all fixed. One commit, gate pending. NEXT: deploy with 551's 10-28 batch (docs.rs and sql.rs are flip files; U2b touches crates/ingest, which P1 covers), then R3 (the /docs bullet GET, 0 notices re-queued) and monitor M0, then done. Was: ready-for-agent — unit 1 MEASURED and DECIDED 2026-10-19 (rule 572-L: leave as published under 456 design 3, so a buying agent's identifier keeps binding the member body printed beside it, and document that; 5 545-F-shaped mentions move to 545's follow-up cohort; adopted after the critic's amendments, harm re-measured per principal; .scratch/tender-db/572-triage/decision.md). NEXT: unit 2 — U2a the /docs caveat, the `v_tender_buyers` note in sql.rs and their test (crates/app, any deploy), U2b the FTS checklist's two "owed" entries and the `parties[].roles` reword (crates/ingest, after 551's flip or held as a gated patch), U2c the tracker edits DONE 2026-10-19 (545's cohort of 5 plus guard G-A, 456, the 513/519/473/524 side notes appended), then read bars R1–R3 and monitor M0. Was: ready-for-agent — filed 2026-10-19 from issue 545 unit 2a (wf_fde95594-dbf: `.scratch/tender-db/545-triage/u2a/`, class "A", 52 kept rows / 53 keys / 79 mentions in the GB-PPON half alone). Next: unit 1, measure the class and decide its semantics (it is NOT 545's one-off copy-paste class, so 545's reviewed rehoming does not apply).
 Kind: data quality (organization identity, buyer side)
 Relates to:
 - 545 (the GB-identifier-names-another-organization class; 2a split this pattern out as "A", agent and principal);
@@ -194,3 +194,29 @@ duplicate College of Policing party.
 
 Unit 2 as above: U2a and U2c first, because they are free of 551. U2b follows after 551's flip, or is held as a gated
 patch. Then R1–R3 and M0, then close 572 against the Verify above.
+
+## Unit 2 — read and built (2026-10-24, wf_9f0ea8c2-9c7; `572-triage/u2/`)
+
+- **R1 PASS: 40 R, 0 W, 0 replaced N.**
+  - q8_rows: 1 SQL, 66 SEARCH steps, 263 rows. The class now has 193 rows: all 191 mentions of 10-19 plus 2 new
+    current P@A rows.
+    - COMMUNITY GATEWAY on NHC (8853907/47418946) is a new key, not on frozen list (a), so it goes to monitor M's
+      unreviewed bucket.
+    - Cardiff and Vale on NWSSP (47428982) is an existing key.
+    - Current rows: P@A 99, A@P 13.
+  - The sample was the 10 exemplars (R) plus a salted 30 (A@P 8, P@A 22), every row R. The 3 v1-only exemplars are N,
+    as expected.
+- **R2 PASS: 6 of 6.** 11 lists, each a complete single page.
+- **Re-score.** An independent re-score reproduced the salted draw exactly and every score.
+- **Build.**
+  - U2a, docs.rs: the "Codes and identities" bullet in the decided wording, plus the clause in "A party names its
+    organization twice".
+  - U2a, sql.rs: the v_tender_buyers note, with a needle in the plans test.
+  - U2a, CONTEXT.md: "Buying agent", limited after review to procurement service providers, not eSenders; the host
+    binding applies only where the host's identifier is printed.
+  - U2b: checklist.rs, both "owed" entries citing (issue 572), since F1 is not filed. The classifications reason
+    names UK_CA_TYPE, UK_CA_DEVOLVED_REGULATIONS, TED_CA_TYPE, COFOG, TED_CE_ACTIVITY and UVDB, and
+    `parties[].details` no longer claims them.
+- **Tests.** Focused runs: 150 passed, then checklist 3 and the census 1, all EXIT=0.
+- **Budget left for unit 2:** 2 SQL statements and 21 GETs, for M0 and R3.
+

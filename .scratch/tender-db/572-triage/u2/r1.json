@@ -1,0 +1,1258 @@
+{
+ "exemplars": [
+  {
+   "tender_id": 8641682,
+   "cur": 1,
+   "org": 30953692,
+   "role": "Procedure-Buyer",
+   "notice_id": 46795453,
+   "section_id": "ORG-GB-PPON-PJXZ-4423-NDBT",
+   "name": "Birmingham City Council",
+   "direction": "P@A",
+   "agent": "NHC",
+   "new_since_q4": false,
+   "score": "R",
+   "detail": {
+    "version": 2,
+    "n_versions": 2,
+    "current_caused_by": 46795453,
+    "versions_published_since_cutoff": [],
+    "party": {
+     "role": "Procedure-Buyer",
+     "organization_id": 30953692,
+     "organization_name": "Northern Housing Consortium Ltd",
+     "mention_name": "Birmingham City Council",
+     "lot": null
+    }
+   }
+  },
+  {
+   "tender_id": 8636304,
+   "cur": 1,
+   "org": 30953692,
+   "role": "Procedure-Buyer",
+   "notice_id": 46789661,
+   "section_id": "ORG-GB-PPON-PJXZ-4423-NDBT",
+   "name": "Darlington Borough Council",
+   "direction": "P@A",
+   "agent": "NHC",
+   "new_since_q4": false,
+   "score": "R",
+   "detail": {
+    "version": 2,
+    "n_versions": 2,
+    "current_caused_by": 46789661,
+    "versions_published_since_cutoff": [],
+    "party": {
+     "role": "Procedure-Buyer",
+     "organization_id": 30953692,
+     "organization_name": "Northern Housing Consortium Ltd",
+     "mention_name": "Darlington Borough Council",
+     "lot": null
+    }
+   }
+  },
+  {
+   "tender_id": 8677647,
+   "cur": 1,
+   "org": 30953692,
+   "role": "Procedure-Buyer",
+   "notice_id": 46794092,
+   "section_id": "ORG-GB-PPON-PJXZ-4423-NDBT",
+   "name": "Karbon Homes (54North Homes)",
+   "direction": "P@A",
+   "agent": "NHC",
+   "new_since_q4": false,
+   "score": "R",
+   "detail": {
+    "version": 1,
+    "n_versions": 1,
+    "current_caused_by": 46794092,
+    "versions_published_since_cutoff": [],
+    "party": {
+     "role": "Procedure-Buyer",
+     "organization_id": 30953692,
+     "organization_name": "Northern Housing Consortium Ltd",
+     "mention_name": "Karbon Homes (54North Homes)",
+     "lot": null
+    }
+   }
+  },
+  {
+   "tender_id": 8698064,
+   "cur": 1,
+   "org": 30913738,
+   "role": "Procedure-Buyer",
+   "notice_id": 46805032,
+   "section_id": "ORG-GB-PPON-PXWV-6492-CGMN",
+   "name": "Health Education and Improvement Wales (HEIW)",
+   "direction": "P@A",
+   "agent": "NWSSP",
+   "new_since_q4": false,
+   "score": "R",
+   "detail": {
+    "version": 4,
+    "n_versions": 4,
+    "current_caused_by": 46805032,
+    "versions_published_since_cutoff": [],
+    "party": {
+     "role": "Procedure-Buyer",
+     "organization_id": 30913738,
+     "organization_name": "NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)",
+     "mention_name": "Health Education and Improvement Wales (HEIW)",
+     "lot": null
+    }
+   }
+  },
+  {
+   "tender_id": 8655231,
+   "cur": 1,
+   "org": 30917275,
+   "role": "Procedure-Buyer",
+   "notice_id": 46817944,
+   "section_id": "ORG-GB-PPON-PGZW-1429-QQZQ",
+   "name": "Star Procurement",
+   "direction": "A@P",
+   "agent": "STAR",
+   "new_since_q4": false,
+   "score": "R",
+   "detail": {
+    "version": 1,
+    "n_versions": 1,
+    "current_caused_by": 46817944,
+    "versions_published_since_cutoff": [],
+    "party": {
+     "role": "Procedure-Buyer",
+     "organization_id": 30917275,
+     "organization_name": "Trafford Council",
+     "mention_name": "Star Procurement",
+     "lot": null
+    }
+   }
+  },
+  {
+   "tender_id": 8677040,
+   "cur": 1,
+   "org": 30913798,
+   "role": "Procedure-Buyer",
+   "notice_id": 46845134,
+   "section_id": "ORG-GB-PPON-PVMQ-1845-NYPP",
+   "name": "Rutland County Council",
+   "direction": "P@A",
+   "agent": "WELLAND",
+   "new_since_q4": false,
+   "score": "R",
+   "detail": {
+    "version": 1,
+    "n_versions": 1,
+    "current_caused_by": 46845134,
+    "versions_published_since_cutoff": [],
+    "party": {
+     "role": "Procedure-Buyer",
+     "organization_id": 30913798,
+     "organization_name": "Welland Procurement",
+     "mention_name": "Rutland County Council",
+     "lot": null
+    }
+   }
+  },
+  {
+   "tender_id": 8639202,
+   "cur": 1,
+   "org": 30968739,
+   "role": "Procedure-Buyer",
+   "notice_id": 46737636,
+   "section_id": "ORG-GB-PPON-PLMN-9829-JXLV",
+   "name": "The Howard Partnership Trust",
+   "direction": "P@A",
+   "agent": "GINGER",
+   "new_since_q4": false,
+   "score": "R",
+   "detail": {
+    "version": 1,
+    "n_versions": 1,
+    "current_caused_by": 46737636,
+    "versions_published_since_cutoff": [],
+    "party": {
+     "role": "Procedure-Buyer",
+     "organization_id": 30968739,
+     "organization_name": "Ginger energy",
+     "mention_name": "The Howard Partnership Trust",
+     "lot": null
+    }
+   }
+  },
+  {
+   "tender_id": 8580124,
+   "cur": 1,
+   "org": 30914436,
+   "role": "Procedure-Buyer",
+   "notice_id": 46698168,
+   "section_id": "ORG-GB-PPON-PJNL-2763-PVHM",
+   "name": "GLEEDS COST MANAGEMENT LIMITED",
+   "direction": "A@P",
+   "agent": "GLEEDS",
+   "new_since_q4": false,
+   "score": "R",
+   "detail": {
+    "version": 4,
+    "n_versions": 4,
+    "current_caused_by": 46698168,
+    "versions_published_since_cutoff": [],
+    "party": {
+     "role": "Procedure-Buyer",
+     "organization_id": 30914436,
+     "organization_name": "COLLEGE OF POLICING LIMITED",
+     "mention_name": "GLEEDS COST MANAGEMENT LIMITED",
+     "lot": null
+    }
+   }
+  },
+  {
+   "tender_id": 8596944,
+   "cur": 1,
+   "org": 30913722,
+   "role": "Procedure-Buyer",
+   "notice_id": 46757368,
+   "section_id": "ORG-GB-PPON-PGJB-3773-RCMH",
+   "name": "English Rural Housing Association",
+   "direction": "P@A",
+   "agent": "GIBBS",
+   "new_since_q4": false,
+   "score": "R",
+   "detail": {
+    "version": 2,
+    "n_versions": 2,
+    "current_caused_by": 46757368,
+    "versions_published_since_cutoff": [],
+    "party": {
+     "role": "Procedure-Buyer",
+     "organization_id": 30913722,
+     "organization_name": "GIBBS LAIDLER CONSULTING LLP",
+     "mention_name": "English Rural Housing Association",
+     "lot": null
+    }
+   }
+  },
+  {
+   "tender_id": 8687157,
+   "cur": 1,
+   "org": 30914820,
+   "role": "Procedure-Buyer",
+   "notice_id": 46869370,
+   "section_id": "ORG-GB-PPON-PRYY-6263-NQHG",
+   "name": "Remarkable Autism",
+   "direction": "P@A",
+   "agent": "RPJ3",
+   "new_since_q4": false,
+   "score": "R",
+   "detail": {
+    "version": 1,
+    "n_versions": 1,
+    "current_caused_by": 46869370,
+    "versions_published_since_cutoff": [],
+    "party": {
+     "role": "Procedure-Buyer",
+     "organization_id": 30914820,
+     "organization_name": "RPJ3 Group Limited on Behalf of Aspirational Futures MAT",
+     "mention_name": "Remarkable Autism",
+     "lot": null
+    }
+   }
+  }
+ ],
+ "v1_only": [
+  {
+   "tender_id": 8654651,
+   "cur": 0,
+   "org": 30919377,
+   "role": "Procedure-Buyer",
+   "notice_id": 46816840,
+   "section_id": "ORG-GB-PPON-PVLN-4733-WJBQ",
+   "name": "NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)",
+   "direction": "A@P",
+   "agent": "NWSSP",
+   "new_since_q4": false,
+   "score": "N",
+   "expected": "N",
+   "current_version": 2,
+   "current_buyer_parties": [
+    {
+     "lot": null,
+     "mention_name": "NHS Wales Shared Services Partnership (hosted by Velindre University NHS Trust)",
+     "organization_id": 30913738,
+     "organization_name": "NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)",
+     "role": "Procedure-Buyer"
+    },
+    {
+     "lot": null,
+     "mention_name": "Aneurin Bevan University Health Board",
+     "organization_id": 30919377,
+     "organization_name": "Aneurin Bevan University Health Board",
+     "role": "Procedure-Buyer"
+    }
+   ]
+  },
+  {
+   "tender_id": 8621643,
+   "cur": 0,
+   "org": 30913763,
+   "role": "Procedure-Buyer",
+   "notice_id": 46765017,
+   "section_id": "ORG-GB-PPON-PVHP-5769-YHRQ",
+   "name": "Ardal",
+   "direction": "A@P",
+   "agent": "ARDAL",
+   "new_since_q4": false,
+   "score": "N",
+   "expected": "N",
+   "current_version": 5,
+   "current_buyer_parties": [
+    {
+     "lot": null,
+     "mention_name": "Cardiff Council",
+     "organization_id": 30913763,
+     "organization_name": "Cardiff Council",
+     "role": "Procedure-Buyer"
+    },
+    {
+     "lot": null,
+     "mention_name": "Welsh Local Government Association (WLGA)",
+     "organization_id": 30928156,
+     "organization_name": "WLGA",
+     "role": "Procedure-Buyer"
+    }
+   ]
+  },
+  {
+   "tender_id": 8613154,
+   "cur": 0,
+   "org": 30916821,
+   "role": "Procedure-Buyer",
+   "notice_id": 46750905,
+   "section_id": "ORG-GB-PPON-PGRT-5366-CGWY",
+   "name": "TMT Procurement Partnership",
+   "direction": "A@P",
+   "agent": "TMT",
+   "new_since_q4": false,
+   "score": "N",
+   "expected": "N",
+   "current_version": 4,
+   "current_buyer_parties": [
+    {
+     "lot": null,
+     "mention_name": "Maidstone Borough Council",
+     "organization_id": 30916821,
+     "organization_name": "Maidstone Borough Council",
+     "role": "Procedure-Buyer"
+    }
+   ]
+  },
+  {
+   "tender_id": 8613154,
+   "cur": 0,
+   "org": 30916821,
+   "role": "Procedure-Buyer",
+   "notice_id": 46751431,
+   "section_id": "ORG-GB-PPON-PGRT-5366-CGWY",
+   "name": "TMT Procurement Partnership",
+   "direction": "A@P",
+   "agent": "TMT",
+   "new_since_q4": false,
+   "score": "N",
+   "expected": "N",
+   "current_version": 4,
+   "current_buyer_parties": [
+    {
+     "lot": null,
+     "mention_name": "Maidstone Borough Council",
+     "organization_id": 30916821,
+     "organization_name": "Maidstone Borough Council",
+     "role": "Procedure-Buyer"
+    }
+   ]
+  },
+  {
+   "tender_id": 8613154,
+   "cur": 0,
+   "org": 30916821,
+   "role": "Procedure-Buyer",
+   "notice_id": 46774362,
+   "section_id": "ORG-GB-PPON-PGRT-5366-CGWY",
+   "name": "TMT Procurement Partnership",
+   "direction": "A@P",
+   "agent": "TMT",
+   "new_since_q4": false,
+   "score": "N",
+   "expected": "N",
+   "current_version": 4,
+   "current_buyer_parties": [
+    {
+     "lot": null,
+     "mention_name": "Maidstone Borough Council",
+     "organization_id": 30916821,
+     "organization_name": "Maidstone Borough Council",
+     "role": "Procedure-Buyer"
+    }
+   ]
+  }
+ ],
+ "salted": [
+  {
+   "tender_id": 8677564,
+   "cur": 1,
+   "org": 30928312,
+   "role": "Procedure-Buyer",
+   "notice_id": 46823552,
+   "section_id": "ORG-GB-PPON-PBXD-6758-YMPY",
+   "name": "NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)",
+   "direction": "A@P",
+   "agent": "NWSSP",
+   "new_since_q4": false,
+   "stratum": "A@P",
+   "salt": "15390c50905184c6b00f712be2971890669ad76bb9e8107f1747f8dc9e0339ca",
+   "score": "R",
+   "detail": {
+    "version": 1,
+    "n_versions": 1,
+    "current_caused_by": 46823552,
+    "versions_published_since_cutoff": [],
+    "party": {
+     "role": "Procedure-Buyer",
+     "organization_id": 30928312,
+     "organization_name": "Public Health Wales",
+     "mention_name": "NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)",
+     "lot": null
+    }
+   }
+  },
+  {
+   "tender_id": 8610192,
+   "cur": 1,
+   "org": 30926924,
+   "role": "Procedure-Buyer",
+   "notice_id": 46751168,
+   "section_id": "ORG-GB-PPON-PPPR-7969-BTJG",
+   "name": "NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)",
+   "direction": "A@P",
+   "agent": "NWSSP",
+   "new_since_q4": false,
+   "stratum": "A@P",
+   "salt": "154e1eb3e10498722aef0a8c8f21e16d56dd9b2c32fc0a581a8ba5838917adc5",
+   "score": "R",
+   "detail": {
+    "version": 2,
+    "n_versions": 2,
+    "current_caused_by": 46751168,
+    "versions_published_since_cutoff": [],
+    "party": {
+     "role": "Procedure-Buyer",
+     "organization_id": 30926924,
+     "organization_name": "Cardiff and Vale University Health Board",
+     "mention_name": "NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)",
+     "lot": null
+    }
+   }
+  },
+  {
+   "tender_id": 8614798,
+   "cur": 1,
+   "org": 30926924,
+   "role": "Procedure-Buyer",
+   "notice_id": 46758368,
+   "section_id": "ORG-GB-PPON-PPPR-7969-BTJG",
+   "name": "NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)",
+   "direction": "A@P",
+   "agent": "NWSSP",
+   "new_since_q4": false,
+   "stratum": "A@P",
+   "salt": "1882272e8890092474a60657b0064f53f8b6b15f6c526cfbba01380d9308aec7",
+   "score": "R",
+   "detail": {
+    "version": 2,
+    "n_versions": 2,
+    "current_caused_by": 46758368,
+    "versions_published_since_cutoff": [],
+    "party": {
+     "role": "Procedure-Buyer",
+     "organization_id": 30926924,
+     "organization_name": "Cardiff and Vale University Health Board",
+     "mention_name": "NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)",
+     "lot": null
+    }
+   }
+  },
+  {
+   "tender_id": 8626810,
+   "cur": 1,
+   "org": 30919377,
+   "role": "Procedure-Buyer",
+   "notice_id": 46819472,
+   "section_id": "ORG-GB-PPON-PVLN-4733-WJBQ",
+   "name": "NHS WALES SHARED SERVICES PARTNERSHIP",
+   "direction": "A@P",
+   "agent": "NWSSP",
+   "new_since_q4": false,
+   "stratum": "A@P",
+   "salt": "3c1990da7496620f75094d551d3b4030d7ab19b7e019f3c0c70ff11092cfad4c",
+   "score": "R",
+   "detail": {
+    "version": 3,
+    "n_versions": 3,
+    "current_caused_by": 46819472,
+    "versions_published_since_cutoff": [],
+    "party": {
+     "role": "Procedure-Buyer",
+     "organization_id": 30919377,
+     "organization_name": "Aneurin Bevan University Health Board",
+     "mention_name": "NHS WALES SHARED SERVICES PARTNERSHIP",
+     "lot": null
+    }
+   }
+  },
+  {
+   "tender_id": 8655040,
+   "cur": 1,
+   "org": 30917275,
+   "role": "Procedure-Buyer",
+   "notice_id": 46817583,
+   "section_id": "ORG-GB-PPON-PGZW-1429-QQZQ",
+   "name": "Star procurement",
+   "direction": "A@P",
+   "agent": "STAR",
+   "new_since_q4": false,
+   "stratum": "A@P",
+   "salt": "99a4436a0011a64da68298f1d55061b5c8c8b23dc61fd7e3feb67fc9ea1ce161",
+   "score": "R",
+   "detail": {
+    "version": 1,
+    "n_versions": 1,
+    "current_caused_by": 46817583,
+    "versions_published_since_cutoff": [],
+    "party": {
+     "role": "Procedure-Buyer",
+     "organization_id": 30917275,
+     "organization_name": "Trafford Council",
+     "mention_name": "Star procurement",
+     "lot": null
+    }
+   }
+  },
+  {
+   "tender_id": 8678156,
+   "cur": 1,
+   "org": 30929723,
+   "role": "Procedure-Buyer",
+   "notice_id": 46697948,
+   "section_id": "ORG-GB-PPON-PHBY-3981-QBMR",
+   "name": "NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)",
+   "direction": "A@P",
+   "agent": "NWSSP",
+   "new_since_q4": false,
+   "stratum": "A@P",
+   "salt": "a8659f24b062f825880310ec8056b31cda69fed86138c8cf2b30adf09cdfe097",
+   "score": "R",
+   "detail": {
+    "version": 1,
+    "n_versions": 1,
+    "current_caused_by": 46697948,
+    "versions_published_since_cutoff": [],
+    "party": {
+     "role": "Procedure-Buyer",
+     "organization_id": 30929723,
+     "organization_name": "Betsi Cadwaladr University Health Board",
+     "mention_name": "NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)",
+     "lot": null
+    }
+   }
+  },
+  {
+   "tender_id": 8636214,
+   "cur": 1,
+   "org": 30967593,
+   "role": "Procedure-Buyer",
+   "notice_id": 47290364,
+   "section_id": "ORG-GB-PPON-PLDX-6964-RZQX",
+   "name": "TMT Procurement Partnership",
+   "direction": "A@P",
+   "agent": "TMT",
+   "new_since_q4": false,
+   "stratum": "A@P",
+   "salt": "e47e51376777cdede964ae2f4049f5ed56604f9e38df6cbc6357c9e6ce1cd435",
+   "score": "R",
+   "detail": {
+    "version": 4,
+    "n_versions": 4,
+    "current_caused_by": 47290364,
+    "versions_published_since_cutoff": [],
+    "party": {
+     "role": "Procedure-Buyer",
+     "organization_id": 30967593,
+     "organization_name": "Tunbridge Wells Borough Council",
+     "mention_name": "TMT Procurement Partnership",
+     "lot": null
+    }
+   }
+  },
+  {
+   "tender_id": 8648971,
+   "cur": 1,
+   "org": 30974616,
+   "role": "Procedure-Buyer",
+   "notice_id": 46807157,
+   "section_id": "ORG-GB-PPON-PVWR-6662-QTQX",
+   "name": "Scape Group Limited (trading as SCAPE)",
+   "direction": "A@P",
+   "agent": "SCAPE",
+   "new_since_q4": false,
+   "stratum": "A@P",
+   "salt": "f926432a115608ae99b3be3723a64d14c0e6fb877a2181e2f334c3cfa21889cf",
+   "score": "R",
+   "detail": {
+    "version": 2,
+    "n_versions": 2,
+    "current_caused_by": 46807157,
+    "versions_published_since_cutoff": [],
+    "party": {
+     "role": "Procedure-Buyer",
+     "organization_id": 30974616,
+     "organization_name": "Arc Property Services Partnership Limited",
+     "mention_name": "Scape Group Limited (trading as SCAPE)",
+     "lot": null
+    }
+   }
+  },
+  {
+   "tender_id": 8678350,
+   "cur": 1,
+   "org": 30953692,
+   "role": "Procedure-Buyer",
+   "notice_id": 46848785,
+   "section_id": "ORG-GB-PPON-PJXZ-4423-NDBT",
+   "name": "Ongo Homes Limited",
+   "direction": "P@A",
+   "agent": "NHC",
+   "new_since_q4": false,
+   "stratum": "P@A",
+   "salt": "0030a0a5c89dc61bfbd6a2363f0ee3aef51ae7cb1404ef978286fd3d122130ce",
+   "score": "R",
+   "detail": {
+    "version": 1,
+    "n_versions": 1,
+    "current_caused_by": 46848785,
+    "versions_published_since_cutoff": [],
+    "party": {
+     "role": "Procedure-Buyer",
+     "organization_id": 30953692,
+     "organization_name": "Northern Housing Consortium Ltd",
+     "mention_name": "Ongo Homes Limited",
+     "lot": null
+    }
+   }
+  },
+  {
+   "tender_id": 8678872,
+   "cur": 1,
+   "org": 30953692,
+   "role": "Procedure-Buyer",
+   "notice_id": 46857436,
+   "section_id": "ORG-GB-PPON-PJXZ-4423-NDBT",
+   "name": "Rochdale Borough Council",
+   "direction": "P@A",
+   "agent": "NHC",
+   "new_since_q4": false,
+   "stratum": "P@A",
+   "salt": "040a75d839645fff07720b08c8f51cf98de7fcf9096a7b122a614bb828a0f38a",
+   "score": "R",
+   "detail": {
+    "version": 2,
+    "n_versions": 2,
+    "current_caused_by": 46857436,
+    "versions_published_since_cutoff": [],
+    "party": {
+     "role": "Procedure-Buyer",
+     "organization_id": 30953692,
+     "organization_name": "Northern Housing Consortium Ltd",
+     "mention_name": "Rochdale Borough Council",
+     "lot": null
+    }
+   }
+  },
+  {
+   "tender_id": 8595312,
+   "cur": 1,
+   "org": 30913722,
+   "role": "Procedure-Buyer",
+   "notice_id": 46755465,
+   "section_id": "ORG-GB-PPON-PGJB-3773-RCMH",
+   "name": "Hull Churches Housing Association",
+   "direction": "P@A",
+   "agent": "GIBBS",
+   "new_since_q4": false,
+   "stratum": "P@A",
+   "salt": "072efae2f80103fa980aa7de81ba40629ad620bc2bbae9424af253d492984619",
+   "score": "R",
+   "detail": {
+    "version": 2,
+    "n_versions": 2,
+    "current_caused_by": 46755465,
+    "versions_published_since_cutoff": [],
+    "party": {
+     "role": "Procedure-Buyer",
+     "organization_id": 30913722,
+     "organization_name": "GIBBS LAIDLER CONSULTING LLP",
+     "mention_name": "Hull Churches Housing Association",
+     "lot": null
+    }
+   }
+  },
+  {
+   "tender_id": 8668300,
+   "cur": 1,
+   "org": 30953692,
+   "role": "Procedure-Buyer",
+   "notice_id": 46841445,
+   "section_id": "ORG-GB-PPON-PJXZ-4423-NDBT",
+   "name": "City of Lincoln Council",
+   "direction": "P@A",
+   "agent": "NHC",
+   "new_since_q4": false,
+   "stratum": "P@A",
+   "salt": "0c387061e69d5be85e8fdb45db1749f1e94869e5ab332efabac29f8df7c16ca2",
+   "score": "R",
+   "detail": {
+    "version": 2,
+    "n_versions": 2,
+    "current_caused_by": 46841445,
+    "versions_published_since_cutoff": [],
+    "party": {
+     "role": "Procedure-Buyer",
+     "organization_id": 30953692,
+     "organization_name": "Northern Housing Consortium Ltd",
+     "mention_name": "City of Lincoln Council",
+     "lot": null
+    }
+   }
+  },
+  {
+   "tender_id": 8858460,
+   "cur": 1,
+   "org": 30913738,
+   "role": "Procedure-Buyer",
+   "notice_id": 47428982,
+   "section_id": "ORG-GB-PPON-PXWV-6492-CGMN",
+   "name": "Cardiff and Vale University Health Board",
+   "direction": "P@A",
+   "agent": "NWSSP",
+   "new_since_q4": true,
+   "stratum": "P@A",
+   "salt": "1278664d5e1ca7c2ab598773cdbf9ac00c8002761054c41ffe19a45f59bfd5b4",
+   "score": "R",
+   "detail": {
+    "version": 1,
+    "n_versions": 1,
+    "current_caused_by": 47428982,
+    "versions_published_since_cutoff": [
+     [
+      1,
+      "2026-10-21T11:50:47+01:00",
+      47428982
+     ]
+    ],
+    "party": {
+     "role": "Procedure-Buyer",
+     "organization_id": 30913738,
+     "organization_name": "NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)",
+     "mention_name": "Cardiff and Vale University Health Board",
+     "lot": null
+    }
+   }
+  },
+  {
+   "tender_id": 8653366,
+   "cur": 1,
+   "org": 30953692,
+   "role": "Procedure-Buyer",
+   "notice_id": 46814746,
+   "section_id": "ORG-GB-PPON-PJXZ-4423-NDBT",
+   "name": "London Borough of Newham",
+   "direction": "P@A",
+   "agent": "NHC",
+   "new_since_q4": false,
+   "stratum": "P@A",
+   "salt": "172cc72a5c56640806c9d799fd7ca9f3793f2ba9867fd54638c1091437a22f84",
+   "score": "R",
+   "detail": {
+    "version": 2,
+    "n_versions": 2,
+    "current_caused_by": 46814746,
+    "versions_published_since_cutoff": [],
+    "party": {
+     "role": "Procedure-Buyer",
+     "organization_id": 30953692,
+     "organization_name": "Northern Housing Consortium Ltd",
+     "mention_name": "London Borough of Newham",
+     "lot": null
+    }
+   }
+  },
+  {
+   "tender_id": 8673075,
+   "cur": 1,
+   "org": 30953692,
+   "role": "Procedure-Buyer",
+   "notice_id": 46850020,
+   "section_id": "ORG-GB-PPON-PJXZ-4423-NDBT",
+   "name": "Carmarthenshire County Council",
+   "direction": "P@A",
+   "agent": "NHC",
+   "new_since_q4": false,
+   "stratum": "P@A",
+   "salt": "1a86e06752cefd5c40be75df4f75fc09340e12a04ca5a8cd9c4d56665428c3ef",
+   "score": "R",
+   "detail": {
+    "version": 2,
+    "n_versions": 2,
+    "current_caused_by": 46850020,
+    "versions_published_since_cutoff": [],
+    "party": {
+     "role": "Procedure-Buyer",
+     "organization_id": 30953692,
+     "organization_name": "Northern Housing Consortium Ltd",
+     "mention_name": "Carmarthenshire County Council",
+     "lot": null
+    }
+   }
+  },
+  {
+   "tender_id": 8668723,
+   "cur": 1,
+   "org": 30953692,
+   "role": "Procedure-Buyer",
+   "notice_id": 46842261,
+   "section_id": "ORG-GB-PPON-PJXZ-4423-NDBT",
+   "name": "Stockton on Tees Borough Council",
+   "direction": "P@A",
+   "agent": "NHC",
+   "new_since_q4": false,
+   "stratum": "P@A",
+   "salt": "1b8be7e00d686c648863b0a8e359d6d00b7ffa022fbe5a984c2de2f9c1b51949",
+   "score": "R",
+   "detail": {
+    "version": 2,
+    "n_versions": 2,
+    "current_caused_by": 46842261,
+    "versions_published_since_cutoff": [],
+    "party": {
+     "role": "Procedure-Buyer",
+     "organization_id": 30953692,
+     "organization_name": "Northern Housing Consortium Ltd",
+     "mention_name": "Stockton on Tees Borough Council",
+     "lot": null
+    }
+   }
+  },
+  {
+   "tender_id": 8677488,
+   "cur": 1,
+   "org": 30968739,
+   "role": "Procedure-Buyer",
+   "notice_id": 46785018,
+   "section_id": "ORG-GB-PPON-PLMN-9829-JXLV",
+   "name": "The Keys Academy Trust",
+   "direction": "P@A",
+   "agent": "GINGER",
+   "new_since_q4": false,
+   "stratum": "P@A",
+   "salt": "1ff79faaa8774f23f70e1a36173b644123c43ae92c9e6caee27f08666745ba93",
+   "score": "R",
+   "detail": {
+    "version": 1,
+    "n_versions": 1,
+    "current_caused_by": 46785018,
+    "versions_published_since_cutoff": [],
+    "party": {
+     "role": "Procedure-Buyer",
+     "organization_id": 30968739,
+     "organization_name": "Ginger energy",
+     "mention_name": "The Keys Academy Trust",
+     "lot": null
+    }
+   }
+  },
+  {
+   "tender_id": 8678322,
+   "cur": 1,
+   "org": 30953692,
+   "role": "Procedure-Buyer",
+   "notice_id": 46843775,
+   "section_id": "ORG-GB-PPON-PJXZ-4423-NDBT",
+   "name": "HOUSING 21",
+   "direction": "P@A",
+   "agent": "NHC",
+   "new_since_q4": false,
+   "stratum": "P@A",
+   "salt": "21479d08697e62973f48afadd72780ca56ece9cc7b11110626b3191b74ada70b",
+   "score": "R",
+   "detail": {
+    "version": 1,
+    "n_versions": 1,
+    "current_caused_by": 46843775,
+    "versions_published_since_cutoff": [],
+    "party": {
+     "role": "Procedure-Buyer",
+     "organization_id": 30953692,
+     "organization_name": "Northern Housing Consortium Ltd",
+     "mention_name": "HOUSING 21",
+     "lot": null
+    }
+   }
+  },
+  {
+   "tender_id": 8678054,
+   "cur": 1,
+   "org": 30953692,
+   "role": "Procedure-Buyer",
+   "notice_id": 46818155,
+   "section_id": "ORG-GB-PPON-PJXZ-4423-NDBT",
+   "name": "THE GUINNESS PARTNERSHIP LIMITED",
+   "direction": "P@A",
+   "agent": "NHC",
+   "new_since_q4": false,
+   "stratum": "P@A",
+   "salt": "2726ba3e04a23888dca069754d77dd131f14850db20137c9648588106b2c9f9b",
+   "score": "R",
+   "detail": {
+    "version": 1,
+    "n_versions": 1,
+    "current_caused_by": 46818155,
+    "versions_published_since_cutoff": [],
+    "party": {
+     "role": "Procedure-Buyer",
+     "organization_id": 30953692,
+     "organization_name": "Northern Housing Consortium Ltd",
+     "mention_name": "THE GUINNESS PARTNERSHIP LIMITED",
+     "lot": null
+    }
+   }
+  },
+  {
+   "tender_id": 8639888,
+   "cur": 1,
+   "org": 30913738,
+   "role": "Procedure-Buyer",
+   "notice_id": 46821071,
+   "section_id": "ORG-GB-PPON-PXWV-6492-CGMN",
+   "name": "Hywel Dda University Health Board",
+   "direction": "P@A",
+   "agent": "NWSSP",
+   "new_since_q4": false,
+   "stratum": "P@A",
+   "salt": "2a9c1660da8dbc996f48a0429c62df07b9f12147ae717e3ee1c3f4805d9987fd",
+   "score": "R",
+   "detail": {
+    "version": 3,
+    "n_versions": 3,
+    "current_caused_by": 46821071,
+    "versions_published_since_cutoff": [],
+    "party": {
+     "role": "Procedure-Buyer",
+     "organization_id": 30913738,
+     "organization_name": "NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)",
+     "mention_name": "Hywel Dda University Health Board",
+     "lot": null
+    }
+   }
+  },
+  {
+   "tender_id": 8678310,
+   "cur": 1,
+   "org": 30953692,
+   "role": "Procedure-Buyer",
+   "notice_id": 46844733,
+   "section_id": "ORG-GB-PPON-PJXZ-4423-NDBT",
+   "name": "ONWARD HOMES LIMITED",
+   "direction": "P@A",
+   "agent": "NHC",
+   "new_since_q4": false,
+   "stratum": "P@A",
+   "salt": "2bf0fe84f71d2f13f802f05b9f396df3342ac2a8e8478d5f241e3d3de957917e",
+   "score": "R",
+   "detail": {
+    "version": 1,
+    "n_versions": 1,
+    "current_caused_by": 46844733,
+    "versions_published_since_cutoff": [],
+    "party": {
+     "role": "Procedure-Buyer",
+     "organization_id": 30953692,
+     "organization_name": "Northern Housing Consortium Ltd",
+     "mention_name": "ONWARD HOMES LIMITED",
+     "lot": null
+    }
+   }
+  },
+  {
+   "tender_id": 8678131,
+   "cur": 1,
+   "org": 30953692,
+   "role": "Procedure-Buyer",
+   "notice_id": 46823501,
+   "section_id": "ORG-GB-PPON-PJXZ-4423-NDBT",
+   "name": "Moat Homes Limited",
+   "direction": "P@A",
+   "agent": "NHC",
+   "new_since_q4": false,
+   "stratum": "P@A",
+   "salt": "2cef260e46cc32ee3bd4de8431e919db769a1924cebbb4f551e94046539b992c",
+   "score": "R",
+   "detail": {
+    "version": 1,
+    "n_versions": 1,
+    "current_caused_by": 46823501,
+    "versions_published_since_cutoff": [],
+    "party": {
+     "role": "Procedure-Buyer",
+     "organization_id": 30953692,
+     "organization_name": "Northern Housing Consortium Ltd",
+     "mention_name": "Moat Homes Limited",
+     "lot": null
+    }
+   }
+  },
+  {
+   "tender_id": 8643140,
+   "cur": 1,
+   "org": 30913738,
+   "role": "Procedure-Buyer",
+   "notice_id": 46828632,
+   "section_id": "ORG-GB-PPON-PXWV-6492-CGMN",
+   "name": "Cardiff and Vale University Health Board",
+   "direction": "P@A",
+   "agent": "NWSSP",
+   "new_since_q4": false,
+   "stratum": "P@A",
+   "salt": "2ec2abf275cb7a6a63e507ae96a70130bfab07f2e97e8b2e059fd9428d918e07",
+   "score": "R",
+   "detail": {
+    "version": 2,
+    "n_versions": 2,
+    "current_caused_by": 46828632,
+    "versions_published_since_cutoff": [],
+    "party": {
+     "role": "Procedure-Buyer",
+     "organization_id": 30913738,
+     "organization_name": "NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)",
+     "mention_name": "Cardiff and Vale University Health Board",
+     "lot": null
+    }
+   }
+  },
+  {
+   "tender_id": 8649052,
+   "cur": 1,
+   "org": 30953692,
+   "role": "Procedure-Buyer",
+   "notice_id": 46806856,
+   "section_id": "ORG-GB-PPON-PJXZ-4423-NDBT",
+   "name": "Lancaster City Council",
+   "direction": "P@A",
+   "agent": "NHC",
+   "new_since_q4": false,
+   "stratum": "P@A",
+   "salt": "31e617344f2f52d11a6b70ba59825e5f56bfbb034c17f9c83af07ab30b82070a",
+   "score": "R",
+   "detail": {
+    "version": 2,
+    "n_versions": 2,
+    "current_caused_by": 46806856,
+    "versions_published_since_cutoff": [],
+    "party": {
+     "role": "Procedure-Buyer",
+     "organization_id": 30953692,
+     "organization_name": "Northern Housing Consortium Ltd",
+     "mention_name": "Lancaster City Council",
+     "lot": null
+    }
+   }
+  },
+  {
+   "tender_id": 8635466,
+   "cur": 1,
+   "org": 30913738,
+   "role": "Procedure-Buyer",
+   "notice_id": 46788140,
+   "section_id": "ORG-GB-PPON-PXWV-6492-CGMN",
+   "name": "Public Health Wales NHS Trust",
+   "direction": "P@A",
+   "agent": "NWSSP",
+   "new_since_q4": false,
+   "stratum": "P@A",
+   "salt": "3342816ac97d6addcd642c35a50bb6961815bfc537ad7fbcaf31fef934c4ecd3",
+   "score": "R",
+   "detail": {
+    "version": 1,
+    "n_versions": 1,
+    "current_caused_by": 46788140,
+    "versions_published_since_cutoff": [],
+    "party": {
+     "role": "Procedure-Buyer",
+     "organization_id": 30913738,
+     "organization_name": "NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)",
+     "mention_name": "Public Health Wales NHS Trust",
+     "lot": null
+    }
+   }
+  },
+  {
+   "tender_id": 8627364,
+   "cur": 1,
+   "org": 30913722,
+   "role": "Procedure-Buyer",
+   "notice_id": 46801228,
+   "section_id": "ORG-GB-PPON-PGJB-3773-RCMH",
+   "name": "YMCA Saint Pauls Group",
+   "direction": "P@A",
+   "agent": "GIBBS",
+   "new_since_q4": false,
+   "stratum": "P@A",
+   "salt": "3644f71700a06fa5f9facf04fb3ae16ac0daa4af424d7c6adfeddf98778db966",
+   "score": "R",
+   "detail": {
+    "version": 2,
+    "n_versions": 2,
+    "current_caused_by": 46801228,
+    "versions_published_since_cutoff": [],
+    "party": {
+     "role": "Procedure-Buyer",
+     "organization_id": 30913722,
+     "organization_name": "GIBBS LAIDLER CONSULTING LLP",
+     "mention_name": "YMCA Saint Pauls Group",
+     "lot": null
+    }
+   }
+  },
+  {
+   "tender_id": 8668115,
+   "cur": 1,
+   "org": 30953692,
+   "role": "Procedure-Buyer",
+   "notice_id": 46841024,
+   "section_id": "ORG-GB-PPON-PJXZ-4423-NDBT",
+   "name": "Bristol City Council",
+   "direction": "P@A",
+   "agent": "NHC",
+   "new_since_q4": false,
+   "stratum": "P@A",
+   "salt": "384eaeae997d76d0fea039c2c6ed597f17cad0f82d2023655bdac20a53e2200c",
+   "score": "R",
+   "detail": {
+    "version": 2,
+    "n_versions": 2,
+    "current_caused_by": 46841024,
+    "versions_published_since_cutoff": [],
+    "party": {
+     "role": "Procedure-Buyer",
+     "organization_id": 30953692,
+     "organization_name": "Northern Housing Consortium Ltd",
+     "mention_name": "Bristol City Council",
+     "lot": null
+    }
+   }
+  },
+  {
+   "tender_id": 8678133,
+   "cur": 1,
+   "org": 30953692,
+   "role": "Procedure-Buyer",
+   "notice_id": 46823485,
+   "section_id": "ORG-GB-PPON-PJXZ-4423-NDBT",
+   "name": "ISLINGTON & SHOREDITCH HOUSING ASSOCIATION LIMITED",
+   "direction": "P@A",
+   "agent": "NHC",
+   "new_since_q4": false,
+   "stratum": "P@A",
+   "salt": "41e88748426fb6af1ab9b7a8d232f30735b998672325cbd29e7919a6b4105300",
+   "score": "R",
+   "detail": {
+    "version": 1,
+    "n_versions": 1,
+    "current_caused_by": 46823485,
+    "versions_published_since_cutoff": [],
+    "party": {
+     "role": "Procedure-Buyer",
+     "organization_id": 30953692,
+     "organization_name": "Northern Housing Consortium Ltd",
+     "mention_name": "ISLINGTON & SHOREDITCH HOUSING ASSOCIATION LIMITED",
+     "lot": null
+    }
+   }
+  },
+  {
+   "tender_id": 8582562,
+   "cur": 1,
+   "org": 30953692,
+   "role": "Procedure-Buyer",
+   "notice_id": 46697938,
+   "section_id": "ORG-GB-PPON-PJXZ-4423-NDBT",
+   "name": "Stoke on Trent City Council",
+   "direction": "P@A",
+   "agent": "NHC",
+   "new_since_q4": false,
+   "stratum": "P@A",
+   "salt": "4510569c9343b6e174fd45e25bbb7f6f50701fd76106026780e4ae0e2e9fe8a1",
+   "score": "R",
+   "detail": {
+    "version": 2,
+    "n_versions": 2,
+    "current_caused_by": 46697938,
+    "versions_published_since_cutoff": [],
+    "party": {
+     "role": "Procedure-Buyer",
+     "organization_id": 30953692,
+     "organization_name": "Northern Housing Consortium Ltd",
+     "mention_name": "Stoke on Trent City Council",
+     "lot": null
+    }
+   }
+  },
+  {
+   "tender_id": 8609020,
+   "cur": 1,
+   "org": 30913738,
+   "role": "Procedure-Buyer",
+   "notice_id": 46822958,
+   "section_id": "ORG-GB-PPON-PXWV-6492-CGMN",
+   "name": "Hywel Dda University Health Board",
+   "direction": "P@A",
+   "agent": "NWSSP",
+   "new_since_q4": false,
+   "stratum": "P@A",
+   "salt": "4a62cca65a13dfec6cdb83ecef9aeaeab2821e76d1f52412fe05b48b30ade3be",
+   "score": "R",
+   "detail": {
+    "version": 3,
+    "n_versions": 3,
+    "current_caused_by": 46822958,
+    "versions_published_since_cutoff": [],
+    "party": {
+     "role": "Procedure-Buyer",
+     "organization_id": 30913738,
+     "organization_name": "NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)",
+     "mention_name": "Hywel Dda University Health Board",
+     "lot": null
+    }
+   }
+  }
+ ],
+ "replacements": [],
+ "missing_bodies": [],
+ "tally": {
+  "R": 40,
+  "N": 0,
+  "W": 0,
+  "v1_only": {
+   "N": 5
+  }
+ }
+}

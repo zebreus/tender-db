@@ -1,0 +1,308 @@
+{
+ "rows": [
+  {
+   "tender": 8641682,
+   "checks": [
+    {
+     "org": 30953692,
+     "label": "NHC",
+     "must": "include",
+     "present": true,
+     "list_complete": true,
+     "pass_": true
+    },
+    {
+     "org": 30914707,
+     "label": "Birmingham",
+     "must": "exclude",
+     "present": false,
+     "list_complete": true,
+     "pass_": true
+    }
+   ],
+   "score": "PASS"
+  },
+  {
+   "tender": 8636304,
+   "checks": [
+    {
+     "org": 30953692,
+     "label": "NHC",
+     "must": "include",
+     "present": true,
+     "list_complete": true,
+     "pass_": true
+    },
+    {
+     "org": 30914393,
+     "label": "Darlington",
+     "must": "exclude",
+     "present": false,
+     "list_complete": true,
+     "pass_": true
+    }
+   ],
+   "score": "PASS"
+  },
+  {
+   "tender": 8677040,
+   "checks": [
+    {
+     "org": 30913798,
+     "label": "Welland",
+     "must": "include",
+     "present": true,
+     "list_complete": true,
+     "pass_": true
+    },
+    {
+     "org": 30915335,
+     "label": "Rutland",
+     "must": "exclude",
+     "present": false,
+     "list_complete": true,
+     "pass_": true
+    }
+   ],
+   "score": "PASS"
+  },
+  {
+   "tender": 8698064,
+   "checks": [
+    {
+     "org": 30913738,
+     "label": "NWSSP",
+     "must": "include",
+     "present": true,
+     "list_complete": true,
+     "pass_": true
+    },
+    {
+     "org": 30917293,
+     "label": "HEIW",
+     "must": "exclude",
+     "present": false,
+     "list_complete": true,
+     "pass_": true
+    }
+   ],
+   "score": "PASS"
+  },
+  {
+   "tender": 8596944,
+   "checks": [
+    {
+     "org": 30913722,
+     "label": "Gibbs Laidler",
+     "must": "include",
+     "present": true,
+     "list_complete": true,
+     "pass_": true
+    },
+    {
+     "org": 2291108,
+     "label": "English Rural HA (provisional)",
+     "must": "exclude",
+     "present": false,
+     "list_complete": true,
+     "pass_": true
+    }
+   ],
+   "score": "PASS"
+  },
+  {
+   "tender": 8655231,
+   "checks": [
+    {
+     "org": 30917275,
+     "label": "Trafford (host)",
+     "must": "include",
+     "present": true,
+     "list_complete": true,
+     "pass_": true
+    },
+    {
+     "org": 30916230,
+     "label": "Rochdale",
+     "must": "include",
+     "present": true,
+     "list_complete": true,
+     "pass_": true
+    }
+   ],
+   "score": "PASS"
+  }
+ ],
+ "lists": {
+  "30953692": {
+   "org": 30953692,
+   "pages": [
+    {
+     "file": "v1_tenders_buyer_30953692_limit_1000.json",
+     "items": 75,
+     "more": false,
+     "next_cursor": null,
+     "ignored_filters": []
+    }
+   ],
+   "tenders": 75,
+   "complete": true,
+   "dupes": 0
+  },
+  "30914707": {
+   "org": 30914707,
+   "pages": [
+    {
+     "file": "v1_tenders_buyer_30914707_limit_1000.json",
+     "items": 199,
+     "more": false,
+     "next_cursor": null,
+     "ignored_filters": []
+    }
+   ],
+   "tenders": 199,
+   "complete": true,
+   "dupes": 0
+  },
+  "30914393": {
+   "org": 30914393,
+   "pages": [
+    {
+     "file": "v1_tenders_buyer_30914393_limit_1000.json",
+     "items": 172,
+     "more": false,
+     "next_cursor": null,
+     "ignored_filters": []
+    }
+   ],
+   "tenders": 172,
+   "complete": true,
+   "dupes": 0
+  },
+  "30913798": {
+   "org": 30913798,
+   "pages": [
+    {
+     "file": "v1_tenders_buyer_30913798_limit_1000.json",
+     "items": 121,
+     "more": false,
+     "next_cursor": null,
+     "ignored_filters": []
+    }
+   ],
+   "tenders": 121,
+   "complete": true,
+   "dupes": 0
+  },
+  "30915335": {
+   "org": 30915335,
+   "pages": [
+    {
+     "file": "v1_tenders_buyer_30915335_limit_1000.json",
+     "items": 76,
+     "more": false,
+     "next_cursor": null,
+     "ignored_filters": []
+    }
+   ],
+   "tenders": 76,
+   "complete": true,
+   "dupes": 0
+  },
+  "30913738": {
+   "org": 30913738,
+   "pages": [
+    {
+     "file": "v1_tenders_buyer_30913738_limit_1000.json",
+     "items": 693,
+     "more": false,
+     "next_cursor": null,
+     "ignored_filters": []
+    }
+   ],
+   "tenders": 693,
+   "complete": true,
+   "dupes": 0
+  },
+  "30917293": {
+   "org": 30917293,
+   "pages": [
+    {
+     "file": "v1_tenders_buyer_30917293_limit_1000.json",
+     "items": 32,
+     "more": false,
+     "next_cursor": null,
+     "ignored_filters": []
+    }
+   ],
+   "tenders": 32,
+   "complete": true,
+   "dupes": 0
+  },
+  "30913722": {
+   "org": 30913722,
+   "pages": [
+    {
+     "file": "v1_tenders_buyer_30913722_limit_1000.json",
+     "items": 84,
+     "more": false,
+     "next_cursor": null,
+     "ignored_filters": []
+    }
+   ],
+   "tenders": 84,
+   "complete": true,
+   "dupes": 0
+  },
+  "2291108": {
+   "org": 2291108,
+   "pages": [
+    {
+     "file": "v1_tenders_buyer_2291108_limit_1000.json",
+     "items": 6,
+     "more": false,
+     "next_cursor": null,
+     "ignored_filters": []
+    }
+   ],
+   "tenders": 6,
+   "complete": true,
+   "dupes": 0
+  },
+  "30917275": {
+   "org": 30917275,
+   "pages": [
+    {
+     "file": "v1_tenders_buyer_30917275_limit_1000.json",
+     "items": 63,
+     "more": false,
+     "next_cursor": null,
+     "ignored_filters": []
+    }
+   ],
+   "tenders": 63,
+   "complete": true,
+   "dupes": 0
+  },
+  "30916230": {
+   "org": 30916230,
+   "pages": [
+    {
+     "file": "v1_tenders_buyer_30916230_limit_1000.json",
+     "items": 85,
+     "more": false,
+     "next_cursor": null,
+     "ignored_filters": []
+    }
+   ],
+   "tenders": 85,
+   "complete": true,
+   "dupes": 0
+  }
+ },
+ "tally": {
+  "ok": 6,
+  "of": 6,
+  "W": 0
+ }
+}
