@@ -184,6 +184,10 @@ after `published_at`.
   `Notice.published_at` say so: `Tender.dispatched_at` no longer promises "earlier than published_at" where a DÖE
   notice caused the current version (a `ted`-labelled Tender included): there a dispatch falls on or before
   `published_at`'s day, and days after it until the drain.
+- **The drain ran on 2026-10-23/24.** `repair-notice-instants` re-dated 16,343 stored DÖE notice rows (job 2732),
+  and three refolds (jobs 2733, 2737, 2740, with projects 2734, 2738, 2741) re-folded the 1,161,837 notices of the
+  re-dating profiles; 13,524 Tenders were corrected, each announced as a `version: null` `changed` row. Tender 65023
+  serves `published_at` 2023-01-31. The pre-drain caveats in `/docs` and the three OpenAPI descriptions are retired.
 
 ## Unreleased (issue 571) — an R2.0.9 transport award's operator owners are no longer its result winners
 

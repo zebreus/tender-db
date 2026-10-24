@@ -1092,11 +1092,8 @@ rates and the quarantine resolution ledger.</p>
   1&ndash;3 days before the day of the portal's daily export that carries the notice, which is how
   the portal cuts its exports (a monthly export spans its month, and the lag shows there only at
   month boundaries). The IssueDate is <code>dispatched_at</code>, so a DÖE dispatch falls on or
-  before the day of <code>published_at</code> rather than strictly before it. Until the issue-539
-  drain re-dates the notices already stored, a DÖE notice dated before the deploy serves the
-  requested (or stamped) date alone; on about 16,344 of them (counted 2026-10-19) its
-  <code>dispatched_at</code> falls one or more days after <code>published_at</code>. A Tender
-  refolded since the deploy already serves the new date on its versions.</li>
+  before the day of <code>published_at</code> rather than strictly before it. The stored DÖE
+  notices were re-dated and their Tenders refolded by the issue-539 drain (2026-10-24).</li>
   <li>A Lot's <code>submission_deadline</code> is <strong>the lot's own if it published
   one, otherwise the procedure's</strong> (issue 389). The legacy form generations
   publish ONE procedure-level deadline for the whole notice &mdash; the r209 era's
@@ -1394,6 +1391,10 @@ mod tests {
             // later day; DÖE's dispatch
             // falls on or before published_at's day since the issue-539 rule.
             ("for publication — earlier than published_at. Same", "a DÖE dispatch can fall on published_at's day (issue 539)"),
+            // Issue 539: the drain ran (repair-notice-instants 2732; refolds 2733, 2737, 2740 with projects 2734, 2738,
+            // 2741; 2026-10-23/24), so the stored DÖE notices serve the raised date. The pre-drain caveats on /docs and
+            // the three OpenAPI descriptions shared this token.
+            ("issue-539 drain re-dates", "the issue-539 drain ran, jobs 2732-2741 (issue 539)"),
         ];
         // Issue 534 review: an entry is only as good as its spelling. The `/docs` form
         // of the winner sentence, wrapped the way the page wraps prose, is caught.
@@ -2236,10 +2237,10 @@ mod tests {
     /// Issue 539: what a DÖE `published_at` is, and why a DÖE `dispatched_at` is not always
     /// earlier than it — on the `/docs` Dates caveats and the OpenAPI `Tender.published_at`,
     /// `Tender.dispatched_at` and `Notice.published_at` descriptions, not the whole surface.
-    /// One phrase per sentence. The pre-drain sentences carry `issue-539 drain`: once the drain
-    /// (repair-notice-instants, then the ADR-0017 R3 `refold` of the DÖE profiles that re-date
-    /// and its trailing project) has run, retire them through RETIRED. `repair-version-instants`
-    /// is not part of that drain: it writes no change rows and re-sorts no chain.
+    /// One phrase per sentence. The drain ran 2026-10-23/24 (repair-notice-instants 2732, then
+    /// the ADR-0017 R3 refolds 2733, 2737 and 2740 of the DÖE profiles that re-date, with
+    /// projects 2734, 2738 and 2741), so the pre-drain sentences are gone and RETIRED holds
+    /// `"issue-539 drain re-dates"`.
     #[test]
     fn the_docs_say_a_doe_publication_date_is_raised_to_its_issue_day() {
         let start = PAGE.find("<h3>Dates</h3>").expect("/docs has the date caveats");
@@ -2268,10 +2269,7 @@ mod tests {
                 "a change notice can repeat its first version's request",
                 "usually runs 1&ndash;3 days before the day of the portal's daily export that carries the notice",
                 "a döe dispatch falls on or before the day of published_at rather than strictly before it",
-                "until the issue-539 drain re-dates the notices already stored, a döe notice dated before the \
-                 deploy serves the requested (or stamped) date alone",
-                "on about 16,344 of them (counted 2026-10-19)",
-                "a tender refolded since the deploy already serves the new date on its versions",
+                "the stored döe notices were re-dated and their tenders refolded by the issue-539 drain (2026-10-24)",
             ],
         );
         // `plain` drops backticks, so the `ted` label is pinned bare.
@@ -2285,8 +2283,6 @@ mod tests {
                 DOE,
                 SDK1X[0],
                 SDK1X[1],
-                "until the issue-539 drain re-dates the notices already stored, a döe notice's dispatch can \
-                 fall days after its published_at",
             ],
         );
         for (surface, text) in
@@ -2301,15 +2297,9 @@ mod tests {
                     SDK1X[0],
                     SDK1X[1],
                     "usually runs 1–3 days before the day of the portal's daily export that carries the notice",
-                    "until the issue-539 drain re-dates the notices already stored",
                 ],
             );
         }
-        assert_says(
-            "Tender.published_at",
-            &described("Tender", "published_at"),
-            &["a row whose current version a döe notice caused (a ted-labelled tender included) can serve"],
-        );
     }
 
     /// Issue 537 unit 3 (review): the `/docs` value caveat names the lot-sum rule beside the
