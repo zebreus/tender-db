@@ -1,41 +1,49 @@
-"""Issue 586 unit 1 (a): the reference implementation of the touchpoint alias fold's two tiers.
+"""Issue 586 unit 1 (a): the reference implementation of the touchpoint alias fold's two tiers (fold.md).
 
 A touchpoint is compared ONLY with its own parent Organization section in the same notice
-(`touchpoint_decision`'s `parent` map); `store::org_name_norm` is untouched. This file is the oracle the
-Rust port (crates/ingest/src/project.rs) is checked against: `tier(tp, parent)` answers "A", "C" or None.
+(`touchpoint_decision`'s `parent` map), name by name over every language either publishes; `store::org_name_norm`
+is untouched and its equality stays the first alias test. This file is the oracle the Rust port
+(crates/ingest/src/project.rs) is checked against: `tier(touchpoint_name, parent_name)` answers 'A', 'C0', 'C1',
+'C2', 'C3', 'C3r' or None; vectors.json holds both keys and the tier of all 3,751 saved pairs.
 
-    python3 -I fold.py --selftest
+    python3 -I fold.py --selftest | --key NAME [PARENT] | --tier TOUCHPOINT PARENT
 
-Pipeline of a name (both sides, `fold_tokens`):
-  1. html entities (`&#8217;`, `&#x2019;`, `&amp;` `&quot;` `&apos;` `&lt;` `&gt;` `&nbsp;`) decoded;
-  2. lower-cased, every char through NFKD with combining chars dropped, restricted to the blocks of
-     crates/ingest/src/project/title_key_nfkd.rs (so the port reuses `title_key_nfkd::NFKD_STRIPPED`), then
-     EXTRA_FOLD (the letters NFKD leaves whole: l-stroke, o-slash, ss, ae, oe, final sigma ...), lower-cased again;
-  3. brackets () [] {} cut out (side rules below; an unclosed opener runs to the end);
-  4. every char that is not alphanumeric (str.isalnum / char::is_alphanumeric) is a space: punctuation,
-     quotes, U+037E (already ';' after step 2), ':' and the spacing around hyphens all fall out here;
-  5. split on whitespace -> tokens.
-Then `key_a` drops legal forms (LEGAL_ANYWHERE anywhere, LEGAL_TRAILING repeatedly at the end), then
-articles/connectives (ARTICLES) and honorifics (HONORIFICS) anywhere.
+Key tokens of a name (`key_tokens(name, side)`, both sides):
+  1. html entities decoded: &#NNN; &#xHHH; &amp; &quot; &apos; &lt; &gt; &nbsp;
+  2. lower-cased; each char through NFKD with every combining char dropped, ONLY for the blocks of
+     crates/ingest/src/project/title_key_nfkd.rs (the port reuses `title_key_nfkd::NFKD_STRIPPED`; U+037E -> ';',
+     fullwidth -> ASCII, 'º' -> 'o'); then EXTRA_FOLD (letters NFKD leaves whole); lower-cased again;
+  3. brackets () [] {} cut out by the side rule below (first closer of the same kind; an unclosed opener runs
+     to the end; a stray closer is a space);
+  4. every char that is not alphanumeric (str.isalnum / char::is_alphanumeric) is a space; split on spaces;
+  5. LEGAL_ANYWHERE phrases dropped wherever they stand (leftmost, longest first);
+  6. LEGAL_TRAILING phrases dropped from the END, repeatedly, longest first, never down to nothing;
+  7. ARTICLES and HONORIFICS tokens dropped wherever they stand;
+  8. every run of two or more one-character tokens joined into one ('c u c' -> 'cuc');
+  9. touchpoint side only: one TP_HEAD_LABELS phrase cut from the head ('punto contacto ...'), never to nothing.
 
-Side rules for brackets (step 3), the one asymmetry:
-  - parent side: every bracket is cut (what the parent prints in brackets is about the parent: its acronym
-    "(SARGA)", "(AVRA)", a qualifier "(Agrupación de Base)");
-  - touchpoint side: a bracket is cut only when its folded content is a contact/registry label
-    (TP_BRACKET_LABELS), is all legal-form/article tokens ("(Medio Propio)"), is empty, or equals the folded
-    content of one of the parent's own brackets. Anything else stays in the key: "(TARCAS)", "(TACRC)",
-    "(Contratación y Compras)", "(Emscher)", "(abt.14)", "(Granada)".
+Bracket side rule (step 3), the one asymmetry:
+  - parent side: every bracket is cut (what the parent prints in brackets describes the parent: "(SARGA)",
+    "(AVRA)", "(Agrupación de Base)");
+  - touchpoint side: a bracket is cut only when its content (steps 1-2 and 4, joined by one space) is in
+    TP_BRACKET_LABELS or TP_BRACKET_PLACES, is empty, is only legal-form/article tokens ("(Medio Propio)"), or
+    equals (after step 8) the content of one of the parent's own brackets ("(ICA)" / "(ICA)", "(OAGER)" /
+    "(O.A.G.E.R.)"). Anything else stays in the key: "(TARCAS)", "(Contratación y Compras)", "( SERVCIO
+    P..CIUDADANA)", "(PROCASA)", "(J. Arends)".
 
-Tier A: key_a(tp, side=tp) == key_a(parent, side=parent), both non-empty.
-Tier C (only when A fails), on the same key tokens:
-  E = parent key minus ONE leading organ phrase (ORGAN_PHRASES, longest first; none is fine);
-  municipal words (MUNI) at the head of E and of the touchpoint key are canonicalised to `ayuntamiento`;
-  C holds when, with T the touchpoint key:
-    C1 organ:  an organ phrase was cut, len(E) >= 2, and T == E;
-    C2 muni:   E[0] == T[0] == 'ayuntamiento', E[1:] == T[1:] (non-empty), and E != parent key or the two
-               municipal words differed (an exact match would be tier A);
-    C3 place:  E[0] == 'ayuntamiento' and T == E[1:] (non-empty)       -- the bare town under its town hall;
-    C3r place: T[0] == 'ayuntamiento' and parent key == T[1:]           -- "COMUNE DI LAURINO" under "LAURINO".
+With T = touchpoint key and P = parent key (both non-empty):
+  A    T == P.
+  C0   T and P equal once a leading organ synonym is canonicalised on both (ORGAN_SYNONYMS: 'junta gobierno
+       local' -> 'junta gobierno', 'pleno municipal' -> 'pleno', 'alcaldia presidencia' -> 'alcaldia').
+  E  = P minus ONE leading ORGAN_PHRASES phrase (the longest that leads P and leaves something), else P.
+  C1   an organ was cut, E is 2+ tokens or one token of 4+ chars, and T == E.
+  C2   with MUNI words at the head of E and T canonicalised to 'ayuntamiento': E[0] == 'ayuntamiento',
+       len(E) >= 2 and T == E ("Ajuntament de Biar" under "Junta de Gobierno del Ayuntamiento de Biar").
+  C3   E[0] == 'ayuntamiento' (canonicalised), len(E) >= 2 and T == E[1:] (the bare town under its town hall).
+  C3r  T[0] == 'ayuntamiento' (canonicalised), P has no MUNI head and P == T[1:] ("COMUNE DI LAURINO" under
+       "LAURINO").
+Never: an organ cut from the TOUCHPOINT, a bare place under anything but a town hall, a prefix/suffix or fuzzy
+match.
 """
 import html
 import re
@@ -375,7 +383,7 @@ def tier(tp, parent):
             return 'C2'
         if t == em[1:]:
             return 'C3'
-    if tm[0] == 'ayuntamiento' and len(tm) >= 2 and _muni(p) == p and p == tm[1:]:
+    if tm[0] == 'ayuntamiento' and len(tm) >= 2 and p[0] not in MUNI and p == tm[1:]:
         return 'C3r'
     return None
 

@@ -18,6 +18,7 @@ second-look class x tier:
   review-body     {'None': 729, 'A': 2}
 P2 03-t3_window_a.json: 2081 touchpoint mentions; would alias (mentions): {('old', 'A'): 3, ('old', 'C'): 140, ('new', 'C'): 16, ('new', 'A'): 7}
 P2 05-t5_window_b.json: 904 touchpoint mentions; would alias (mentions): {('old', 'C'): 55, ('old', 'A'): 4, ('new', 'C'): 9, ('new', 'A'): 3}
+wrote 3751 vectors to vectors.json
 
 == salted A (586-u1-tierA), 40 of 182
    1 31976215 A      1 parent 'Consejo de Administración de la Empresa Municipal de la Vivienda de Coslada S.A.U' -> tp 'Consejo de Administración de la Empresa Municipal de la Vivienda de Coslada'

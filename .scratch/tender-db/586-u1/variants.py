@@ -45,7 +45,7 @@ def tier_v(tp, parent, tp_brackets='allow', min_e='final', tp_organ=False, place
             return 'C2'
         if t == em[1:]:
             return 'C3'
-    if tm[0] == 'ayuntamiento' and len(tm) >= 2 and fold._muni(p) == p and p == tm[1:]:
+    if tm[0] == 'ayuntamiento' and len(tm) >= 2 and p[0] not in fold.MUNI and p == tm[1:]:
         return 'C3r'
     if place == 'suffix' and len(t) < len(p) and p[-len(t):] == t:
         return 'C3s'
