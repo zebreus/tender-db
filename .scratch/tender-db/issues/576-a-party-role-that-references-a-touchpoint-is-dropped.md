@@ -398,3 +398,10 @@ Posted on a63cf23 (the batch deploy, 11:32Z) under the owner's velocity ruling, 
   ('buyer','Procedure-Buyer') for organization_id IN (31431409, 18044191, 18044192) through the org index → the
   `mention_notice_id`s → `{"kind":"refold-notices","notices":[12400937, …]}` (cap 1,000) beside the Touchpoint
   `refold-sections`, so the compare engine announces the buyer change under 576 U5.
+- **U5 buyer cohort sized (2026-10-24 16:45Z, 3 bounded index reads on tender_version_parties by organization_id,
+  `576-u4/u5_buyer_cohort.json`):** org 31431409 (the "Inhoudelijke en procedurele aspecten rond deze aanbesteding …"
+  sentence) has 17 party rows, 3 of them `buyer`, all from notice **12400937** (tender 4592524); orgs 18044191 / 18044192
+  (the two dashboard labels) have 0 buyer rows — 1,032 `Lot-AddInfo` + 193 legacy `further-information`, and 1,076
+  `Lot-TenderReceipt` + 175 legacy `tender-receipt`. Apply after deploy #3: `{"kind":"refold-notices","notices":[12400937]}`
+  beside the Touchpoint `refold-sections`. Expected after the refold: the touchpoint (`Lot-*`) rows on 18044191/18044192
+  go to 0; the legacy ORG-path rows stay (issue 585).
