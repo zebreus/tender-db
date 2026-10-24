@@ -389,3 +389,12 @@ Posted on a63cf23 (the batch deploy, 11:32Z) under the owner's velocity ruling, 
 - Apply after deploy #3: `refold-sections` `{"kind":"refold-sections","profiles":["Touchpoint"]}` (198,857 carriers,
   ~45 min); the fold retires the two labels' touchpoint mentions through `retire_mentions`.
 
+- **Review (wf_c35791a6-e18) — the phrase also reaches buyer promotion.** `portal_label` feeds `promotable` (role_census.rs
+  ~970) as well as `touchpoint_gate`, so U5 also stops the census promoting a "deze aanbesteding" party to buyer on
+  ORG-path and legacy notices. Live witness: tender 4592524 (ted:246538-2011, notice 12400937) serves org 31431409
+  "Inhoudelijke en procedurele aspecten rond deze aanbesteding dienen via het tabblad berichten te worden aangemeld." as
+  `buyer` today (15 words, under the 16-word cap). That change is a fix, kept; CHANGELOG says so (the old "census
+  unchanged" line is gone). **Apply addition after deploy #3:** a bounded read of `tender_version_parties` with role IN
+  ('buyer','Procedure-Buyer') for organization_id IN (31431409, 18044191, 18044192) through the org index → the
+  `mention_notice_id`s → `{"kind":"refold-notices","notices":[12400937, …]}` (cap 1,000) beside the Touchpoint
+  `refold-sections`, so the compare engine announces the buyer change under 576 U5.
