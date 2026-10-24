@@ -1,6 +1,18 @@
 {
+ "CA": 959215522,
  "CB": 959211183,
  "K_open": 959211183,
+ "ca_health": [
+  "2026-10-24T01:37:18Z CA-w539-b rev=512b2976f8c5d65de6b72d642202311e3308349a cursor=959215522 last_job_kind=None last_job_outcome=None last_job_started_at=None last_job_finished_at=None",
+  "2026-10-24T01:37:19Z CA-w539-bb rev=512b2976f8c5d65de6b72d642202311e3308349a cursor=959215522 last_job_kind=None last_job_outcome=None last_job_started_at=None last_job_finished_at=None"
+ ],
+ "ca_jobs": {
+  "current": null,
+  "file_sha256": "270fd43610527ea31da481bf82c85008b4ca6bb6719182fc151d1b31aabaf51f",
+  "max_job_id": 2738,
+  "measured_at": 1792805838,
+  "queued": []
+ },
  "cb_health": [
   "2026-10-24T00:43:12Z CB-w539-b rev=512b2976f8c5d65de6b72d642202311e3308349a cursor=959211183 last_job_kind=None last_job_outcome=None last_job_started_at=None last_job_finished_at=None",
   "2026-10-24T00:43:14Z CB-w539-bb rev=512b2976f8c5d65de6b72d642202311e3308349a cursor=959211183 last_job_kind=None last_job_outcome=None last_job_started_at=None last_job_finished_at=None"
@@ -13,6 +25,9 @@
   "queued": []
  },
  "class": "W",
+ "closed_at": "2026-10-24T01:37:19Z",
+ "corrected": 2211,
+ "corrected_parsed": 2211,
  "deadline": "2026-10-24T05:35:00Z",
  "dry_since_mark": [
   {
@@ -34,9 +49,16 @@
    "started_at": 1792802534
   }
  ],
+ "foreign": [],
+ "jobs_verdict": "PASS",
  "lock": "Writer: 551 w539-b until 2026-10-24T03:00Z",
  "minutes_per_run": 50,
+ "missing_own": [],
  "opened_at": "2026-10-24T00:43:14Z",
+ "own": [
+  2737,
+  2738
+ ],
  "prereg": {
   "bar": "U5 sequential; cap max(2Ar, Ar+10)",
   "class": "W",
@@ -47,7 +69,27 @@
  "read_minutes": 45,
  "runs_left": 2,
  "seg": "w539-b",
- "status": "open",
+ "started": [
+  {
+   "counts": "218876 notices → 127578 tenders (2024 islands), 2948 versions; 126813 tenders written, 765 verified unchanged, 0 relabelled (issue 562); compare (issue 495): 124601 tenders verified, 2211 corrected; tables 4477691 skipped / 23768 rewritten; rows 37572304 skipped / 85275 rewritten; 2372 correction rows; 37637803 stored rows of 499094 versions read in 248.5s: 6.60 us per row, 497.9 us per version; dropped parties (issue 511): 0 void, 389 placeholder (195 with an identifier: 26198212/ORG-0003 's.o.' [DE 164 242 157], 26198212/ORG-0004 's.o.' [DE 164 242 157], 26198257/ORG-0003 's.o.' [DE 164 242 157], 26198257/ORG-0004 's.o.' [DE 164 242 157], 26199049/ORG-0003 's.o.' [DE164242157], 26199537/ORG-0003 's.o.' [DE 164 242 157], 26199537/ORG-0004 's.o.' [DE 164 242 157], 26199550/ORG-7005 's.o.' [022894990], 26199550/ORG-7006 's.o.' [022894990], 26203743/ORG-7005 'siehe I.1) Öffentlicher Auftraggeber' [01061-0000-66], 26204672/ORG-7005 'siehe I.1 und VI.4.1' [13-X71610001000-88], 26205750/ORG-7005 'siehe I.1) Öffentlicher Auftraggeber' [01061-0000-66], 26206849/ORG-0003 's.o.' [DE 164 242 157], 26206849/ORG-0004 's.o.' [DE 164 242 157], 26206873/ORG-0003 's.o.' [DE 164 242 157], 26206873/ORG-0004 's.o.' [DE 164 242 157], 26207043/ORG-7005 'siehe I.1) Öffentlicher Auftraggeber' [01061-0000-66], 26207082/ORG-0003 's.o.' [DE 164 242 157], 26207082/ORG-0004 's.o.' [DE 164 242 157], 26208955/ORG-0003 's.o.' [DE 164 242 157]), 192 blank; issue-481 tender links joined: 5709 (previous-notice 3521 of which cross-source 887, logical-notice 2188, matched 0); refused: 2463 (not-earlier 20, shared-kind 13, buyer-disjoint 1085, pin-fan-in 1345, fan-in 0, not-one-to-one 0, keyed-weld 0, oversized 0); deferred: 0; largest component: 26 key(s) at notice 24334880; issue-482 uuid hubs refused: 21 key(s), 874 notice(s) split into 113 buyer cluster(s); issue-479 procedure type: eforms 222384 folded / 575 unmapped / 27699 none, eforms-de-2x 20315 folded / 0 unmapped / 10825 none, eforms-de-1x 201589 folded / 0 unmapped / 17287 none, doe-sdk01 974 folded / 0 unmapped / 1 none",
+   "finished_at": 1792805772,
+   "job_id": 2738,
+   "kind": "project",
+   "outcome": "ok",
+   "params": "rebuild=false",
+   "started_at": 1792802599
+  },
+  {
+   "counts": "re-queued 218876 notices, stamped 126812 tenders epoch-stale for the incremental fold",
+   "finished_at": 1792802599,
+   "job_id": 2737,
+   "kind": "refold",
+   "outcome": "ok",
+   "params": "refold eforms:eforms-de-1.0,eforms:eforms-de-1.1,eforms:eforms-de-1.2",
+   "started_at": 1792802596
+  }
+ ],
+ "status": "closed",
  "switchoff_by": "2026-10-24T07:05:00Z",
  "tag": "drain-539-b",
  "tick": "2026-10-24T07:35:00Z",

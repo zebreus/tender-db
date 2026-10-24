@@ -1,0 +1,4 @@
+  start rule (D.1): now 2026-10-24T01:38Z; next chain 2026-10-24T07:35Z (09:35 Berlin); next weekly tick 2026-10-25T02:10Z (Sun 03:10 Berlin); binding: chain; must finish by 2026-10-24T05:35Z; 1 run(s) left, estimate 2:05:00 (switch-off gate budgeted) -> 2026-10-24T03:43Z: GO; a switch-off must START by 2026-10-24T07:05Z (gate 0+deploy 10+drain_back_and_verify 20 min)
+w539-c OPEN (class W, tag drain-539-c) at CB = K = 959215522; /admin/jobs idle (newest job 2739); latest switch-off start 2026-10-24T07:05:00Z (chain tick 2026-10-24T07:35:00Z)
+  writer lock (551 and the drain's issue, before the wet POST): Writer: 551 w539-c until 2026-10-24T03:45Z
+  pre-registered: expected NEW 0; served moves "0 R moves (C9')"; salt '551-b6-drain-539-'; bar 'U5 sequential; cap max(2Ar, Ar+10)'

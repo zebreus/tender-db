@@ -31,7 +31,7 @@
   8460630
  ],
  "C1": 959004090,
- "K": 959211183,
+ "K": 959215522,
  "at": "2026-10-23T23:44:41Z",
  "entries": {
   "1000347": {
@@ -100043,7 +100043,7 @@
    "vouches_from": "port P_final (23cbd850)"
   }
  },
- "entries_sha256": "55a075dec0e236408b068c5af423707e6ac9fae802081cd184675ee67a255c42",
+ "entries_sha256": "ccc37ec3b4443299b59933125a9f4f9e832b565f2fde8ffd95ac180a3f3bfafc",
  "frozen": null,
  "history": [
   {
@@ -100090,6 +100090,21 @@
    "seg": "w539-a",
    "tag": "drain-539-a",
    "version": 3
+  },
+  {
+   "K_from": 959211183,
+   "K_to": 959215522,
+   "added": [],
+   "at": "2026-10-24T01:38:24Z",
+   "ca_max_job_id": 2738,
+   "ca_measured_at": 1792805838,
+   "class": "W",
+   "lost": [],
+   "moved": [],
+   "result_sha256": "d81c9df2155ea0ed5682ddbf5045fd237769cfb1f5436331d94f8579f32b5dee",
+   "seg": "w539-b",
+   "tag": "drain-539-b",
+   "version": 4
   }
  ],
  "ids_sha256": "8845f0d03f91defccf46a7275a5ead4d13dc84a44a2501155202562365f3ae20",
@@ -100105,13 +100120,13 @@
   "u9/20261023/switchoff.json": "500fa0c862a43ec79bf8aa29b19ed8fe0e884b69e96bdcd43894317a0194b902"
  },
  "jobs_mark": {
-  "max_job_id": 2734,
-  "measured_at": 1792802475,
-  "seg": "w539-a"
+  "max_job_id": 2738,
+  "measured_at": 1792805838,
+  "seg": "w539-b"
  },
  "lost": {},
  "n": 3478,
- "open_segment": "w539-b",
+ "open_segment": "w539-c",
  "retired": [
   300875,
   1203991,
@@ -100144,7 +100159,7 @@
   "chain-2026-10-23": 2,
   "delta-U8": 8
  },
- "version": 3,
+ "version": 4,
  "watch": {
   "1024214": {
    "kind": "pin",
