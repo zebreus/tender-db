@@ -1,0 +1,11 @@
+SCOPE: PASS
+   note: all-kind rows {'bid/added': 14, 'contract/added': 10, 'lot/added': 11, 'lot/changed': 9219, 'lot_result/added': 82, 'tender/changed': 9594}
+NEW: PASS
+   note: NEW 0; A 6; A x 1.0974 % = 0.07; cap max(2 A r, A r + 10) = 10.07 (a tripwire)
+R (MOVED/LOST/SILENT): PASS
+PINS: PASS
+BAND: PASS
+   note: band route sql; 29 rows; B_R 29
+D7 (advisory: the runs not yet started): PASS
+   note: now 2026-10-24T00:42Z; next chain 2026-10-24T07:35Z (09:35 Berlin); next weekly tick 2026-10-25T02:10Z (Sun 03:10 Berlin); binding: chain; must finish by 2026-10-24T05:35Z; 0 run(s) left, estimate 0:30:00 (switch-off gate budgeted) -> 2026-10-24T01:12Z: GO; a switch-off must START by 2026-10-24T06:59Z (gate 0+deploy 10+drain_back_and_verify 20+box_reads 6 min)
+w539-a: PASS -- registry.py advance w539-a (K -> 959211183; NEW 0, moved 0, lost 0)

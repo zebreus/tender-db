@@ -1634,3 +1634,4 @@ Full record: `551-lot-sum/b6/decision-b6.md` (three judges — risk-first, value
   between runs; all close before the 10-25 02:10Z weekly tick, else c moves to 10-25. Started in the 10-23/24 night gap
   (after the 10-23 chain's check in R0, P0 and step 1; no tick before 07:35Z).
 - **Writer: 551 w539-a until 2026-10-24T02:30Z** (539 step 2 run a, refold eforms-sdk-0.1, class W; opened 00:05Z at CB = K = 959192253).
+- **Writer: 551 w539-b until 2026-10-24T03:00Z** (539 step 2 run b, refold eforms-de-1.0/1.1/1.2, class W; run a PASS: NEW 0, 0 R moves, A 6).

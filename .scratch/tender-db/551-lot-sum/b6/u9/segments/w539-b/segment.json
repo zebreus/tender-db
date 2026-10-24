@@ -1,0 +1,55 @@
+{
+ "CB": 959211183,
+ "K_open": 959211183,
+ "cb_health": [
+  "2026-10-24T00:43:12Z CB-w539-b rev=512b2976f8c5d65de6b72d642202311e3308349a cursor=959211183 last_job_kind=None last_job_outcome=None last_job_started_at=None last_job_finished_at=None",
+  "2026-10-24T00:43:14Z CB-w539-bb rev=512b2976f8c5d65de6b72d642202311e3308349a cursor=959211183 last_job_kind=None last_job_outcome=None last_job_started_at=None last_job_finished_at=None"
+ ],
+ "cb_jobs": {
+  "current": null,
+  "file_sha256": "cb3d55939a836848d0394846369dbe1ef3c8fbbef59575ce221ff6e97507a01f",
+  "max_job_id": 2736,
+  "measured_at": 1792802593,
+  "queued": []
+ },
+ "class": "W",
+ "deadline": "2026-10-24T05:35:00Z",
+ "dry_since_mark": [
+  {
+   "counts": "refold-lot-sum (issue 551) DRY RUN — nothing written: 3 of 4117 named Tender(s) whose head could serve a derived lot sum, 12 notice(s); 4114 named Tender(s) not in the cohort (no such Tender, or a head no lot sum can reach): 659006,659083,659267,659504,659516,659664,659909,659956,660146,660298,660442,660452,660693,660957,661005,661128,661147,661225,661313,661360,…; run it with \"dry_run\":false,\"expect\":3 with the same tender_ids to stamp and re-queue them (a `project` is queued behind the wet run)",
+   "finished_at": 1792802547,
+   "job_id": 2736,
+   "kind": "refold-lot-sum",
+   "outcome": "ok",
+   "params": "refold-lot-sum dry-run tender_ids=4117 [659006,659083,659267,659504,659516,659664,659909,659956,…]",
+   "started_at": 1792802547
+  },
+  {
+   "counts": "refold-lot-sum (issue 551) DRY RUN — nothing written: 3 of 5000 named Tender(s) whose head could serve a derived lot sum, 17 notice(s); 4997 named Tender(s) not in the cohort (no such Tender, or a head no lot sum can reach): 302,479,593,627,678,838,854,1325,1332,1480,1778,1891,1942,2302,2419,2525,2564,2670,2785,2921,…; run it with \"dry_run\":false,\"expect\":3 with the same tender_ids to stamp and re-queue them (a `project` is queued behind the wet run)",
+   "finished_at": 1792802535,
+   "job_id": 2735,
+   "kind": "refold-lot-sum",
+   "outcome": "ok",
+   "params": "refold-lot-sum dry-run tender_ids=5000 [302,479,593,627,678,838,854,1325,…]",
+   "started_at": 1792802534
+  }
+ ],
+ "lock": "Writer: 551 w539-b until 2026-10-24T03:00Z",
+ "minutes_per_run": 50,
+ "opened_at": "2026-10-24T00:43:14Z",
+ "prereg": {
+  "bar": "U5 sequential; cap max(2Ar, Ar+10)",
+  "class": "W",
+  "expected_moves": "0 R moves (C9')",
+  "expected_new": 0,
+  "salt": "551-b6-drain-539-"
+ },
+ "read_minutes": 45,
+ "runs_left": 2,
+ "seg": "w539-b",
+ "status": "open",
+ "switchoff_by": "2026-10-24T07:05:00Z",
+ "tag": "drain-539-b",
+ "tick": "2026-10-24T07:35:00Z",
+ "tick_kind": "chain"
+}

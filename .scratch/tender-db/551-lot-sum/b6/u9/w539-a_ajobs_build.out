@@ -1,0 +1,1 @@
+A jobs w539-a: 9117 changed live Tenders in 2 dry job(s) ['A01', 'A02'] (gd5 read of w539-a: /home/user/tender-db/.scratch/tender-db/551-lot-sum/b6/u9/segments/w539-a/read/changed_live_ids.json); POST each /home/user/tender-db/.scratch/tender-db/551-lot-sum/b6/u9/ajobs/w539-a/AXX_dry.json (dry), save each summary, then ajobs.py count w539-a

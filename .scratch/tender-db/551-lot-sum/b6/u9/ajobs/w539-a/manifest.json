@@ -1,0 +1,17 @@
+{
+ "at": "2026-10-24T00:42:04Z",
+ "ids_sha256": "acbe04230bd28f61ebab5cbc8b99c9528ec57bed6ae7962a95dc18b6383a66e4",
+ "jobs": [
+  {
+   "job": "A01",
+   "n": 5000
+  },
+  {
+   "job": "A02",
+   "n": 4117
+  }
+ ],
+ "n": 9117,
+ "name": "w539-a",
+ "source": "gd5 read of w539-a: /home/user/tender-db/.scratch/tender-db/551-lot-sum/b6/u9/segments/w539-a/read/changed_live_ids.json"
+}
