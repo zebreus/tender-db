@@ -5964,6 +5964,8 @@ fn fold_summary(report: &ingest::project::Report, sweep: &str) -> String {
     let dropped = dropped_suffix(&report.dropped);
     // Issue 520 U4: the kept parties bound under their award summary's one winner, silent at zero.
     let extracted = extracted_suffix(&report.extracted);
+    // Issue 576: the role references naming a touchpoint, by what the fold did with each; silent at zero.
+    let touchpoints = touchpoint_suffix(&report.touchpoint_roles);
     let citations = format!(
         "{}{}{}{}{}{}",
         citation_suffix(&report.citations),
@@ -5976,7 +5978,7 @@ fn fold_summary(report: &ingest::project::Report, sweep: &str) -> String {
     // Issue 495 unit 3: the shadow compare's tally, when a stale Tender was compared.
     let compare = report.applied.compare_line().map(|line| format!("; {line}")).unwrap_or_default();
     format!(
-        "{cancelled}{} notices → {} tenders ({} islands), {} versions; {} tenders written, {} verified unchanged, {} relabelled (issue 562){compare}{wall}{alias}{refreshed}{retired}{dropped}{extracted}{sweep}{citations}",
+        "{cancelled}{} notices → {} tenders ({} islands), {} versions; {} tenders written, {} verified unchanged, {} relabelled (issue 562){compare}{wall}{alias}{refreshed}{retired}{dropped}{extracted}{touchpoints}{sweep}{citations}",
         report.notices,
         report.tenders,
         report.islands,
@@ -5984,6 +5986,20 @@ fn fold_summary(report: &ingest::project::Report, sweep: &str) -> String {
         report.applied.tenders_written,
         report.applied.tenders_unchanged,
         report.applied.label_corrections
+    )
+}
+
+/// Issue 576: a fold's touchpoint role references ([`ingest::project::TouchpointRoles`]) for its durable
+/// log row — how many bound the touchpoint's own Organization, how many its minted mention (and of those
+/// how many published no country and took the Organization's) and how many were dropped: unit 3's drain reads the exact size
+/// here. Empty when the fold read none.
+fn touchpoint_suffix(roles: &ingest::project::TouchpointRoles) -> String {
+    if roles.total() == 0 {
+        return String::new();
+    }
+    format!(
+        "; touchpoint roles (issue 576): {} aliased, {} minted ({} without a country of their own took the organization's), {} dropped",
+        roles.aliased, roles.minted, roles.country_fallback, roles.dropped
     )
 }
 
@@ -23088,6 +23104,20 @@ mod tests {
         let long = "x".repeat(80);
         extracted.sample = vec![(7, "ORG-1".into(), long.clone(), long)];
         assert!(extracted_suffix(&extracted).contains(&format!("7/ORG-1 '{0}' → '{0}'", "x".repeat(60))), "clipped");
+    }
+
+    /// Issue 576: the fold's job row carries `Report.touchpoint_roles` — unit 3's drain reads its size
+    /// there. Silent at zero; otherwise every class, per role reference.
+    #[test]
+    fn the_touchpoint_suffix_names_every_class() {
+        assert_eq!(touchpoint_suffix(&ingest::project::TouchpointRoles::default()), "", "no touchpoint role: silent");
+        let roles = ingest::project::TouchpointRoles { aliased: 4, minted: 5, dropped: 2, country_fallback: 1 };
+        assert_eq!(
+            touchpoint_suffix(&roles),
+            "; touchpoint roles (issue 576): 4 aliased, 5 minted (1 without a country of their own took the organization's), 2 dropped"
+        );
+        let dropped_only = ingest::project::TouchpointRoles { dropped: 1, ..Default::default() };
+        assert!(!touchpoint_suffix(&dropped_only).is_empty(), "a dropped reference alone is printed");
     }
 
     /// Issue 483 unit 2: `refold-buyer-roles` enqueues dry unless asked, runs through

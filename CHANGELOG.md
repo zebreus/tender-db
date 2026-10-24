@@ -4,6 +4,43 @@ Behavior changes a client could observe, newest first. Additive fields and new
 endpoints land without an entry unless they change how an existing request
 answers; this file exists for the rare case where one does.
 
+## Unreleased (issue 576) — a role whose eForms reference names a touchpoint is served: as its organization, or under the touchpoint's own name
+
+An eForms `Lot-` or `Part-` role (`Lot-ReviewOrg`, `Lot-ReviewInfo`, `Lot-Mediator`, `Lot-AddInfo`,
+`Lot-TenderReceipt`, …) may reference a touchpoint (`TPO-0001`), a contact point printed inside an organization's
+block, instead of the organization. Such a role was left out of `parties[]` without a word. Publishers mostly use the
+touchpoint to print another body, usually the review tribunal. Tender 8851944 (notice 47411306) names LOT-0000's
+review body through its buyer's TPO-0001, `Tribunal Administrativo Central de Recursos Contractuales (TACRC) o
+Tribunal Superior de Justicia (TSJ).`, and served only its `Procedure-Buyer` and its `Tenderer`. In the notice ids
+47408000–47415999, 1,179 role references named a touchpoint, on 345–374 of 7,122 eForms notices (about 5%; 672 of
+them `Lot-ReviewOrg`). At least 73 printed the touchpoint's organization's own name and 1,086 another, in the review
+roles mostly a tribunal. Nothing wrong was served; the roles were missing.
+- From the deploy on, a touchpoint that prints its organization's own name (up to case, whitespace and a trailing
+  `.`, `,` or `;`, in any language either prints) serves that organization's own party in the role: its
+  `organization_id`, anchored at the organization's block, so `mention_name` is the name the organization printed.
+  Once refolded, tender 8851996 (notice 47413157) serves its four `Lot-AddInfo` roles as its buyer's organization
+  this way.
+- A touchpoint that prints another name serves a party named after the touchpoint: no identifier, resolved by name and
+  country like any party published without one (the touchpoint's country, or its organization's where it prints
+  none), so it joins the provisional organization of that name and country, or a new one (`organization added`).
+  Once refolded, 8851944 serves a `Lot-ReviewOrg` party on LOT-0000 named after the tribunal, and 8851996 serves its
+  four `Lot-ReviewOrg` roles as the Madrid tribunal its TPO-0001 prints. A compound or suffixed name is its own
+  organization: 8851944's tribunal does not join the plainly named `Tribunal Administrativo Central de Recursos
+  Contractuales`. A buyer's department printed under another name (`Stadt Fürth - Zentrale Vergabestelle`) is its
+  own party under that name, as it is where a publisher prints it as an organization.
+- Some touchpoint names name no party. The role then binds nothing and is not served: a name shaped like a section id
+  (`ORG-0001`), one carrying a URL, `www.` or `@` (`De inschrijvingen dienen ingediend te worden via
+  www.tenderned.nl`), one naming a procurement portal or platform, as prose (`Vragen kunt u stellen via TenderNed`)
+  or as the platform's own name (`Mercell Norge AS`, though the same body printed as an organization is served), and
+  a placeholder, a blank or a void-lot phrase, as for any party (issues 510, 511, 520, 525). On the window's 60
+  largest other-name groups this drops 25 references (21 of TenderNed prose, 4 `ORG-0001`) and no tribunal.
+- A touchpoint no role names is not a party. A touchpoint is never a buyer, a bidder or a winner: the roles behind
+  `Procedure-Buyer`, `Tenderer`, `bids[]` and `lot_results[].winners` reference organizations only, so they,
+  `is_buyer`, `?winner=` and `?bidder=` are unchanged, and so is the buyer the role census elects (issue 483).
+- Stored tenders change once refolded (issue 576 unit 3: a `refold-sections` run over the notices that carry a
+  touchpoint). Until then a tender folded before the change can lack these parties. Each refolded tender whose parties
+  change is announced as a `version: null` `changed` row (ADR-0017 D3).
+
 ## Unreleased (issue 577) — notice content serves the field id the notice's own SDK declares, not a grafted one
 
 `/v1/notices/{id}/content` and the `notice_*` tables on `/v1/sql` promise field ids in the source's own vocabulary.

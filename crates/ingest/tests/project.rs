@@ -7190,3 +7190,245 @@ async fn an_sdk01_award_notice_maps_no_submission_deadline() {
     assert_eq!(scalar(&db, "SELECT current_deadline FROM tenders").await, CN_DEADLINE);
     let _ = std::fs::remove_file(&path);
 }
+
+// ------------------------------------------------- issue 576: touchpoint roles
+
+const EFORMS: &str = "eforms:eforms-sdk-1.13";
+
+fn eforms_text(section: &str, field: &str, lang: &str, value: &str) -> ValueRow {
+    ValueRow {
+        section_id: section.into(),
+        field_id: field.into(),
+        ordinal: 0,
+        value: NoticeValue::Text { lang: Some(lang.into()), value: value.into() },
+    }
+}
+
+fn eforms_code(section: &str, field: &str, code: &str) -> ValueRow {
+    ValueRow { section_id: section.into(), field_id: field.into(), ordinal: 0, value: NoticeValue::Code { list: None, code: code.into() } }
+}
+
+/// Issue 576's two exhibits as synthetic eForms records (`project::tests::touchpoint_576` pins the same
+/// shapes pure). `00710001-2026` is 47413157's shape on two lots: its buyer's TPO-0001 (the Madrid
+/// tribunal) is each lot's review body and TPO-0002 (printed with the buyer's own name) gives additional
+/// information. `00722535-2026` is 47411306's award: LOT-0000's review body is TPO-0001 (TACRC/TSJ), and
+/// Compusof wins it. With `refs` false the touchpoint references are left out: the notices as the fold
+/// served them before the issue, which skipped every one.
+fn touchpoint_notices(fetch_id: i64, refs: bool) -> Vec<(Notice, Parse)> {
+    let buyer = |p: &mut Parsed, name: &str| {
+        p.sections.push(sec("ND-ContractingParty#0", "ContractingParty", Some("PROCEDURE")));
+        p.sections.push(sec("ORG-0001", "Organization", Some("PROCEDURE")));
+        p.values.push(ted_ref("ND-ContractingParty#0", "OPT-300-Procedure-Buyer", "ORG-0001"));
+        p.values.push(eforms_text("ORG-0001", "BT-500-Organization-Company", "SPA", name));
+        p.values.push(eforms_code("ORG-0001", "BT-514-Organization-Company", "ESP"));
+    };
+    let touchpoint = |p: &mut Parsed, id: &str, name: &str| {
+        p.sections.push(sec(id, "Touchpoint", Some("ORG-0001")));
+        p.values.push(eforms_text(id, "BT-500-Organization-TouchPoint", "SPA", name));
+        p.values.push(eforms_code(id, "BT-514-Organization-TouchPoint", "ESP"));
+    };
+    let lot = |p: &mut Parsed, key: &str, roles: &[(&str, &str)]| {
+        p.sections.push(sec(key, "Lot", Some("PROCEDURE")));
+        p.values.push(ted_text(key, "BT-21-Lot", &format!("Lote {key}")));
+        for (field, target) in roles.iter().filter(|_| refs) {
+            p.values.push(ValueRow {
+                section_id: key.into(),
+                field_id: (*field).into(),
+                ordinal: 0,
+                value: NoticeValue::Id { scheme: Some("touchpoint".into()), value: (*target).into(), is_ref: true },
+            });
+        }
+    };
+
+    let iam = "Organismo Autónomo Informática del Ayuntamiento de Madrid";
+    let mut cn = Parsed { sections: vec![sec("PROCEDURE", "Notice", None)], values: vec![ted_text("PROCEDURE", "BT-21-Procedure", "Servicios")] };
+    buyer(&mut cn, iam);
+    touchpoint(&mut cn, "TPO-0001", "Tribunal Administrativo de Contratación Pública de la Comunidad de Madrid");
+    touchpoint(&mut cn, "TPO-0002", iam);
+    for key in ["LOT-0001", "LOT-0002"] {
+        lot(&mut cn, key, &[("OPT-301-Lot-AddInfo", "TPO-0002"), ("OPT-301-Lot-ReviewOrg", "TPO-0001")]);
+    }
+
+    let mut can = Parsed { sections: vec![sec("PROCEDURE", "Notice", None)], values: vec![ted_text("PROCEDURE", "BT-21-Procedure", "Estaciones de trabajo")] };
+    buyer(&mut can, "Dirección General de Racionalización y Centralización de la Contratación");
+    touchpoint(
+        &mut can,
+        "TPO-0001",
+        "Tribunal Administrativo Central de Recursos Contractuales (TACRC) o Tribunal Superior de Justicia (TSJ).",
+    );
+    lot(&mut can, "LOT-0000", &[("OPT-301-Lot-ReviewOrg", "TPO-0001")]);
+    for (id, kind, parent) in [
+        ("ORG-0002", "Organization", "PROCEDURE"),
+        ("RES-0001", "LotResult", "PROCEDURE"),
+        ("TEN-0001", "LotTender", "PROCEDURE"),
+        ("TPA-0001", "TenderingParty", "PROCEDURE"),
+        ("ND-Tenderer#0", "Tenderer", "TPA-0001"),
+    ] {
+        can.sections.push(sec(id, kind, Some(parent)));
+    }
+    can.values.extend([
+        eforms_text("ORG-0002", "BT-500-Organization-Company", "SPA", "Compusof, S.A."),
+        eforms_code("ORG-0002", "BT-514-Organization-Company", "ESP"),
+        ted_ref("RES-0001", "BT-13713-LotResult", "LOT-0000"),
+        eforms_code("RES-0001", "BT-142-LotResult", "selec-w"),
+        ted_ref("RES-0001", "OPT-320-LotResult", "TEN-0001"),
+        ted_ref("TEN-0001", "BT-13714-Tender", "LOT-0000"),
+        ted_amount("TEN-0001", "BT-720-Tender", 47_497_700),
+        ted_ref("TEN-0001", "OPT-310-Tender", "TPA-0001"),
+        ted_ref("ND-Tenderer#0", "OPT-300-Tenderer", "ORG-0002"),
+        ted_amount("PROCEDURE", "BT-161-NoticeResult", 47_497_700),
+    ]);
+    vec![legacy_record(fetch_id, "00710001-2026", EFORMS, cn), legacy_record(fetch_id, "00722535-2026", EFORMS, can)]
+}
+
+/// One `group_concat` cell, `''` for no rows.
+async fn cell(db: &Db, sql: &str) -> String {
+    query_text(db, sql).await.unwrap_or_default()
+}
+
+/// Issue 576 through the real fold: a role naming a touchpoint is served through the touchpoint's own
+/// identity. The minted touchpoint's mention stands at its own section and its party rows are anchored
+/// there; the aliased touchpoint's roles bind the buyer at ORG-0001, where its mention stands — so the
+/// foreign key every party row carries to `organization_mentions` holds for both (checked directly: the
+/// fold runs with enforcement off). Planner step 4d's role mix (`guid_twin_parties_sql`'s rows) gains
+/// only the (i) rows on the buyer's own key, beside the TPO-keyed (ii) rows. Path W's inputs do not
+/// move: the results, winners, bids, amounts and lots and every non-touchpoint party are the fold's
+/// without the references. The Report counts every reference, and unit 3's drain (`refold-sections`
+/// over the Touchpoint carriers, through the incremental fold) re-mints them from a pre-576 layer
+/// (no touchpoint mention or role stored) to the same layer.
+#[tokio::test]
+async fn a_touchpoint_role_is_served_through_the_touchpoints_own_identity() {
+    let (db, fetch_id, path) = scratch("touchpoint-576").await;
+    let (before, before_fetch, before_path) = scratch("touchpoint-576-before").await;
+    for (notice, parse) in touchpoint_notices(fetch_id, true) {
+        db.record_notice(&notice, &parse).await.expect("record");
+    }
+    for (notice, parse) in touchpoint_notices(before_fetch, false) {
+        before.record_notice(&notice, &parse).await.expect("record");
+    }
+    let report = project::project(&db, false).await.expect("project");
+    project::project(&before, false).await.expect("project the notices without their references");
+    assert_eq!(
+        *report.touchpoint_roles,
+        project::TouchpointRoles { aliased: 2, minted: 3, dropped: 0, country_fallback: 0 },
+        "two AddInfo references aliased, three ReviewOrg references minted"
+    );
+
+    let mentions = "SELECT group_concat(r, ',') FROM (SELECT n.publication_id || '/' || m.section_id AS r
+                      FROM organization_mentions m JOIN notices n ON n.id = m.notice_id ORDER BY 1)";
+    assert_eq!(
+        cell(&db, mentions).await,
+        "00710001-2026/ORG-0001,00710001-2026/TPO-0001,00722535-2026/ORG-0001,00722535-2026/ORG-0002,00722535-2026/TPO-0001",
+        "the minted touchpoints' mentions, none at the aliased TPO-0002"
+    );
+    assert_eq!(
+        cell(
+            &db,
+            "SELECT group_concat(name, '|') FROM (SELECT o.name FROM organization_mentions m
+               JOIN organizations o ON o.id = m.organization_id WHERE m.section_id = 'TPO-0001' ORDER BY 1)"
+        )
+        .await,
+        "Tribunal Administrativo Central de Recursos Contractuales (TACRC) o Tribunal Superior de Justicia (TSJ).|\
+         Tribunal Administrativo de Contratación Pública de la Comunidad de Madrid",
+        "each review body under its own published name"
+    );
+    for table in ["tender_version_parties", "tender_version_bid_parties"] {
+        assert_eq!(
+            scalar(
+                &db,
+                &format!(
+                    "SELECT COUNT(*) FROM {table} p LEFT JOIN organization_mentions m
+                       ON m.notice_id = p.mention_notice_id AND m.section_id = p.mention_section_id
+                      WHERE m.notice_id IS NULL"
+                ),
+            )
+            .await,
+            0,
+            "{table}: every row's mention key names a recorded mention"
+        );
+    }
+
+    // Planner step 4d's role mix: (notice, mention section) → roles, from the party rows by mention.
+    let role_mix = "SELECT group_concat(r, ';') FROM (SELECT publication_id || '/' || section || '=' || group_concat(role, ',') AS r
+                      FROM (SELECT DISTINCT n.publication_id, p.mention_section_id AS section, p.role
+                              FROM tender_version_parties p JOIN notices n ON n.id = p.mention_notice_id
+                             ORDER BY 1, 2, 3)
+                     GROUP BY publication_id, section ORDER BY 1)";
+    assert_eq!(
+        cell(&before, role_mix).await,
+        "00710001-2026/ORG-0001=Procedure-Buyer;00722535-2026/ORG-0001=Procedure-Buyer;00722535-2026/ORG-0002=Tenderer",
+        "premise: before, every touchpoint role was skipped"
+    );
+    assert_eq!(
+        cell(&db, role_mix).await,
+        "00710001-2026/ORG-0001=Lot-AddInfo,Procedure-Buyer;00710001-2026/TPO-0001=Lot-ReviewOrg;\
+         00722535-2026/ORG-0001=Procedure-Buyer;00722535-2026/ORG-0002=Tenderer;00722535-2026/TPO-0001=Lot-ReviewOrg",
+        "the buyer's key gains only the (i) AddInfo rows; the (ii) rows stand at the touchpoints"
+    );
+    assert_eq!(
+        scalar(&db, "SELECT COUNT(*) FROM tender_version_parties WHERE role LIKE 'Lot-%' AND lot_id IS NULL").await,
+        0,
+        "every touchpoint role is served on its lot"
+    );
+    assert_eq!(
+        scalar(
+            &db,
+            "SELECT COUNT(DISTINCT p.organization_id) FROM tender_version_parties p
+              JOIN notices n ON n.id = p.mention_notice_id
+             WHERE n.publication_id = '00710001-2026' AND p.role IN ('Procedure-Buyer', 'Lot-AddInfo')"
+        )
+        .await,
+        1,
+        "the aliased AddInfo binds the buyer's own organization"
+    );
+
+    // Path W's inputs and every other row: the fold's without the references, organizations by name
+    // (the minted tribunals take organization ids, so raw ids shift).
+    let unchanged = [
+        "SELECT group_concat(r, x'0a') FROM (SELECT id||'|'||tender_id||'|'||lot_key AS r FROM lots ORDER BY id)",
+        "SELECT group_concat(r, x'0a') FROM (SELECT tender_id||'|'||seq||'|'||lot_id||'|'||kind||'|'||coalesce(value_cents,-1) AS r FROM tender_version_lots ORDER BY 1)",
+        "SELECT group_concat(r, x'0a') FROM (SELECT id||'|'||tender_id||'|'||notice_id||'|'||result_key AS r FROM lot_results ORDER BY id)",
+        "SELECT group_concat(r, x'0a') FROM (SELECT tender_id||'|'||seq||'|'||lot_result_id||'|'||coalesce(lot_id,-1)||'|'||coalesce(decision,'')||'|'||coalesce(awarded_cents,-1) AS r FROM tender_version_lot_results ORDER BY 1)",
+        "SELECT group_concat(r, x'0a') FROM (SELECT w.tender_id||'|'||w.seq||'|'||w.lot_result_id||'|'||o.name||'|'||coalesce(w.is_buyer,-1) AS r FROM tender_version_result_winners w JOIN organizations o ON o.id = w.organization_id ORDER BY 1)",
+        "SELECT group_concat(r, x'0a') FROM (SELECT tender_id||'|'||seq||'|'||field||'|'||cents||'|'||coalesce(lot_id,-1) AS r FROM tender_version_amounts ORDER BY 1)",
+        "SELECT group_concat(r, x'0a') FROM (SELECT tender_id||'|'||seq||'|'||bid_id||'|'||coalesce(lot_id,-1)||'|'||coalesce(cents,-1) AS r FROM tender_version_bids ORDER BY 1)",
+        "SELECT group_concat(r, x'0a') FROM (SELECT b.tender_id||'|'||b.seq||'|'||b.bid_id||'|'||b.role||'|'||o.name||'|'||b.mention_section_id AS r FROM tender_version_bid_parties b JOIN organizations o ON o.id = b.organization_id ORDER BY 1)",
+        "SELECT group_concat(r, x'0a') FROM (SELECT p.tender_id||'|'||p.seq||'|'||p.role||'|'||o.name||'|'||p.mention_section_id||'|'||coalesce(p.lot_id,-1) AS r FROM tender_version_parties p JOIN organizations o ON o.id = p.organization_id WHERE p.role NOT LIKE 'Lot-%' ORDER BY 1)",
+    ];
+    for sql in unchanged {
+        assert_eq!(cell(&db, sql).await, cell(&before, sql).await, "{sql}");
+    }
+    assert!(cell(&db, unchanged[4]).await.contains("|Compusof, S.A.|"), "premise: Compusof wins LOT-0000");
+
+    // Unit 3's drain through the incremental fold's Phase 1 (`incremental_plan_rows`): `refold-sections`
+    // kinds=[Touchpoint] re-queues every carrier and stamps its Tenders. The stored layer is first put
+    // back to a pre-576 fold's — no touchpoint mention, no touchpoint role (every Lot role here names a
+    // touchpoint; the aliased AddInfo rows stand at ORG-0001) — because the incremental fold keeps a
+    // changed notice's recorded mentions and Phase 2 binds through them: left standing, the full fold's
+    // rows would serve the minted roles whether or not the incremental fold re-minted them. The fold must
+    // re-mint, re-bind and re-count the touchpoints as the full fold's plan sweep did, to the same layer.
+    let carriers = db.notice_ids_with_section_kind(&["Touchpoint"]).await.expect("cohort");
+    assert_eq!(carriers.len(), 2, "both notices carry a touchpoint");
+    let parties = "SELECT group_concat(r, x'0a') FROM (SELECT p.tender_id||'|'||p.seq||'|'||p.role||'|'||p.organization_id||'|'||p.mention_section_id||'|'||coalesce(p.lot_id,-1) AS r FROM tender_version_parties p ORDER BY 1)";
+    let (folded_mentions, folded_parties) = (cell(&db, mentions).await, cell(&db, parties).await);
+    let raw = turso::Builder::new_local(&path).build().await.expect("open the scratch db");
+    let conn = raw.connect().expect("connect");
+    conn.execute("DELETE FROM tender_version_parties WHERE role LIKE 'Lot-%'", ()).await.expect("unserve the roles");
+    conn.execute("DELETE FROM organization_mentions WHERE section_id LIKE 'TPO-%'", ()).await.expect("unrecord the mentions");
+    drop(conn);
+    assert_eq!(
+        cell(&db, mentions).await,
+        "00710001-2026/ORG-0001,00722535-2026/ORG-0001,00722535-2026/ORG-0002",
+        "premise: no touchpoint mention is recorded"
+    );
+    assert_eq!(cell(&db, role_mix).await, cell(&before, role_mix).await, "premise: the roles a pre-576 fold served");
+    assert_eq!(db.unmark_projected_by_ids(&carriers).await.expect("requeue"), 2);
+    db.stamp_stale_for_notices(&carriers).await.expect("stamp");
+    let refold = project::project_incremental(&db).await.expect("refold the touchpoint carriers");
+    assert_eq!(refold.touchpoint_roles, report.touchpoint_roles, "the incremental fold counts as the full one");
+    assert_eq!(cell(&db, mentions).await, folded_mentions, "the touchpoint mentions are re-minted");
+    assert_eq!(cell(&db, parties).await, folded_parties, "the touchpoint roles are re-served, on the same organizations");
+
+    let _ = std::fs::remove_file(&path);
+    let _ = std::fs::remove_file(&before_path);
+}

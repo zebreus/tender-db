@@ -390,6 +390,28 @@ is counting: <code>?winner=</code> does not count such an award as a win, and su
 statistics on <code>/v1/sql</code> should filter <code>winner_is_buyer IS NULL</code>
 (issue 484). The flag is written when a tender is folded, so a tender not re-folded since
 2026-10 reads unflagged until it is.</p>
+<p id="tender-detail-touchpoint"><strong>A role whose eForms reference names a touchpoint is
+served.</strong> A touchpoint is a contact point printed inside an organization's block: the
+<code>Lot-</code> and <code>Part-</code> roles (<code>Lot-ReviewOrg</code>,
+<code>Lot-ReviewInfo</code>, <code>Lot-Mediator</code>, <code>Lot-AddInfo</code>,
+<code>Lot-TenderReceipt</code>, &hellip;) may name one instead of an organization, and publishers
+mostly use it to print another body, usually the review tribunal (issue 576). A touchpoint that
+prints its organization's own name (up to case, whitespace and a trailing <code>.</code>,
+<code>,</code> or <code>;</code>, in any language) serves that organization's own party: its
+<code>organization_id</code>, anchored at the organization's block, so <code>mention_name</code>
+is the name the organization printed. One that prints another name serves a party named after the
+touchpoint, with no identifier, resolved by name and country like any party published without one
+(the touchpoint's country, or its organization's where it prints none): it joins the
+<em>provisional</em> organization of that name and country, or a new one. Some touchpoint names
+name no party and are dropped, so the role is not served: a name shaped like a section id
+(<code>ORG-0001</code>), one carrying a URL, <code>www.</code> or <code>@</code>, one naming a
+procurement portal or platform, as prose (<code>Vragen kunt u stellen via TenderNed</code>) or as
+the platform's own name (<code>Mercell Norge AS</code>), and a placeholder, a blank or a void-lot
+phrase. A touchpoint is never a buyer, a bidder or a winner: the roles behind
+<code>Procedure-Buyer</code>, <code>Tenderer</code> and the award decisions reference
+organizations only. Stored Tenders gain these parties once refolded: until the issue-576 refold
+reaches it, a Tender folded before the change can lack them, and the new party arrives on the
+<a href="#changes">change feed</a> as a change.</p>
 <pre><code>curl -s https://tenders.zebreus.click/v1/tenders/14327</code></pre>
 
 <h2 id="notice-content">Notice content</h2>
@@ -1855,6 +1877,59 @@ mod tests {
                 assert!(text.contains(needle), "{surface}'s parties text must name {needle:?}:\n{text}");
             }
         }
+    }
+
+    /// Issue 576 unit 2 (g): a role whose eForms reference names a touchpoint is served (D576-1) — as
+    /// its organization's own party where the touchpoint prints that organization's name, else as a
+    /// party named after the touchpoint, identifier-less and resolved by name and country — and both
+    /// surfaces say which touchpoint names are dropped, that a touchpoint is never a buyer, bidder or
+    /// winner, and that stored Tenders need the refold. Read from the `/docs` touchpoint paragraph of
+    /// the Tender detail and the OpenAPI `parties` description, not the whole surface. One phrase per
+    /// sentence. The pre-refold sentence carries `issue-576 refold`: once unit 3's `refold-sections`
+    /// drain and unit 4's Verify (8851944 serves a `Lot-ReviewOrg` party for LOT-0000) are done,
+    /// retire it through RETIRED.
+    #[test]
+    fn the_docs_say_a_role_naming_a_touchpoint_is_served() {
+        let start = PAGE.find("<p id=\"tender-detail-touchpoint\">").expect("/docs has the touchpoint paragraph");
+        let docs = &PAGE[start..start + PAGE[start..].find("</p>").expect("paragraph end")];
+        let spec: serde_json::Value = serde_json::from_str(SPEC).expect("openapi.json is valid JSON");
+        let openapi = spec["components"]["schemas"]["TenderDetail"]["allOf"][1]["properties"]["parties"]
+            ["description"]
+            .as_str()
+            .expect("the parties array is described");
+        for (surface, text) in [("/docs", docs), ("TenderDetail.parties", openapi)] {
+            let unbolded = text.replace("<strong>", "").replace("</strong>", "");
+            assert_says(
+                &format!("{surface}'s touchpoint text"),
+                &unbolded,
+                &[
+                    "a role whose eforms reference names a touchpoint is served",
+                    "may name one instead of an organization, and publishers mostly use it to print another body, \
+                     usually the review tribunal",
+                    "a touchpoint that prints its organization's own name (up to case, whitespace and a trailing \
+                     ., , or ;, in any language) serves that organization's own party: its organization_id, \
+                     anchored at the organization's block, so mention_name is the name the organization printed",
+                    "one that prints another name serves a party named after the touchpoint, with no identifier, \
+                     resolved by name and country like any party published without one (the touchpoint's country, \
+                     or its organization's where it prints none)",
+                    "some touchpoint names name no party and are dropped, so the role is not served: a name shaped \
+                     like a section id (org-0001), one carrying a url, www. or @, one naming a procurement portal \
+                     or platform, as prose (vragen kunt u stellen via tenderned) or as the platform's own name \
+                     (mercell norge as)",
+                    "a touchpoint is never a buyer, a bidder or a winner",
+                    "stored tenders gain these parties once refolded: until the issue-576 refold reaches it, a \
+                     tender folded before the change can lack them",
+                ],
+            );
+        }
+        assert_says(
+            "/docs touchpoint paragraph",
+            docs,
+            &[
+                "it joins the <em>provisional</em> organization of that name and country, or a new one",
+                "the new party arrives on the <a href=\"#changes\">change feed</a> as a change",
+            ],
+        );
     }
 
     /// Issue 564: `name_prefix` seeks the served head's key, so after issue 524's head refresh renamed

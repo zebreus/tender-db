@@ -737,6 +737,13 @@ fn portal_label(folded: &str) -> bool {
     name_pattern(folded, NameList::Platform).is_some() || name_pattern(folded, NameList::Portal).is_some()
 }
 
+/// [`portal_label`] on a name as published: issue 576's touchpoint gate (`touchpoint_gate`), which
+/// drops a touchpoint printing a portal label (`Vragen kunt u stellen via TenderNed`) rather than minting
+/// a party of it.
+pub(super) fn portal_name(name: &str) -> bool {
+    portal_label(&fold(name))
+}
+
 /// Issue 483 unit 2: what the projection does to one notice's buyer role, from the census's
 /// own verdicts ([`judge`]): the single source of truth, so the census measures exactly what
 /// the projection demotes. Empty for nearly every notice.

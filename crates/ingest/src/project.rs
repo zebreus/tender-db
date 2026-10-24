@@ -89,6 +89,9 @@ pub struct Report {
     /// ([`ExtractedWinners`]). Boxed (issue 467): every `Report` temporary of the fold's poll frames takes
     /// a slot at O0, and the inline 32 bytes pushed the supervisor's `run_project` past its poll budget.
     pub extracted: Box<ExtractedWinners>,
+    /// Issue 576: the OPT-301 Lot/Part role references naming a touchpoint this run read, by what the
+    /// fold did with each ([`TouchpointRoles`]). Boxed for issue 467's reason, as `extracted` is.
+    pub touchpoint_roles: Box<TouchpointRoles>,
     /// Issue 448 unit 3: what the resolver's altid alias did — PPON-first
     /// mentions asked, bound to the company-number org, refused. Durable for
     /// the reason `wall` is; `armed: false` when no resolver was opened.
@@ -215,6 +218,40 @@ impl ExtractedWinners {
         self.count += other.count;
         let room = EXTRACTED_SAMPLE.saturating_sub(self.sample.len());
         self.sample.extend(other.sample.into_iter().take(room));
+    }
+}
+
+/// Issue 576 (D576-1): the OPT-301 Lot/Part role references that name a touchpoint
+/// ([`touchpoint_role`]), across the notices whose mentions this run read, by what the fold did with
+/// each. Counted per REFERENCE, as unit 1's census counted them: 47413157's `Lot-ReviewOrg → TPO-0001`
+/// on four lots is four. Before this issue every one was skipped with no count (issue 368's shape);
+/// unit 3's drain reads the exact size here.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct TouchpointRoles {
+    /// (i) The touchpoint prints its Organization's own name: the role binds that Organization.
+    pub aliased: u64,
+    /// (ii) It prints another name: the role binds the mention minted from the touchpoint.
+    pub minted: u64,
+    /// (iv) That name is no party (a dropping non-name, a section id, a URL or address, a portal
+    /// label): the role binds nothing.
+    pub dropped: u64,
+    /// Of `minted`, the references whose touchpoint publishes no country of its own (BT-514), so its
+    /// mention takes its Organization's.
+    pub country_fallback: u64,
+}
+
+impl TouchpointRoles {
+    /// Every counted reference: aliased, minted and dropped.
+    pub fn total(&self) -> u64 {
+        self.aliased + self.minted + self.dropped
+    }
+
+    /// Another tally into this one.
+    pub fn add(&mut self, other: &TouchpointRoles) {
+        self.aliased += other.aliased;
+        self.minted += other.minted;
+        self.dropped += other.dropped;
+        self.country_fallback += other.country_fallback;
     }
 }
 
@@ -1575,6 +1612,11 @@ const ORGANIZATION_KIND: &str = "Organization";
 const ORG_NAME_FIELD: &str = "BT-500-Organization-Company";
 const ORG_IDENTIFIER_FIELD: &str = "BT-501-Organization-Company";
 const ORG_COUNTRY_FIELD: &str = "BT-514-Organization-Company";
+/// Issue 576: an eForms touchpoint (`efac:TouchPoint`, OPT-201 `TPO-…`), which the parser files as
+/// its own section under its Organization, with its own name and country ([`touchpoint_decision`]).
+const TOUCHPOINT_KIND: &str = "Touchpoint";
+const TOUCHPOINT_NAME_FIELD: &str = "BT-500-Organization-TouchPoint";
+const TOUCHPOINT_COUNTRY_FIELD: &str = "BT-514-Organization-TouchPoint";
 /// Business Registration Information Notices carry no procurement procedure;
 /// CONTEXT.md makes them minimal Tenders of their own kind. The class is the
 /// SDK's, not one literal: every vendored EU SDK makes `OPP-100-Business` (Notice
@@ -2087,11 +2129,12 @@ pub async fn project_with_progress_phase2_stoppable(
              skipping Phase-1 and re-running grouping + Phase-2 (salvage)"
         );
     } else {
-        let (notices, mentions, stopped, citations, f14, procedure, refresh, alias, dropped, extracted) =
+        let (notices, mentions, stopped, citations, f14, procedure, refresh, alias, dropped, extracted, touchpoints) =
             build_plan(db, now, total, &mut on_progress, stop).await?;
         report.alias = alias;
         report.dropped = dropped;
         report.extracted = Box::new(extracted);
+        report.touchpoint_roles = Box::new(touchpoints);
         report.stopped = stopped;
         report.notices = notices;
         report.mentions = mentions;
@@ -2300,6 +2343,7 @@ async fn build_plan(
     store::AltIdAliasCounts,
     DroppedParties,
     ExtractedWinners,
+    TouchpointRoles,
 )> {
     const READ_CHUNK: i64 = 10_000;
     let t0 = std::time::Instant::now();
@@ -2333,6 +2377,8 @@ async fn build_plan(
         dropped: DroppedParties,
         /// Issue 520 U4: the chunk's kept parties minted under an extracted winner, summed the same way.
         extracted: ExtractedWinners,
+        /// Issue 576: the chunk's touchpoint role references, summed the same way.
+        touchpoints: TouchpointRoles,
         /// Issue 364's per-kind tally for this chunk's notices, summed by the
         /// writer half — the sweep is where `Ident::read` runs.
         citations: CitationGate,
@@ -2385,6 +2431,7 @@ async fn build_plan(
                     let mut void: Vec<(i64, String)> = Vec::new();
                     let mut dropped = DroppedParties::default();
                     let mut extracted = ExtractedWinners::default();
+                    let mut touchpoints = TouchpointRoles::default();
                     let mut rows: Vec<store::PlanRow> = Vec::with_capacity(chunk.len());
                     let mut guard_sections: Vec<Vec<String>> = Vec::with_capacity(chunk.len());
                     let mut citations = CitationGate::default();
@@ -2398,6 +2445,13 @@ async fn build_plan(
                         void.extend(skipped.into_iter().map(|section| (notice.id, section)));
                         dropped.add(notice_dropped);
                         extracted.add(notice_extracted);
+                        // Issue 576: the role-referenced touchpoints' mentions are recorded beside the
+                        // Organizations' — and only here, never on `NoticeState::mentions` (D576-1 (v)).
+                        let (tp_mentions, tp_retired, tp_roles) =
+                            NoticeState::touchpoint_mentions(ident.sdk01, notice.id, parsed);
+                        mentions.extend(tp_mentions);
+                        void.extend(tp_retired.into_iter().map(|section| (notice.id, section)));
+                        touchpoints.add(&tp_roles);
                         citations.add(ident.citations);
                         f14.add(ident.f14_targets);
                         procedure.add(ident.procedure);
@@ -2415,6 +2469,7 @@ async fn build_plan(
                             void,
                             dropped,
                             extracted,
+                            touchpoints,
                             citations,
                             f14,
                             procedure,
@@ -2432,6 +2487,7 @@ async fn build_plan(
     let (mut notices, mut mentions_total) = (0u64, 0u64);
     let mut dropped = DroppedParties::default();
     let mut extracted = ExtractedWinners::default();
+    let mut touchpoints = TouchpointRoles::default();
     let mut citations = CitationGate::default();
     let mut f14 = F14TargetGate::default();
     let mut procedure = ProcedureTally::default();
@@ -2463,6 +2519,7 @@ async fn build_plan(
         notices += chunk.rows.len() as u64;
         dropped.add(std::mem::take(&mut chunk.dropped));
         extracted.add(std::mem::take(&mut chunk.extracted));
+        touchpoints.add(&chunk.touchpoints);
         citations.add(chunk.citations);
         f14.add(chunk.f14);
         procedure.add(chunk.procedure);
@@ -2585,7 +2642,7 @@ async fn build_plan(
         t0.elapsed().as_secs_f64(),
         if stopped { " — STOPPED at a checkpoint (issue 256)" } else { "" }
     );
-    Ok((notices, mentions_total, stopped, citations, f14, procedure, refresh, alias, dropped, extracted))
+    Ok((notices, mentions_total, stopped, citations, f14, procedure, refresh, alias, dropped, extracted, touchpoints))
 }
 
 /// Run only the interruptible PREFIX of a full rebuild — clear the canonical
@@ -2600,7 +2657,7 @@ pub async fn project_plan_only(db: &Db) -> turso::Result<Report> {
         db.clear_canonical().await?;
         db.strip_organization_indexes().await?;
         let total = db.parsed_notice_count().await?;
-        let (notices, mentions, _, citations, f14_targets, procedure, refresh, alias, dropped, extracted) =
+        let (notices, mentions, _, citations, f14_targets, procedure, refresh, alias, dropped, extracted, touchpoints) =
             build_plan(db, store::now_unix(), total, |_| {}, &|| false).await?;
         Ok::<Report, turso::Error>(Report {
             notices,
@@ -2613,6 +2670,7 @@ pub async fn project_plan_only(db: &Db) -> turso::Result<Report> {
             mentions_retired: refresh.retired,
             dropped,
             extracted: Box::new(extracted),
+            touchpoint_roles: Box::new(touchpoints),
             alias,
             ..Default::default()
         })
@@ -3441,6 +3499,12 @@ fn incremental_plan_rows(
             void.extend(skipped.into_iter().map(|section| (notice.id, section)));
             report.dropped.add(dropped);
             report.extracted.add(extracted);
+            // Issue 576: the role-referenced touchpoints, recorded beside the Organizations (as the
+            // plan sweep does).
+            let (tp_mentions, tp_retired, tp_roles) = NoticeState::touchpoint_mentions(ident.sdk01, notice.id, p);
+            mentions.extend(tp_mentions);
+            void.extend(tp_retired.into_iter().map(|section| (notice.id, section)));
+            report.touchpoint_roles.add(&tp_roles);
         }
         // Issue 364: counted in the PLAN build only — pass 1 reads the same
         // notices' identity again, and counting there too would double every
@@ -4531,6 +4595,7 @@ impl BucketRow {
             round: self.round.clone(),
             // Already bound: no reference is left to alias (issue 259).
             org_alias: HashMap::new(),
+            touchpoints: Vec::new(),
             stated_totals: self.stated_totals.clone(),
             award_text: self.award_text.clone(),
         }
@@ -4585,6 +4650,9 @@ struct NoticeState {
     /// (issue 259). A role or winner reference may name either end of a nest; both
     /// must land on the one party. Empty except in the legacy eras.
     org_alias: HashMap<String, String>,
+    /// Issue 576: every Touchpoint section of the notice, which the results graph never binds
+    /// ([`Self::bind_organizations`]). Empty for nearly every notice.
+    touchpoints: Vec<String>,
     /// Issue 551 unit 4b (B1): the totals this notice states ([`notice_stated_totals`]), each
     /// with its `lots_awarded` still empty — [`fold`] fills that from each version's rounds.
     stated_totals: Vec<StatedTotal>,
@@ -4956,7 +5024,53 @@ fn drop_decision(
     parsed: &Parsed,
     explain: bool,
 ) -> DropDecision {
-    let kinds: &[&str] = if sdk01 { SDK01_PARTY_KINDS } else { &[ORGANIZATION_KIND] };
+    drop_decision_of(PartyShape::Party { sdk01 }, sections, alias, parsed, explain)
+}
+
+/// Which sections [`drop_decision_of`] reads as parties, under which name fields.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum PartyShape {
+    /// The dialect's Organization sections (sdk-0.1's party sections) under its party-name fields
+    /// ([`party_name_field`]).
+    Party { sdk01: bool },
+    /// Issue 576: eForms Touchpoint sections under `BT-500-Organization-TouchPoint`. A touchpoint
+    /// publishes no identifier (no BT-501), so guard 3 never keeps a blank one.
+    Touchpoint,
+}
+
+impl PartyShape {
+    fn kinds(self) -> &'static [&'static str] {
+        match self {
+            PartyShape::Party { sdk01: true } => SDK01_PARTY_KINDS,
+            PartyShape::Party { sdk01: false } => &[ORGANIZATION_KIND],
+            PartyShape::Touchpoint => &[TOUCHPOINT_KIND],
+        }
+    }
+
+    fn is_name(self, field: &str) -> bool {
+        match self {
+            PartyShape::Party { sdk01 } => party_name_field(sdk01, field),
+            PartyShape::Touchpoint => field == TOUCHPOINT_NAME_FIELD,
+        }
+    }
+
+    /// Whether the party may carry an identifier guard 3 reads: an eForms or legacy Organization.
+    fn identified(self) -> bool {
+        self == PartyShape::Party { sdk01: false }
+    }
+}
+
+/// [`drop_decision`] over the parties of `shape`: the Organizations (every caller but one), or since
+/// issue 576 the touchpoints a role names, whose own names meet the same classes
+/// ([`touchpoint_decision`]).
+fn drop_decision_of(
+    shape: PartyShape,
+    sections: &HashMap<&str, &store::Section>,
+    alias: &HashMap<String, String>,
+    parsed: &Parsed,
+    explain: bool,
+) -> DropDecision {
+    let kinds = shape.kinds();
     // The notice's language, read once and only when a name needs it: guard 2's scoped
     // words (`ingen`, `nd`) and guard 3's echo test. `not_a_name` and `not_a_name_in`
     // agree on every other name, so the plain read decides first and only a name whose
@@ -4970,7 +5084,7 @@ fn drop_decision(
     let mut labels: HashMap<&str, Vec<Option<&str>>> = HashMap::new();
     for value in &parsed.values {
         let NoticeValue::Text { value: name, lang: label } = &value.value else { continue };
-        if name.trim().is_empty() || !party_name_field(sdk01, &value.field_id) {
+        if name.trim().is_empty() || !shape.is_name(&value.field_id) {
             continue;
         }
         let Some(owner) = enclosing(sections, &value.section_id, kinds) else { continue };
@@ -5030,7 +5144,7 @@ fn drop_decision(
     // `mentions_and_void` reads a mention's (the first identifier and country in the
     // party's subtree); sdk-0.1 publishes none there.
     let mut identity: HashMap<&str, (Option<&str>, Option<&str>, Option<&str>)> = HashMap::new();
-    if !sdk01 && decided.iter().any(|(_, class)| matches!(class, NotAName::Blank | NotAName::Placeholder)) {
+    if shape.identified() && decided.iter().any(|(_, class)| matches!(class, NotAName::Blank | NotAName::Placeholder)) {
         for (owner, _) in &decided {
             identity.insert(*owner, (None, None, None));
         }
@@ -5817,6 +5931,12 @@ impl NoticeState {
         // A role or winner reference may name the inner half of a nested party
         // (issue 259); both halves must bind to the one Organization.
         let org_alias = nested_org_aliases(&sections, if sdk01 { SDK01_PARTY_KINDS } else { &[ORGANIZATION_KIND] });
+        // Issue 576 (D576-1): a Lot/Part role naming a touchpoint binds through the touchpoint's own
+        // published identity — its Organization when it prints that Organization's name, its own minted
+        // mention when it prints another, nothing when that name is no party. Before the drop below, so
+        // a role aliased onto a dropped Organization goes with the Organization's own roles.
+        let touchpoints = touchpoint_decision(sdk01, &sections, parsed, notice.id);
+        touchpoints.retarget(&mut raw_roles);
         // Issues 510 and 511: a party that names no organization (a void lot, a placeholder,
         // a blank slot) carries no role, no result winner and no bid party, in every role
         // and era — decided here from the parse, so a mention row recorded before the rule
@@ -5914,6 +6034,7 @@ impl NoticeState {
             raw_results,
             round: None,
             org_alias,
+            touchpoints: touchpoints.sections,
             stated_totals,
             award_text,
         }
@@ -6151,6 +6272,46 @@ impl NoticeState {
         (mentions, skipped, dropped, extracted)
     }
 
+    /// Issue 576 (D576-1): the mentions minted from the touchpoints a Lot/Part role names under another
+    /// name than their Organization's ((ii), [`touchpoint_decision`]); the touchpoint keys whose recorded
+    /// mention is retired — every touchpoint that mints nothing now (aliased, dropped or named by no
+    /// such role), so a later rule change leaves no row standing (issue 525's reason; a key with no row
+    /// costs one seek); and the roles' tally.
+    ///
+    /// (v) Census isolation: Phase 1 records these beside [`Self::mentions_and_dropped`]'s and nothing
+    /// else reads them — `bind_organizations` binds the roles through the recorded rows. They are never on
+    /// [`Self::mentions`] or [`Self::published_mentions`], so `role_census::buyer_fix` /
+    /// `notice_parties_from` and `buyer_side_mentions` (369's buyer key, 481's tokens) read the notice as
+    /// before: a touchpoint in a buyer-shaped role (AddInfo, TenderReceipt) neither corroborates
+    /// `real-buyer-elsewhere` against a review-body-named buyer nor is promoted to buyer. Promoting a
+    /// touchpoint is not decided.
+    fn touchpoint_mentions(sdk01: bool, notice_id: i64, parsed: &Parsed) -> (Vec<Mention>, Vec<String>, TouchpointRoles) {
+        if sdk01 || !parsed.sections.iter().any(|s| s.kind == TOUCHPOINT_KIND) {
+            return Default::default();
+        }
+        let sections: HashMap<&str, &store::Section> = parsed.sections.iter().map(|s| (s.id.as_str(), s)).collect();
+        let Touchpoints { sections: all, verdicts, refs, country_fallback } =
+            touchpoint_decision(sdk01, &sections, parsed, notice_id);
+        let mut tally = TouchpointRoles::default();
+        let mut mentions = Vec::new();
+        for (tpo, verdict) in verdicts {
+            let n = refs.get(&tpo).copied().unwrap_or(0);
+            match verdict {
+                TouchpointVerdict::Alias(_) => tally.aliased += n,
+                TouchpointVerdict::Mint(mention) => {
+                    tally.minted += n;
+                    if country_fallback.contains(&tpo) {
+                        tally.country_fallback += n;
+                    }
+                    mentions.push(mention);
+                }
+                TouchpointVerdict::Drop => tally.dropped += n,
+            }
+        }
+        let retired = all.into_iter().filter(|tpo| !mentions.iter().any(|m| m.section_id == *tpo)).collect();
+        (mentions, retired, tally)
+    }
+
     /// Turn the notice-local role references into party facts — and the
     /// results graph into a bound Round — now that each mention has a canonical
     /// Organization. `by_section` maps this notice's Organization section ids to
@@ -6169,11 +6330,28 @@ impl NoticeState {
                 by_section.insert(inner.as_str(), id);
             }
         }
+        // Issue 576: the results graph binds Organizations only. A touchpoint's recorded mention is
+        // there for the roles below, so a winner, tenderer or bid party never binds one, whatever a
+        // result references: the winners path W reads (issue 551) cannot move.
+        let organizations;
+        let for_results = if self.touchpoints.is_empty() {
+            &by_section
+        } else {
+            organizations = by_section
+                .iter()
+                .filter(|(section, _)| !self.touchpoints.iter().any(|t| t == *section))
+                .map(|(section, id)| (*section, *id))
+                .collect::<HashMap<&str, i64>>();
+            &organizations
+        };
         self.round = (!self.raw_results.is_empty())
-            .then(|| self.raw_results.bind(self.notice_id, self.logical_id.clone(), &by_section));
+            .then(|| self.raw_results.bind(self.notice_id, self.logical_id.clone(), for_results));
         for (scope, role, target) in std::mem::take(&mut self.roles) {
-            // A reference to something that is not an Organization section (a
-            // touchpoint, a lot, a result) is notice-layer detail, not a party.
+            // A reference to something that is not a party section (a lot, a result) is
+            // notice-layer detail, not a party. Issue 576: a touchpoint is one only where
+            // `NoticeState::read` kept its role ([`Touchpoints::retarget`]): an aliased one already
+            // names its Organization, a minted one binds its own recorded mention here, and every
+            // other reference to a touchpoint is gone.
             let Some(&organization_id) = by_section.get(target.as_str()) else { continue };
             let fact = Fact::Party {
                 role,
@@ -7085,10 +7263,231 @@ fn scope_of(sections: &HashMap<&str, &store::Section>, section_id: &str) -> Scop
     }
 }
 
-/// The nearest section of one of `kinds`, starting at `section_id` itself and
-/// walking up the parent chain. This is how a value finds the entity it
-/// describes: eForms hangs values off the deepest node that carries them, and
-/// the canonical scope is the nearest enclosing entity above it.
+/// Issue 576 (D576-1): whether a role may name a touchpoint — the SDK's twenty OPT-301-{Lot,Part}-*
+/// references (`idSchemes ['ORG','TPO']`: AddInfo, DocProvider, ReviewOrg, ReviewInfo, Mediator, …), as
+/// [`role_name`] names them. The OPT-300 roles (Buyer, SProvider, Signatory, Tenderer) and the
+/// LotResult and Tenderer roles are ORG-only, so a touchpoint one of them names stays no party, as it
+/// was before this issue: the buyers, tenderers and winners the fold binds do not move.
+fn touchpoint_role(role: &str) -> bool {
+    role.starts_with("Lot-") || role.starts_with("Part-")
+}
+
+/// Issue 576 (D576-1 (iv), skeptic 2): a touchpoint name that names no party, beside the fold's dropping
+/// non-names ([`crate::partyname::not_a_name`], whose lexicons hold no stem for these):
+///
+/// - a section id (`ORG-0001`: `^(ORG|TPO|UBO)-\d+$`, an unfilled template);
+/// - a URL, a `www.` host or an address (`De inschrijvingen dienen ingediend te worden via
+///   www.tenderned.nl`);
+/// - a portal or platform label ([`role_census::portal_name`]: `Vragen kunt u stellen via TenderNed`,
+///   `Indiening Inschrijving … digitale kluis van TenderNed`), a platform's own name included
+///   (`Mercell Norge AS`, `cosinex GmbH`: the same body printed as an Organization is served).
+///
+/// Unit 1's bar on R3's top 60 different-name groups: it drops their 25 such references (21 TenderNed
+/// prose, 4 `ORG-0001`) and no tribunal.
+fn touchpoint_gate(name: &str) -> bool {
+    let name = name.trim();
+    let section_id = name.split_once('-').is_some_and(|(prefix, number)| {
+        ["ORG", "TPO", "UBO"].iter().any(|p| prefix.eq_ignore_ascii_case(p))
+            && !number.is_empty()
+            && number.bytes().all(|b| b.is_ascii_digit())
+    });
+    let lower = name.to_lowercase();
+    section_id || lower.contains("://") || lower.contains("www.") || name.contains('@') || role_census::portal_name(name)
+}
+
+/// Issue 576 (D576-1): the fold's verdict on one touchpoint a [`touchpoint_role`] names.
+#[derive(Clone, Debug, PartialEq, Eq)]
+enum TouchpointVerdict {
+    /// (i) It prints its Organization's own name (one of its names, under the resolver's
+    /// [`store::org_name_norm`], equals one of the Organization's, any language): the role binds that
+    /// Organization — issue 259's alias shape — and its party row is anchored at the Organization's
+    /// section, because the row's mention key must name a recorded mention and none stands at the
+    /// touchpoint.
+    Alias(String),
+    /// (ii) It prints another name: the role binds this mention, minted from the touchpoint's own name
+    /// and country with no identifier, resolved by name and country like any identifier-less party.
+    Mint(Mention),
+    /// (iv) That name is no party (no name, a dropping non-name, [`touchpoint_gate`]): the role binds
+    /// nothing.
+    Drop,
+}
+
+/// Issue 576 (D576-1): one notice's touchpoints as the fold reads them ([`touchpoint_decision`]).
+#[derive(Debug, Default)]
+struct Touchpoints {
+    /// Every Touchpoint section of the notice (none in nearly every notice).
+    sections: Vec<String>,
+    /// (iii) The touchpoints a [`touchpoint_role`] names, each with the fold's verdict: only these mint.
+    verdicts: BTreeMap<String, TouchpointVerdict>,
+    /// How many such references name each of them, for [`TouchpointRoles`].
+    refs: BTreeMap<String, u64>,
+    /// The minted touchpoints that publish no country (BT-514): their mention took the Organization's.
+    country_fallback: BTreeSet<String>,
+}
+
+impl Touchpoints {
+    /// Apply the verdicts to the raw role references `(scope, source, role, target)`: a
+    /// [`touchpoint_role`] naming an aliased touchpoint names its Organization instead, one naming a
+    /// minted touchpoint keeps it (its recorded mention binds it), and every other reference to a
+    /// touchpoint goes — to a dropped one, and from a role the SDK keeps ORG-only, which bound nothing
+    /// before this issue and binds nothing now, even where the touchpoint's mention is recorded.
+    fn retarget(&self, raw_roles: &mut Vec<(Scope, String, String, String)>) {
+        if self.sections.is_empty() {
+            return;
+        }
+        raw_roles.retain_mut(|(_, _, role, target)| {
+            if !self.sections.contains(target) {
+                return true;
+            }
+            match self.verdicts.get(target.as_str()) {
+                Some(TouchpointVerdict::Alias(organization)) if touchpoint_role(role) => {
+                    target.clone_from(organization);
+                    true
+                }
+                Some(TouchpointVerdict::Mint(_)) => touchpoint_role(role),
+                _ => false,
+            }
+        });
+    }
+}
+
+/// Issue 576 (D576-1): the verdict on each touchpoint of one notice that a [`touchpoint_role`] names.
+///
+/// - (i) Same name: one of the touchpoint's `BT-500-Organization-TouchPoint` names and one of its
+///   Organization's names agree under [`store::org_name_norm`], the resolver's own name key, over every
+///   language either publishes: [`TouchpointVerdict::Alias`] to the Organization's section.
+/// - Otherwise the touchpoint's names meet the Organizations' drop classes (510/511/520/525:
+///   [`drop_decision_of`] over [`PartyShape::Touchpoint`]) and (iv)'s gate ([`touchpoint_gate`]); a
+///   touchpoint with no name, every name of which is a dropping non-name or gated, or that the classes
+///   drop, is [`TouchpointVerdict::Drop`].
+/// - Else (ii): [`TouchpointVerdict::Mint`], its mention named as an Organization's is (the first
+///   name, every labelled copy first-seen per language) and placed in the touchpoint's own BT-514, else
+///   its Organization's (the country unit 1's census assumed; counted, `country_fallback`).
+///
+/// (iii) A touchpoint no such role names gets no verdict and mints nothing. BT-16 (the touchpoint's
+/// department) is not read, as BT-16-Organization-Company is not.
+fn touchpoint_decision(
+    sdk01: bool,
+    sections: &HashMap<&str, &store::Section>,
+    parsed: &Parsed,
+    notice_id: i64,
+) -> Touchpoints {
+    let mut out = Touchpoints::default();
+    if sdk01 {
+        return out;
+    }
+    out.sections = parsed.sections.iter().filter(|s| s.kind == TOUCHPOINT_KIND).map(|s| s.id.clone()).collect();
+    if out.sections.is_empty() {
+        return out;
+    }
+    for value in &parsed.values {
+        if let NoticeValue::Id { value: target, is_ref: true, scheme } = &value.value
+            && scheme.as_deref() != Some("ojs")
+            && sections.get(target.as_str()).is_some_and(|s| s.kind == TOUCHPOINT_KIND)
+            && role_name(&value.field_id).is_some_and(|role| touchpoint_role(&role))
+        {
+            *out.refs.entry(target.clone()).or_default() += 1;
+        }
+    }
+    if out.refs.is_empty() {
+        return out;
+    }
+    // Each named touchpoint's Organization: the enclosing one (the parser files a touchpoint directly
+    // under it).
+    let parent: HashMap<&str, &str> = out
+        .refs
+        .keys()
+        .filter_map(|tpo| {
+            let up = sections.get(tpo.as_str())?.parent.as_deref()?;
+            Some((tpo.as_str(), enclosing(sections, up, &[ORGANIZATION_KIND])?))
+        })
+        .collect();
+    // Names `(value, language)` and the first country, of each named touchpoint and of each of their
+    // Organizations, read as the mentions read them.
+    #[derive(Default)]
+    struct Read<'a> {
+        names: Vec<(&'a str, Option<&'a str>)>,
+        country: Option<&'a str>,
+    }
+    let mut touchpoint: HashMap<&str, Read> = out.refs.keys().map(|tpo| (tpo.as_str(), Read::default())).collect();
+    let mut organization: HashMap<&str, Read> = parent.values().map(|org| (*org, Read::default())).collect();
+    for value in &parsed.values {
+        let field = value.field_id.as_str();
+        let own = field == TOUCHPOINT_NAME_FIELD || field == TOUCHPOINT_COUNTRY_FIELD;
+        let (is_name, is_country) = if own {
+            (field == TOUCHPOINT_NAME_FIELD, field == TOUCHPOINT_COUNTRY_FIELD)
+        } else {
+            (party_name_field(false, field), field == ORG_COUNTRY_FIELD || ORG_COUNTRY_FIELDS.contains(&field))
+        };
+        if !is_name && !is_country {
+            continue;
+        }
+        let read = if own {
+            enclosing(sections, &value.section_id, &[TOUCHPOINT_KIND]).and_then(|owner| touchpoint.get_mut(owner))
+        } else {
+            enclosing(sections, &value.section_id, &[ORGANIZATION_KIND]).and_then(|owner| organization.get_mut(owner))
+        };
+        let Some(read) = read else { continue };
+        match &value.value {
+            NoticeValue::Text { value, lang } if is_name && !value.trim().is_empty() => {
+                read.names.push((value.as_str(), lang.as_deref()));
+            }
+            NoticeValue::Code { code, .. } if is_country => {
+                read.country.get_or_insert(code.as_str());
+            }
+            _ => {}
+        }
+    }
+    let classes = drop_decision_of(PartyShape::Touchpoint, sections, &HashMap::new(), parsed, false).sections;
+    for tpo in out.refs.keys() {
+        let own = &touchpoint[tpo.as_str()];
+        let org = parent.get(tpo.as_str()).map(|org| (*org, &organization[org]));
+        let same = org.filter(|(_, read)| {
+            let keys: BTreeSet<String> = read.names.iter().map(|(name, _)| store::org_name_norm(name)).collect();
+            own.names.iter().any(|(name, _)| keys.contains(&store::org_name_norm(name)))
+        });
+        let dropping = |name: &str| {
+            touchpoint_gate(name)
+                || matches!(
+                    crate::partyname::not_a_name(name),
+                    Some(NotAName::VoidLot | NotAName::Placeholder | NotAName::Blank)
+                )
+        };
+        let verdict = if let Some((org, _)) = same {
+            TouchpointVerdict::Alias(org.to_owned())
+        } else if own.names.iter().all(|(name, _)| dropping(name)) || classes.contains_key(tpo) {
+            // `all` over no name at all is true: a touchpoint that names nothing mints nothing.
+            TouchpointVerdict::Drop
+        } else {
+            let mut mention = Mention {
+                notice_id,
+                section_id: tpo.clone(),
+                name: own.names[0].0.to_owned(),
+                country: None,
+                raw_identifier: None,
+                scheme: None,
+                identifier: None,
+                variants: Vec::new(),
+            };
+            for (name, lang) in &own.names {
+                if let Some(lang) = normalize_lang(*lang)
+                    && !mention.variants.iter().any(|(l, _)| *l == lang)
+                {
+                    mention.variants.push((lang, (*name).to_owned()));
+                }
+            }
+            let fallback = org.and_then(|(_, read)| read.country);
+            if own.country.is_none() && fallback.is_some() {
+                out.country_fallback.insert(tpo.clone());
+            }
+            mention.country = own.country.or(fallback).map(canonical_country);
+            TouchpointVerdict::Mint(mention)
+        };
+        out.verdicts.insert(tpo.clone(), verdict);
+    }
+    out
+}
+
 /// Map every Organization-kind section that is NESTED inside another one to the
 /// OUTERMOST Organization above it (issue 259). Sections not nested are absent.
 ///
@@ -7132,6 +7531,10 @@ fn nested_org_aliases(
     alias
 }
 
+/// The nearest section of one of `kinds`, starting at `section_id` itself and
+/// walking up the parent chain. This is how a value finds the entity it
+/// describes: eForms hangs values off the deepest node that carries them, and
+/// the canonical scope is the nearest enclosing entity above it.
 fn enclosing<'a>(
     sections: &HashMap<&str, &'a store::Section>,
     section_id: &str,
@@ -15161,6 +15564,7 @@ mod tests {
             raw_results: RawResults::default(),
             round: None,
             org_alias: HashMap::new(),
+            touchpoints: Vec::new(),
             group_members: Vec::new(),
             stated_totals: Vec::new(),
             award_text: BTreeMap::new(),
@@ -15242,6 +15646,7 @@ mod tests {
             raw_results: RawResults::default(),
             round: None,
             org_alias: HashMap::new(), // no parties in this fixture (issue 259)
+            touchpoints: Vec::new(),
             group_members: members
                 .iter()
                 .map(|(g, m)| ((*g).to_owned(), (*m).to_owned()))
@@ -24464,5 +24869,381 @@ mod tests {
         assert_eq!(label("QWU", "NHS Coventry and Warwickshire ICB - B2M3M"), ("admitted", None));
         assert_eq!(label("QOQ", "NHS England North East and Yorkshire"), ("nhse", None));
         assert_eq!(label("QMM", "NHS Norfolk and Suffolk ICB"), ("better", Some("T6Y0W")));
+    }
+
+    /// Issue 576's fixtures and tests: eForms notices whose Lot roles name touchpoints, after the two
+    /// the triage read (47411306 and 47413157, `.scratch/tender-db/audits/2026-10-19-recent-tenders/raw/`),
+    /// trimmed to what the fold's parties and results read.
+    mod touchpoint_576 {
+        use super::placeholder_511::{code, id_ref, row, section};
+        use super::*;
+
+        const PROFILE: &str = "eforms:eforms-sdk-1.13";
+        const TACRC: &str = "Tribunal Administrativo Central de Recursos Contractuales (TACRC) o Tribunal Superior de Justicia (TSJ).";
+        const MADRID_TRIBUNAL: &str = "Tribunal Administrativo de Contratación Pública de la Comunidad de Madrid";
+        const IAM: &str = "Organismo Autónomo Informática del Ayuntamiento de Madrid";
+
+        /// A touchpoint reference as the parser emits it (scheme `touchpoint`).
+        fn tp_ref(lot: &str, field: &str, target: &str) -> store::ValueRow {
+            row(lot, field, NoticeValue::Id { scheme: Some("touchpoint".into()), value: target.into(), is_ref: true })
+        }
+
+        /// A notice whose buyer `ORG-0001` (`buyer`, ESP, under its ContractingParty) has the touchpoints
+        /// `(id, [(language, name)], BT-514)`, and whose lots `(key, [(role field, target)])` name them.
+        fn notice(
+            buyer: &str,
+            touchpoints: &[(&str, &[(&str, &str)], Option<&str>)],
+            lots: &[(&str, &[(&str, &str)])],
+        ) -> Parsed {
+            let mut p = Parsed {
+                sections: vec![
+                    section("PROCEDURE", "Notice", None),
+                    section("ND-ContractingParty#0", "ContractingParty", Some("PROCEDURE")),
+                    section("ORG-0001", ORGANIZATION_KIND, Some("PROCEDURE")),
+                ],
+                values: vec![
+                    id_ref("ND-ContractingParty#0", "OPT-300-Procedure-Buyer", "ORG-0001"),
+                    text_value("ORG-0001", ORG_NAME_FIELD, 0, Some("SPA"), buyer),
+                    code("ORG-0001", ORG_COUNTRY_FIELD, "ESP"),
+                ],
+            };
+            for (id, names, country) in touchpoints {
+                p.sections.push(section(id, TOUCHPOINT_KIND, Some("ORG-0001")));
+                for (i, (lang, name)) in names.iter().enumerate() {
+                    p.values.push(text_value(id, TOUCHPOINT_NAME_FIELD, i as i64, Some(*lang), name));
+                }
+                if let Some(country) = country {
+                    p.values.push(code(id, TOUCHPOINT_COUNTRY_FIELD, country));
+                }
+            }
+            for (lot, refs) in lots {
+                p.sections.push(section(lot, "Lot", Some("PROCEDURE")));
+                for (field, target) in *refs {
+                    p.values.push(tp_ref(lot, field, target));
+                }
+            }
+            p
+        }
+
+        /// 47411306's award on top of [`notice`]: LOT-0000's result RES-0001 (`selec-w`) names the tender
+        /// TEN-0001 (EUR 474,977.00) of TPA-0001, whose tenderer ORG-0002 (Compusof) wins, under a stated
+        /// notice result total (BT-161).
+        fn award(p: &mut Parsed) {
+            for (id, kind) in
+                [("ORG-0002", ORGANIZATION_KIND), ("RES-0001", "LotResult"), ("TEN-0001", "LotTender"), ("TPA-0001", "TenderingParty")]
+            {
+                p.sections.push(section(id, kind, Some("PROCEDURE")));
+            }
+            p.sections.push(section("ND-Tenderer#0", "Tenderer", Some("TPA-0001")));
+            let amount = |cents| NoticeValue::Amount { cents, currency: "EUR".into() };
+            p.values.extend([
+                text_value("ORG-0002", ORG_NAME_FIELD, 0, Some("SPA"), "Compusof, S.A."),
+                code("ORG-0002", ORG_COUNTRY_FIELD, "ESP"),
+                id_ref("RES-0001", "BT-13713-LotResult", "LOT-0000"),
+                code("RES-0001", "BT-142-LotResult", "selec-w"),
+                id_ref("RES-0001", "OPT-320-LotResult", "TEN-0001"),
+                id_ref("TEN-0001", "BT-13714-Tender", "LOT-0000"),
+                row("TEN-0001", "BT-720-Tender", amount(47_497_700)),
+                id_ref("TEN-0001", "OPT-310-Tender", "TPA-0001"),
+                id_ref("ND-Tenderer#0", "OPT-300-Tenderer", "ORG-0002"),
+                row("PROCEDURE", "BT-161-NoticeResult", amount(47_497_700)),
+            ]);
+        }
+
+        /// 47411306 (tender 8851944): LOT-0000's review body is TPO-0001, the buyer's touchpoint printing
+        /// the TACRC/TSJ compound.
+        fn n47411306(with_ref: bool) -> Parsed {
+            let refs: &[(&str, &str)] = if with_ref { &[("OPT-301-Lot-ReviewOrg", "TPO-0001")] } else { &[] };
+            let mut p = notice(
+                "Dirección General de Racionalización y Centralización de la Contratación-Junta de Contratación Centralizada",
+                &[("TPO-0001", &[("SPA", TACRC)], Some("ESP"))],
+                &[("LOT-0000", refs)],
+            );
+            award(&mut p);
+            p
+        }
+
+        /// 47413157 (tender 8851996): four lots, each naming TPO-0001 (the Madrid tribunal) as review body
+        /// and TPO-0002 (printed with ORG-0001's own name) for additional information.
+        fn n47413157(tpo_0002: &str) -> Parsed {
+            let refs: &[(&str, &str)] = &[("OPT-301-Lot-AddInfo", "TPO-0002"), ("OPT-301-Lot-ReviewOrg", "TPO-0001")];
+            notice(
+                IAM,
+                &[("TPO-0001", &[("SPA", MADRID_TRIBUNAL)], Some("ESP")), ("TPO-0002", &[("SPA", tpo_0002)], Some("ESP"))],
+                &[("LOT-0001", refs), ("LOT-0002", refs), ("LOT-0003", refs), ("LOT-0004", refs)],
+            )
+        }
+
+        fn notice_ref(id: i64) -> store::NoticeRef {
+            store::NoticeRef { id, source: "ted".into(), publication_id: "00722535-2026".into(), profile: PROFILE.into() }
+        }
+
+        /// `NoticeState::read`, then `bind_organizations` over the recorded mentions `orgs`.
+        fn bound(id: i64, parsed: &Parsed, orgs: &[(&str, i64)]) -> NoticeState {
+            let mut state = NoticeState::read(&notice_ref(id), parsed);
+            state.bind_organizations(&orgs.iter().map(|(s, o)| ((*s).to_owned(), *o)).collect());
+            state
+        }
+
+        /// Every party fact, `(scope, role, organization, anchor section)`: the Tender's under `-`.
+        fn parties(state: &NoticeState) -> BTreeSet<(String, String, i64, String)> {
+            let of = |scope: &str, facts: &BTreeSet<Fact>| -> Vec<(String, String, i64, String)> {
+                facts
+                    .iter()
+                    .filter_map(|f| match f {
+                        Fact::Party { role, organization_id, section_id, .. } => {
+                            Some((scope.to_owned(), role.clone(), *organization_id, section_id.clone()))
+                        }
+                        _ => None,
+                    })
+                    .collect()
+            };
+            let mut out: BTreeSet<_> = of("-", &state.facts).into_iter().collect();
+            for lot in &state.lots {
+                out.extend(of(&lot.key, &lot.facts));
+            }
+            out
+        }
+
+        fn party(scope: &str, role: &str, org: i64, section: &str) -> (String, String, i64, String) {
+            (scope.to_owned(), role.to_owned(), org, section.to_owned())
+        }
+
+        /// D576-1 (ii) on the lead exhibit: the review role mints the tribunal's own mention (its name,
+        /// its SPA copy, its country, no identifier), recorded beside the Organizations' and on no
+        /// Organization list, and LOT-0000 serves the review body at the touchpoint's own section.
+        #[test]
+        fn a_review_org_touchpoint_mints_the_tribunals_mention() {
+            let p = n47411306(true);
+            let (mentions, retired, roles) = NoticeState::touchpoint_mentions(false, 47_411_306, &p);
+            assert_eq!(
+                mentions,
+                vec![Mention {
+                    notice_id: 47_411_306,
+                    section_id: "TPO-0001".into(),
+                    name: TACRC.into(),
+                    country: Some("ES".into()),
+                    raw_identifier: None,
+                    scheme: None,
+                    identifier: None,
+                    variants: vec![("SPA".into(), TACRC.into())],
+                }]
+            );
+            assert!(retired.is_empty(), "a minted touchpoint's row is never retired");
+            assert_eq!(roles, TouchpointRoles { minted: 1, ..Default::default() });
+            let organizations: Vec<String> =
+                NoticeState::mentions(false, 47_411_306, &p).into_iter().map(|m| m.section_id).collect();
+            assert_eq!(organizations, vec!["ORG-0001", "ORG-0002"], "(v): no touchpoint on the Organizations' list");
+            let state = bound(47_411_306, &p, &[("ORG-0001", 6_614), ("ORG-0002", 12_032_625), ("TPO-0001", 3_955)]);
+            assert_eq!(
+                parties(&state),
+                BTreeSet::from([
+                    party("-", "Procedure-Buyer", 6_614, "ORG-0001"),
+                    party("LOT-0000", "Lot-ReviewOrg", 3_955, "TPO-0001"),
+                    party("LOT-0000", "Tenderer", 12_032_625, "ORG-0002"),
+                ])
+            );
+        }
+
+        /// Path W is on (issue 551): the touchpoint handling adds the review party and moves nothing
+        /// else — the round (winners, bids, amounts), the Tender and lot facts and the stated totals are
+        /// the notice's without the reference, as before this issue. A malformed result or ORG-only role
+        /// naming the touchpoint binds nothing even with its mention recorded.
+        #[test]
+        fn the_touchpoint_party_moves_no_winner_amount_or_total() {
+            let orgs = [("ORG-0001", 6_614), ("ORG-0002", 12_032_625), ("TPO-0001", 3_955)];
+            let with = bound(47_411_306, &n47411306(true), &orgs);
+            let without = bound(47_411_306, &n47411306(false), &orgs[..2]);
+            assert_eq!(with.round, without.round, "the round");
+            assert_eq!(with.round.as_ref().expect("an award").lot_results[0].winners, vec![12_032_625]);
+            assert_eq!(with.stated_totals, without.stated_totals, "the stated totals");
+            assert_eq!(with.facts, without.facts, "the Tender facts");
+            let review = Fact::Party {
+                role: "Lot-ReviewOrg".into(),
+                organization_id: 3_955,
+                notice_id: 47_411_306,
+                section_id: "TPO-0001".into(),
+            };
+            let mut lots = with.lots.clone();
+            assert!(lots[0].facts.remove(&review), "the one added fact");
+            assert_eq!(lots, without.lots, "everything else on the lots, lot numbers included");
+            // A result whose tendering party names the touchpoint as tenderer: no ORG-only role and no
+            // bid party binds it, and the winner stays Compusof alone.
+            let mut odd = n47411306(true);
+            odd.sections.push(section("ND-Tenderer#1", "Tenderer", Some("TPA-0001")));
+            odd.values.push(id_ref("ND-Tenderer#1", "OPT-300-Tenderer", "TPO-0001"));
+            let odd = bound(47_411_306, &odd, &orgs);
+            let round = odd.round.as_ref().expect("an award");
+            assert_eq!(round.lot_results[0].winners, vec![12_032_625]);
+            assert!(round.bids.iter().all(|b| b.parties.iter().all(|p| p.organization_id != 3_955)), "no bid party");
+            assert!(!parties(&odd).contains(&party("LOT-0000", "Tenderer", 3_955, "TPO-0001")), "no Tenderer role");
+        }
+
+        /// D576-1 (i) and (ii) in one notice (47413157): TPO-0001 prints another body and is minted;
+        /// TPO-0002 prints the buyer's own name and its AddInfo roles bind the buyer, anchored at ORG-0001
+        /// (no mention stands at TPO-0002, whose key is only retired). Counted per reference.
+        #[test]
+        fn tpo_0001_is_minted_and_tpo_0002_is_aliased_to_org_0001() {
+            let p = n47413157(IAM);
+            let (mentions, retired, roles) = NoticeState::touchpoint_mentions(false, 47_413_157, &p);
+            let named: Vec<(&str, &str, Option<&str>)> =
+                mentions.iter().map(|m| (m.section_id.as_str(), m.name.as_str(), m.country.as_deref())).collect();
+            assert_eq!(named, vec![("TPO-0001", MADRID_TRIBUNAL, Some("ES"))]);
+            assert_eq!(retired, vec!["TPO-0002"]);
+            assert_eq!(roles, TouchpointRoles { aliased: 4, minted: 4, dropped: 0, country_fallback: 0 });
+            let state = bound(47_413_157, &p, &[("ORG-0001", 11), ("TPO-0001", 22)]);
+            let mut want = BTreeSet::from([party("-", "Procedure-Buyer", 11, "ORG-0001")]);
+            for lot in ["LOT-0001", "LOT-0002", "LOT-0003", "LOT-0004"] {
+                want.insert(party(lot, "Lot-AddInfo", 11, "ORG-0001"));
+                want.insert(party(lot, "Lot-ReviewOrg", 22, "TPO-0001"));
+            }
+            assert_eq!(parties(&state), want);
+        }
+
+        /// (i)'s name test is the resolver's key (`store::org_name_norm`) over every language: case,
+        /// spacing and a trailing ` .` still alias, and so does the Organization's other-language name;
+        /// a suffixed department is another name and is minted (the accepted cost, issue 456).
+        #[test]
+        fn the_same_name_test_is_the_resolvers_key_over_every_language() {
+            let shouted = n47413157("  ORGANISMO AUTÓNOMO   INFORMÁTICA DEL AYUNTAMIENTO DE MADRID .");
+            assert_eq!(NoticeState::touchpoint_mentions(false, 9, &shouted).2.aliased, 4);
+            let mut english = n47413157("Madrid City Council IT Agency");
+            english.values.push(text_value("ORG-0001", ORG_NAME_FIELD, 1, Some("ENG"), "Madrid City Council IT Agency"));
+            assert_eq!(NoticeState::touchpoint_mentions(false, 9, &english).2.aliased, 4, "the buyer's ENG name");
+            let department = n47413157("Organismo Autónomo Informática del Ayuntamiento de Madrid - Secretaría");
+            let (mentions, _, roles) = NoticeState::touchpoint_mentions(false, 9, &department);
+            assert_eq!((roles.aliased, roles.minted), (0, 8));
+            assert_eq!(mentions.len(), 2);
+        }
+
+        /// (ii)'s country: the touchpoint's own BT-514, else its Organization's — counted.
+        #[test]
+        fn a_touchpoint_without_a_country_takes_its_organizations_and_is_counted() {
+            let p = notice(IAM, &[("TPO-0001", &[("SPA", MADRID_TRIBUNAL)], None)], &[("LOT-0001", &[("OPT-301-Lot-ReviewOrg", "TPO-0001")])]);
+            let (mentions, _, roles) = NoticeState::touchpoint_mentions(false, 9, &p);
+            assert_eq!(mentions[0].country.as_deref(), Some("ES"), "ORG-0001's ESP");
+            assert_eq!(roles, TouchpointRoles { minted: 1, country_fallback: 1, ..Default::default() });
+            let own = notice(IAM, &[("TPO-0001", &[("SPA", MADRID_TRIBUNAL)], Some("PRT"))], &[("LOT-0001", &[("OPT-301-Lot-ReviewOrg", "TPO-0001")])]);
+            let (mentions, _, roles) = NoticeState::touchpoint_mentions(false, 9, &own);
+            assert_eq!((mentions[0].country.as_deref(), roles.country_fallback), (Some("PT"), 0), "its own country first");
+        }
+
+        /// D576-1 (iv): a touchpoint printing TenderNed prose (R3's four strings), a platform's own name
+        /// (`Mercell Norge AS`: `portal_label` reads the platform list too), a section id, a URL or
+        /// an address, or no name at all (blank, punctuation) mints nothing and binds nothing — even with
+        /// a mention recorded at its key, which the fold retires — and is counted. The bar: no review body
+        /// R3 lists, and neither of its non-tribunal names, is dropped.
+        #[test]
+        fn the_touchpoint_gate_drops_prose_section_ids_and_void_names_and_no_tribunal() {
+            let dropped = [
+                "De inschrijvingen dienen ingediend te worden via www.tenderned.nl",
+                "Voor inlichtingen over de aanbesteding kunt u ons bereiken via de aanbesteding op www.tenderned.nl",
+                "Vragen kunt u stellen via TenderNed (berichtenmodule)",
+                "Indiening Inschrijving via de digitale kluis van TenderNed",
+                "Mercell Norge AS",
+                "ORG-0001",
+                "https://www.tenderned.nl",
+                "aanbesteding@utrecht.nl",
+                "",
+                "-",
+            ];
+            let one = |name: &str| {
+                notice("Gemeente Utrecht", &[("TPO-0001", &[("NLD", name)], Some("NLD"))], &[("LOT-0001", &[("OPT-301-Lot-AddInfo", "TPO-0001")])])
+            };
+            for name in dropped {
+                let p = one(name);
+                let (mentions, retired, roles) = NoticeState::touchpoint_mentions(false, 9, &p);
+                assert!(mentions.is_empty(), "{name:?}: no mention");
+                assert_eq!(retired, vec!["TPO-0001"], "{name:?}: a recorded row is retired");
+                assert_eq!(roles, TouchpointRoles { dropped: 1, ..Default::default() }, "{name:?}");
+                let state = bound(9, &p, &[("ORG-0001", 11), ("TPO-0001", 22)]);
+                assert_eq!(parties(&state), BTreeSet::from([party("-", "Procedure-Buyer", 11, "ORG-0001")]), "{name:?}: no role");
+            }
+            for name in [
+                TACRC,
+                "Tribunal Administrativo Central de Recursos Contractuales",
+                "Rechtbank Noord-Holland",
+                "Vergabekammer Baden-Württemberg",
+                "Krajowa Izba Odwoławcza",
+                "TAR Calabria",
+                "Tribunal Català de Contractes del Sector Públic",
+                "Stadt Fürth - Zentrale Vergabestelle",
+                "Agentur Wieseke",
+            ] {
+                let (mentions, _, roles) = NoticeState::touchpoint_mentions(false, 9, &one(name));
+                assert_eq!((mentions.len(), roles.minted), (1, 1), "{name:?} is minted");
+                assert_eq!(mentions[0].name, name);
+            }
+        }
+
+        /// D576-1 (iii): a touchpoint no Lot/Part role names mints nothing — nor one only an ORG-only role
+        /// names (a malformed buyer reference), which binds nothing either, mention recorded or not.
+        #[test]
+        fn an_unreferenced_touchpoint_mints_nothing() {
+            let quiet = notice(IAM, &[("TPO-0001", &[("SPA", MADRID_TRIBUNAL)], Some("ESP"))], &[("LOT-0001", &[])]);
+            let (mentions, retired, roles) = NoticeState::touchpoint_mentions(false, 9, &quiet);
+            assert!(mentions.is_empty());
+            assert_eq!(retired, vec!["TPO-0001"]);
+            assert_eq!(roles, TouchpointRoles::default());
+            let mut buyer_ref = quiet.clone();
+            buyer_ref.values.push(id_ref("ND-ContractingParty#0", "OPT-300-Procedure-Buyer", "TPO-0001"));
+            assert!(NoticeState::touchpoint_mentions(false, 9, &buyer_ref).0.is_empty(), "an ORG-only role mints nothing");
+            let state = bound(9, &buyer_ref, &[("ORG-0001", 11), ("TPO-0001", 22)]);
+            assert_eq!(parties(&state), BTreeSet::from([party("-", "Procedure-Buyer", 11, "ORG-0001")]));
+            assert!(NoticeState::touchpoint_mentions(false, 9, &n47413157(IAM)).0.len() == 1, "premise: referenced, it mints");
+            assert!(NoticeState::touchpoint_mentions(true, 9, &n47413157(IAM)).0.is_empty(), "sdk-0.1 has no touchpoint");
+        }
+
+        /// D576-1 (v): a touchpoint in a buyer-shaped role (AddInfo) beside a review- or platform-named
+        /// buyer leaves the census's `BuyerFix`, 369's buyer key and 481's guard tokens as they are without
+        /// it; the same body published as an Organization section would move all three (the premise: the
+        /// census reads AddInfo as a real buyer elsewhere and promotes it).
+        #[test]
+        fn a_touchpoint_beside_a_review_or_platform_named_buyer_moves_no_buyer() {
+            let body = "Stadt Fürth - Zentrale Vergabestelle";
+            for buyer in ["Tribunal Administrativo Central de Recursos Contractuales", "Mercell Norge AS"] {
+                let with = notice(buyer, &[("TPO-0001", &[("DEU", body)], Some("DEU"))], &[("LOT-0001", &[("OPT-301-Lot-AddInfo", "TPO-0001")])]);
+                let without = notice(buyer, &[], &[("LOT-0001", &[])]);
+                let mut as_org = without.clone();
+                as_org.sections.push(section("ORG-0002", ORGANIZATION_KIND, Some("PROCEDURE")));
+                as_org.values.push(text_value("ORG-0002", ORG_NAME_FIELD, 0, Some("DEU"), body));
+                as_org.values.push(code("ORG-0002", ORG_COUNTRY_FIELD, "DEU"));
+                as_org.values.push(id_ref("LOT-0001", "OPT-301-Lot-AddInfo", "ORG-0002"));
+                assert_eq!(NoticeState::touchpoint_mentions(false, 9, &with).2.minted, 1, "{buyer}: premise, minted");
+                let fix = |p: &Parsed| role_census::buyer_fix(false, 9, p, None);
+                assert!(fix(&without).is_empty(), "{buyer}");
+                assert_eq!(fix(&with), fix(&without), "{buyer}: the BuyerFix");
+                assert_eq!(fix(&as_org).promote, BTreeSet::from(["ORG-0002".to_owned()]), "{buyer}: premise, an ORG is promoted");
+                assert_eq!(buyer_key(false, 9, &with), buyer_key(false, 9, &without), "{buyer}: the buyer key");
+                assert_ne!(buyer_key(false, 9, &as_org), buyer_key(false, 9, &without), "{buyer}: premise");
+                let guard = |p: &Parsed| {
+                    let ident = Ident::read(&notice_ref(9), p);
+                    (ident.buyer_tokens, ident.guard_sections)
+                };
+                assert_eq!(guard(&with), guard(&without), "{buyer}: the guard tokens and sections");
+                assert_ne!(guard(&as_org), guard(&without), "{buyer}: premise");
+                let state = NoticeState::read(&notice_ref(9), &with);
+                assert!(
+                    state.roles.iter().any(|(_, role, target)| role == "Procedure-Buyer" && target == "ORG-0001"),
+                    "{buyer}: the published buyer keeps its role"
+                );
+            }
+        }
+
+        /// 530's A7 role read stays on the raw references: `guid_twin_section_roles` keys the touchpoints'
+        /// roles at TPO-0001/TPO-0002 and is not fed the alias (ORG-0001 keeps the buyer role alone).
+        #[test]
+        fn guid_twin_section_roles_still_read_the_raw_touchpoint_references() {
+            let roles = guid_twin::guid_twin_section_roles(&n47413157(IAM));
+            let want: store::GuidTwinSectionRoles = [
+                ("ORG-0001", vec!["Procedure-Buyer"]),
+                ("TPO-0001", vec!["Lot-ReviewOrg"]),
+                ("TPO-0002", vec!["Lot-AddInfo"]),
+            ]
+            .into_iter()
+            .map(|(s, r)| (s.to_owned(), r.into_iter().map(str::to_owned).collect()))
+            .collect();
+            assert_eq!(roles, want);
+        }
     }
 }
