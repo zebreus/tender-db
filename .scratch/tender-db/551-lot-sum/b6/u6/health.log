@@ -40,3 +40,7 @@
 2026-10-24T05:44:08Z op-0544 rev=512b2976f8c5d65de6b72d642202311e3308349a cursor=959223268 last_job_kind=None last_job_outcome=None last_job_started_at=None last_job_finished_at=None
 2026-10-24T07:44:21Z CA-chain-1024 rev=512b2976f8c5d65de6b72d642202311e3308349a cursor=959250385 last_job_kind=None last_job_outcome=None last_job_started_at=None last_job_finished_at=None
 2026-10-24T07:44:22Z CA-chain-1024b rev=512b2976f8c5d65de6b72d642202311e3308349a cursor=959250385 last_job_kind=None last_job_outcome=None last_job_started_at=None last_job_finished_at=None
+2026-10-24T11:35:09Z CB-p1 rev=a63cf2311385f7a54e0b0d1922e9c45acd314778 cursor=959250385 last_job_kind=None last_job_outcome=None last_job_started_at=None last_job_finished_at=None
+2026-10-24T11:35:10Z CB-p1b rev=a63cf2311385f7a54e0b0d1922e9c45acd314778 cursor=959250385 last_job_kind=None last_job_outcome=None last_job_started_at=None last_job_finished_at=None
+2026-10-24T11:46:23Z CA-p1 rev=a63cf2311385f7a54e0b0d1922e9c45acd314778 cursor=959250675 last_job_kind=None last_job_outcome=None last_job_started_at=None last_job_finished_at=None
+2026-10-24T11:46:24Z CA-p1b rev=a63cf2311385f7a54e0b0d1922e9c45acd314778 cursor=959250675 last_job_kind=None last_job_outcome=None last_job_started_at=None last_job_finished_at=None

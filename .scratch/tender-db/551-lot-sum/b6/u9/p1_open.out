@@ -1,0 +1,4 @@
+  start rule (D.1): now 2026-10-24T11:35Z; next chain 2026-10-25T08:35Z (09:35 Berlin); next weekly tick 2026-10-25T02:10Z (Sun 03:10 Berlin); binding: weekly; must finish by 2026-10-25T00:10Z; 1 run(s) left, estimate 1:50:00 (switch-off gate budgeted) -> 2026-10-24T13:25Z: GO; a switch-off must START by 2026-10-25T01:05Z (gate 35+deploy 10+drain_back_and_verify 20 min)
+p1 OPEN (class D, tag probe-a63cf23) at CB = K = 959250385; /admin/jobs idle (newest job 2755); latest switch-off start 2026-10-25T01:05:00Z (weekly tick 2026-10-25T02:10:00Z)
+  writer lock (551 and the drain's issue, before the wet POST): Writer: 551 p1 until 2026-10-24T13:30Z
+  pre-registered: expected NEW 0; served moves '0 W-column moves'; salt None; bar 'B4: 0 moves in derivation, cents, currency, eur, detail.lots, vouched_by membership'

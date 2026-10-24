@@ -1703,3 +1703,11 @@ Full record: `551-lot-sum/b6/decision-b6.md` (three judges — risk-first, value
   then the drains back-to-back (576 U3, 546 U4, 577 U2 re-applied + U3, then 581/582/583/519 M6/575/561/573 as they are
   built). A banner mechanism is being built (none exists).
 
+- **Writer: 551 p1 until 2026-10-24T13:30Z** (probe of the batch deploy a63cf23, class D; opened 11:35Z at CB = K = 959250385; dry 2755 admitted 3,537 of 3,541).
+- **2026-10-24 11:32Z: BATCH DEPLOYED, a63cf23** (gate green at ed3e2d5 = a63cf23's tree, 1,915 s): 539's caveat retirement,
+  576 U2, 578 U2, 579 U4, 580 U2, 572 U2. 577 U2 was still reverted then; it is re-applied for deploy #2 (bdd055d).
+  **P1 PASS (11:34–11:47Z, segment p1, class D):** dry 2755 (3,537 of 3,541) → wet 2756 → project 2757 (66 corrected; 151
+  tables rewritten) over (959250385, 959250675]. gd5 route both: 66 Tenders, 0 retired, NEW 0, R MOVED/LOST/SILENT 0, pins
+  PASS, band 29 = B_R. K → 959250675. The 6 `organization/added` rows are 576 U2 minting touchpoint mentions on refolded
+  Tenders. Writer released. The twin on the new base (111f1a7 is stale now that 577 rides deploy #2) is rebuilt and gated
+  after deploy #2. **576 U3 posted at 11:47Z: refold-sections Touchpoint 2758 + project 2759.**

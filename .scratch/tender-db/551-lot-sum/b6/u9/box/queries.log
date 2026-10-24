@@ -45,3 +45,8 @@
 2026-10-24T07:45:00Z #45 chain-1024_r_pk000 1.03s rows=2000 truncated=False sha256=2636b35ab631aeec raw=0045_chain-1024_r_pk000.json
 2026-10-24T07:45:03Z #46 chain-1024_r_pk001_n1541 1.06s rows=1541 truncated=False sha256=441c88df392025e7 raw=0046_chain-1024_r_pk001_n1541.json
 2026-10-24T07:45:07Z #47 chain-1024_band 1.53s rows=29 truncated=False sha256=a0577e91a2d75e29 raw=0047_chain-1024_band.json
+2026-10-24T11:46:39Z #48 p1_e1_959250385 0.41s rows=66 truncated=False sha256=74d1bfd3b4bf9f0c raw=0048_p1_e1_959250385.json
+2026-10-24T11:46:42Z #49 changes_959250385_959250675 0.51s rows=290 truncated=False sha256=870452af645a30d2 raw=0049_changes_959250385_959250675.json
+2026-10-24T11:46:45Z #50 p1_r_pk000 1.00s rows=2000 truncated=False sha256=2636b35ab631aeec raw=0050_p1_r_pk000.json
+2026-10-24T11:46:49Z #51 p1_r_pk001_n1541 0.98s rows=1541 truncated=False sha256=441c88df392025e7 raw=0051_p1_r_pk001_n1541.json
+2026-10-24T11:46:53Z #52 p1_band 1.20s rows=29 truncated=False sha256=a0577e91a2d75e29 raw=0052_p1_band.json
