@@ -1,6 +1,6 @@
 # 580 — a Tender id retired on regroup answers 404, and no served doc says a Tender id can go away
 
-Status: needs-triage — filed 2026-10-24 from the hourly AUDIT (issue 539's chain-order audit, wf_41e00ab3-eb4: its skeptic
+Status: ready-for-agent — TRIAGED and DECIDED 2026-10-24 (wf_fcc4cb46-314: a sizer, a designer and an adversarial skeptic, CORRECTED; `.scratch/tender-db/580-triage/`). **D580-1: option (a), served docs only**, using the skeptic-corrected sentences; the successor pointer (b′) is split off as issue 581 (store write path, after 551 U9). Size: about 12 Tender ids retired per daily chain (11/14/12/13/11 over 10-19 → 10-23), 0 on refolds that move no grouping input (2.33M re-folded), and 93 on 539 run c; hundreds in a normal month, 10^4–10^5 in a regrouping campaign (issue 93: 216,450). Ids are never reissued within a generation (AUTOINCREMENT). NEXT: unit 2 (a) build: docs.rs Tender detail and ids/generation paragraphs, the version-null list, openapi generation / getTender 404 / ChangeEvent.version, CHANGELOG, and an assert_says test. These are 551 flip files, so the change gates with a twin re-gate and deploys with the 10-28 batch. Was: needs-triage — filed 2026-10-24 from the hourly AUDIT (issue 539's chain-order audit, wf_41e00ab3-eb4: its skeptic
 found run c had minted new Tenders). The served-docs gap was verified by a finder and an independent refuter (wf_bc2614fa-460):
 both answered gap_real = true, and the refuter could not refute it. Next: unit 1, decide the remedy (docs only, or docs plus a
 successor pointer) and size how often a regroup retires an id.
@@ -68,3 +68,46 @@ Relates to:
 
 **551 note.** Docs (a) touch docs.rs and openapi.json, both flip files, so they deploy with a twin re-gate (C7). (b)
 adds a store write path inside retirement and needs B4's W-on probe. Neither moves a W input.
+
+## Triage (2026-10-24, wf_fcc4cb46-314)
+
+**Sizing** (`580-triage/sizing.md`, `per-archive-counts.json`). The local change archives cover
+(958787061, 959223268] without a gap: 436,207 rows, 10-19 → 10-24. The skeptic recounted them exactly.
+- Daily chains (projects 2645, 2669, 2688, 2716, 2726) retired 11, 14, 12, 13 and 11 Tenders and minted 2,021–2,442
+  each: about 231 per 100k written, 0.56 % of the ids minted that day.
+- Every refold that changed no grouping input retired none (2.33M re-folded). That zero is structural, not a rate.
+- 539 run c retired 93 and minted 93 (8,860,949–8,861,041); the change rows cannot show the pairing.
+- None of the 154 retired ids ever reappeared, and none was retired twice.
+- 8596072 (10-21 chain) took 9,807 bid rows with it.
+- No project summary line counts retirements.
+
+**Design** (`580-triage/design.md`; skeptic corrections in `skeptic.md`).
+- `retire_chunk_tx` is given ids only, and no caller knows the successor. The full path retires after Phase 2; the
+  daily path retires before it, when a new successor has no id yet.
+- Splits, merges, merge-then-undo and chains all occur.
+- The follow path that works today: keep `versions[].publication_id` and ask `/v1/tenders?publication_id=…&source=…`.
+  On /v1/sql: `SELECT tender_id FROM tender_versions WHERE caused_by_notice_id = <notice id>` (no bind parameters;
+  `v_tender_notices` refuses filters).
+- `/v1/notices?tender=<retired>` answers 404, not an empty page.
+- On the daily path the feed sends `removed` before the absorbing Tender's `added`/`changed`, and the full path sends
+  it after, so the docs must say "in either order".
+
+**D580-1 (owner, 2026-10-24): (a), docs only.** It closes Verify `done` at size S with no store change and no W input.
+- (b′), a notice-anchored ledger with 308/410, is size M and touches crates/store, so it needs B4's probe and waits
+  until after 11-04. It cannot backfill: 8811451 would answer 410 with `successors: null`, never 308.
+- (c), `tender_id` on notices, leaves the bare 404.
+- Filed (b′) as **581** with the skeptic's corrections:
+  - D1: twin repair deletes the notices, so anchor on the kept twin or skip it.
+  - D2: guard on `sqlite_sequence`, not `MAX(id)`.
+  - D3: in (c), `MAX(tender_id)` picks the older Tender when notices merge into one.
+  - F3: `Cache-Control: no-store` on 308/410.
+
+**Unit 2 text rules (skeptic F1–F6).**
+- Say "in either order".
+- Say "never issued again within a generation".
+- Say "retired by a fold or a repair".
+- Allow for a retired Tender whose notices went nowhere (held).
+- Never write "retired twice".
+- Write the /v1/sql example with a literal id.
+- Put "Tender id" and "retired" on one /docs source line (Verify greps by line).
+

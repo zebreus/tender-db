@@ -1,0 +1,1471 @@
+{
+ "issue": 580,
+ "built": "2026-10-24",
+ "archives": [
+  {
+   "name": "b5-corpus",
+   "path": ".scratch/tender-db/551-lot-sum/b5/investigate/corpus_changes.json",
+   "cursor_range": "(958764958, 958787061]",
+   "kinds": "tender",
+   "rows": 3429,
+   "complete_no_gap": "tender-only read; manifest complete",
+   "counts": {
+    "tender/changed": 3429
+   },
+   "counts_by_version": {
+    "tender/changed/vnull": 3429
+   },
+   "tender_removed": 0,
+   "tender_added": 0,
+   "minted_new_ids": 0,
+   "removed_alongside_retirement": {
+    "lot": 0,
+    "lot_result": 0,
+    "bid": 0,
+    "contract": 0
+   },
+   "jobs": [
+    {
+     "job_id": null,
+     "job_kind": null,
+     "class": "campaign",
+     "trigger": "refold-lot-sum 2626 (551 B5 corpus drain) -> project 2627",
+     "what": "551 B5 corpus drain",
+     "tenders_refolded_or_written": 251526,
+     "tenders_count_source": "issue 551:1105 (2626 stamped 251,526)",
+     "changed_at": [
+      "2026-10-18T22:37:49Z",
+      "2026-10-18T22:37:49Z"
+     ],
+     "cursor": [
+      958764959,
+      958787056
+     ],
+     "rows": 3429,
+     "tender_changed": 3429,
+     "tender_removed": 0,
+     "removed_alongside_retirement": {},
+     "tender_added": 0,
+     "minted_new_ids": 0,
+     "minted_id_range": [
+      null,
+      null
+     ],
+     "added_on_existing_id_seq1": 0,
+     "other_removed_rows": {},
+     "retired_ids": []
+    }
+   ]
+  },
+  {
+   "name": "u6-lchanged",
+   "path": ".scratch/tender-db/551-lot-sum/b6/u6/lchanged/changes/",
+   "cursor_range": "(958787061, 959004090]",
+   "kinds": "all",
+   "rows": 217029,
+   "complete_no_gap": true,
+   "counts": {
+    "bid/added": 44821,
+    "bid/removed": 9902,
+    "contract/added": 23856,
+    "contract/removed": 51,
+    "lot/added": 15043,
+    "lot/changed": 63983,
+    "lot/removed": 97,
+    "lot_result/added": 18263,
+    "lot_result/removed": 70,
+    "organization/added": 3672,
+    "organization/changed": 718,
+    "organization/removed": 10995,
+    "tender/added": 6584,
+    "tender/changed": 18937,
+    "tender/removed": 37
+   },
+   "counts_by_version": {
+    "bid/added/versioned": 44821,
+    "bid/removed/versioned": 38,
+    "bid/removed/vnull": 9864,
+    "contract/added/versioned": 23856,
+    "contract/removed/versioned": 28,
+    "contract/removed/vnull": 23,
+    "lot/added/versioned": 15043,
+    "lot/changed/versioned": 27722,
+    "lot/changed/vnull": 36261,
+    "lot/removed/vnull": 97,
+    "lot_result/added/versioned": 18263,
+    "lot_result/removed/versioned": 44,
+    "lot_result/removed/vnull": 26,
+    "organization/added/vnull": 3672,
+    "organization/changed/vnull": 718,
+    "organization/removed/vnull": 10995,
+    "tender/added/versioned": 6584,
+    "tender/changed/versioned": 8101,
+    "tender/changed/vnull": 10836,
+    "tender/removed/vnull": 37
+   },
+   "tender_removed": 37,
+   "tender_added": 6584,
+   "minted_new_ids": 6345,
+   "removed_alongside_retirement": {
+    "lot": 95,
+    "lot_result": 26,
+    "bid": 9864,
+    "contract": 23
+   },
+   "jobs": [
+    {
+     "job_id": 2630,
+     "job_kind": "project",
+     "class": "campaign",
+     "trigger": "refold-lot-sum 2629",
+     "what": "551 B5 switch-off drain-back (W=false)",
+     "tenders_refolded_or_written": 3502,
+     "tenders_count_source": "2629 stamped",
+     "changed_at": [
+      "2026-10-19T03:34:07Z",
+      "2026-10-19T03:34:07Z"
+     ],
+     "cursor": [
+      958787062,
+      958809778
+     ],
+     "rows": 22717,
+     "tender_changed": 3502,
+     "tender_removed": 0,
+     "removed_alongside_retirement": {},
+     "tender_added": 0,
+     "minted_new_ids": 0,
+     "minted_id_range": [
+      null,
+      null
+     ],
+     "added_on_existing_id_seq1": 0,
+     "other_removed_rows": {},
+     "retired_ids": []
+    },
+    {
+     "job_id": 2632,
+     "job_kind": "project",
+     "class": "campaign",
+     "trigger": "refold-fields 2631",
+     "what": "541 TED-COST_PARAMETERS",
+     "tenders_refolded_or_written": 753,
+     "tenders_count_source": "2631 stamped",
+     "changed_at": [
+      "2026-10-19T04:23:30Z",
+      "2026-10-19T04:23:30Z"
+     ],
+     "cursor": [
+      958809779,
+      958809905
+     ],
+     "rows": 127,
+     "tender_changed": 126,
+     "tender_removed": 0,
+     "removed_alongside_retirement": {},
+     "tender_added": 0,
+     "minted_new_ids": 0,
+     "minted_id_range": [
+      null,
+      null
+     ],
+     "added_on_existing_id_seq1": 0,
+     "other_removed_rows": {},
+     "retired_ids": []
+    },
+    {
+     "job_id": 2636,
+     "job_kind": "project",
+     "class": "campaign",
+     "trigger": "refold-fields 2635",
+     "what": "571 TED-ADDRESS_PARTY",
+     "tenders_refolded_or_written": 67,
+     "tenders_count_source": "2635 stamped",
+     "changed_at": [
+      "2026-10-19T05:53:39Z",
+      "2026-10-19T05:53:39Z"
+     ],
+     "cursor": [
+      958809906,
+      958810037
+     ],
+     "rows": 132,
+     "tender_changed": 66,
+     "tender_removed": 0,
+     "removed_alongside_retirement": {},
+     "tender_added": 0,
+     "minted_new_ids": 0,
+     "minted_id_range": [
+      null,
+      null
+     ],
+     "added_on_existing_id_seq1": 0,
+     "other_removed_rows": {},
+     "retired_ids": []
+    },
+    {
+     "job_id": 2645,
+     "job_kind": "project",
+     "class": "daily",
+     "trigger": "chain 2637-2646 (probe/process ted, doe, fts; fetch-rates 2643; rederive-eur-recent 2644; project 2645; reveal-recheck 2646)",
+     "what": "daily chain 2026-10-19",
+     "tenders_refolded_or_written": 4070,
+     "tenders_count_source": "2645 tenders written",
+     "changed_at": [
+      "2026-10-19T07:35:55Z",
+      "2026-10-19T07:35:55Z"
+     ],
+     "cursor": [
+      958810038,
+      958848408
+     ],
+     "rows": 38371,
+     "tender_changed": 2750,
+     "tender_removed": 11,
+     "removed_alongside_retirement": {
+      "lot": 27
+     },
+     "tender_added": 2023,
+     "minted_new_ids": 2021,
+     "minted_id_range": [
+      8850005,
+      8852025
+     ],
+     "added_on_existing_id_seq1": 2,
+     "other_removed_rows": {
+      "lot/vnull": 2,
+      "lot_result/versioned": 38,
+      "bid/versioned": 33,
+      "contract/versioned": 23
+     },
+     "retired_ids": [
+      1211273,
+      1211959,
+      1212943,
+      1215013,
+      1216753,
+      1218043,
+      1219428,
+      1739399,
+      1744088,
+      7967007,
+      8849999
+     ]
+    },
+    {
+     "job_id": 2651,
+     "job_kind": "apply-rehoming",
+     "class": "other",
+     "trigger": "apply-rehoming 2651",
+     "what": "545 cohort rehomes (org mentions)",
+     "tenders_refolded_or_written": null,
+     "tenders_count_source": null,
+     "changed_at": [
+      "2026-10-19T11:06:08Z",
+      "2026-10-19T11:06:08Z"
+     ],
+     "cursor": [
+      958848409,
+      958848545
+     ],
+     "rows": 137,
+     "tender_changed": 48,
+     "tender_removed": 0,
+     "removed_alongside_retirement": {},
+     "tender_added": 0,
+     "minted_new_ids": 0,
+     "minted_id_range": [
+      null,
+      null
+     ],
+     "added_on_existing_id_seq1": 0,
+     "other_removed_rows": {},
+     "retired_ids": []
+    },
+    {
+     "job_id": 2652,
+     "job_kind": "project",
+     "class": "campaign",
+     "trigger": "apply-rehoming 2651",
+     "what": "545 project behind the rehomes",
+     "tenders_refolded_or_written": 48,
+     "tenders_count_source": "2652 tenders written",
+     "changed_at": [
+      "2026-10-19T11:06:21Z",
+      "2026-10-19T11:06:21Z"
+     ],
+     "cursor": [
+      958848546,
+      958848657
+     ],
+     "rows": 112,
+     "tender_changed": 47,
+     "tender_removed": 0,
+     "removed_alongside_retirement": {},
+     "tender_added": 0,
+     "minted_new_ids": 0,
+     "minted_id_range": [
+      null,
+      null
+     ],
+     "added_on_existing_id_seq1": 0,
+     "other_removed_rows": {},
+     "retired_ids": []
+    },
+    {
+     "job_id": 2654,
+     "job_kind": "refresh-org-names",
+     "class": "other",
+     "trigger": "refresh-org-names 2654",
+     "what": "548 v13 renames (organizations)",
+     "tenders_refolded_or_written": null,
+     "tenders_count_source": null,
+     "changed_at": [
+      "2026-10-19T11:46:37Z",
+      "2026-10-19T11:46:37Z"
+     ],
+     "cursor": [
+      958848658,
+      958848784
+     ],
+     "rows": 127,
+     "tender_changed": 0,
+     "tender_removed": 0,
+     "removed_alongside_retirement": {},
+     "tender_added": 0,
+     "minted_new_ids": 0,
+     "minted_id_range": [
+      null,
+      null
+     ],
+     "added_on_existing_id_seq1": 0,
+     "other_removed_rows": {},
+     "retired_ids": []
+    },
+    {
+     "job_id": 2668,
+     "job_kind": "rederive-eur-recent",
+     "class": "daily-rederive",
+     "trigger": "chain 2661-2670",
+     "what": "rederive-eur-recent 2026-10-20 (D5 rows)",
+     "tenders_refolded_or_written": null,
+     "tenders_count_source": null,
+     "changed_at": [
+      "2026-10-20T07:41:18Z",
+      "2026-10-20T07:41:26Z"
+     ],
+     "cursor": [
+      958848785,
+      958853608
+     ],
+     "rows": 4824,
+     "tender_changed": 913,
+     "tender_removed": 0,
+     "removed_alongside_retirement": {},
+     "tender_added": 0,
+     "minted_new_ids": 0,
+     "minted_id_range": [
+      null,
+      null
+     ],
+     "added_on_existing_id_seq1": 0,
+     "other_removed_rows": {},
+     "retired_ids": []
+    },
+    {
+     "job_id": 2669,
+     "job_kind": "project",
+     "class": "daily",
+     "trigger": "chain 2661-2670 (doe probe 2663 errored 504; fetch-rates 2667; rederive 2668; project 2669)",
+     "what": "daily chain 2026-10-20",
+     "tenders_refolded_or_written": 4974,
+     "tenders_count_source": "2669 tenders written",
+     "changed_at": [
+      "2026-10-20T07:41:27Z",
+      "2026-10-20T07:41:27Z"
+     ],
+     "cursor": [
+      958853609,
+      958904203
+     ],
+     "rows": 50595,
+     "tender_changed": 3295,
+     "tender_removed": 14,
+     "removed_alongside_retirement": {
+      "lot": 25
+     },
+     "tender_added": 1883,
+     "minted_new_ids": 1882,
+     "minted_id_range": [
+      8852026,
+      8853907
+     ],
+     "added_on_existing_id_seq1": 1,
+     "other_removed_rows": {},
+     "retired_ids": [
+      1166545,
+      1208644,
+      1209550,
+      1214531,
+      7945669,
+      8560995,
+      8592558,
+      8634412,
+      8654928,
+      8664493,
+      8671540,
+      8675957,
+      8815403,
+      8852015
+     ]
+    },
+    {
+     "job_id": 2672,
+     "job_kind": "dissolve-guid-twins",
+     "class": "other",
+     "trigger": "dissolve-guid-twins 2672",
+     "what": "530 Build 2 wet (organizations)",
+     "tenders_refolded_or_written": null,
+     "tenders_count_source": null,
+     "changed_at": [
+      "2026-10-21T01:28:44Z",
+      "2026-10-21T01:28:44Z"
+     ],
+     "cursor": [
+      958904204,
+      958905328
+     ],
+     "rows": 1125,
+     "tender_changed": 287,
+     "tender_removed": 0,
+     "removed_alongside_retirement": {},
+     "tender_added": 0,
+     "minted_new_ids": 0,
+     "minted_id_range": [
+      null,
+      null
+     ],
+     "added_on_existing_id_seq1": 0,
+     "other_removed_rows": {
+      "organization/vnull": 805
+     },
+     "retired_ids": []
+    },
+    {
+     "job_id": 2673,
+     "job_kind": "dissolve-guid-twins",
+     "class": "other",
+     "trigger": "dissolve-guid-twins 2673",
+     "what": "530 Build 2 wet (organizations)",
+     "tenders_refolded_or_written": null,
+     "tenders_count_source": null,
+     "changed_at": [
+      "2026-10-21T01:29:49Z",
+      "2026-10-21T01:34:19Z"
+     ],
+     "cursor": [
+      958905329,
+      958919213
+     ],
+     "rows": 13885,
+     "tender_changed": 3174,
+     "tender_removed": 0,
+     "removed_alongside_retirement": {},
+     "tender_added": 0,
+     "minted_new_ids": 0,
+     "minted_id_range": [
+      null,
+      null
+     ],
+     "added_on_existing_id_seq1": 0,
+     "other_removed_rows": {
+      "organization/vnull": 10190
+     },
+     "retired_ids": []
+    },
+    {
+     "job_id": 2687,
+     "job_kind": "rederive-eur-recent",
+     "class": "daily-rederive",
+     "trigger": "chain 2680-2689",
+     "what": "rederive-eur-recent 2026-10-21",
+     "tenders_refolded_or_written": null,
+     "tenders_count_source": null,
+     "changed_at": [
+      "2026-10-21T07:39:11Z",
+      "2026-10-21T07:39:22Z"
+     ],
+     "cursor": [
+      958919214,
+      958924919
+     ],
+     "rows": 5706,
+     "tender_changed": 822,
+     "tender_removed": 0,
+     "removed_alongside_retirement": {},
+     "tender_added": 0,
+     "minted_new_ids": 0,
+     "minted_id_range": [
+      null,
+      null
+     ],
+     "added_on_existing_id_seq1": 0,
+     "other_removed_rows": {},
+     "retired_ids": []
+    },
+    {
+     "job_id": 2688,
+     "job_kind": "project",
+     "class": "daily",
+     "trigger": "chain 2680-2689 (fetch-rates 2686; rederive 2687; project 2688)",
+     "what": "daily chain 2026-10-21",
+     "tenders_refolded_or_written": 5887,
+     "tenders_count_source": "2688 tenders written",
+     "changed_at": [
+      "2026-10-21T07:39:23Z",
+      "2026-10-21T07:39:23Z"
+     ],
+     "cursor": [
+      958924920,
+      959004090
+     ],
+     "rows": 79171,
+     "tender_changed": 3907,
+     "tender_removed": 12,
+     "removed_alongside_retirement": {
+      "lot": 43,
+      "lot_result": 26,
+      "bid": 9864,
+      "contract": 23
+     },
+     "tender_added": 2678,
+     "minted_new_ids": 2442,
+     "minted_id_range": [
+      8853908,
+      8856349
+     ],
+     "added_on_existing_id_seq1": 236,
+     "other_removed_rows": {
+      "lot_result/versioned": 6,
+      "bid/versioned": 5,
+      "contract/versioned": 5
+     },
+     "retired_ids": [
+      1214417,
+      1216169,
+      1219473,
+      1740086,
+      7939455,
+      8569807,
+      8596072,
+      8620617,
+      8654429,
+      8671104,
+      8682567,
+      8846405
+     ]
+    }
+   ]
+  },
+  {
+   "name": "u9-days12",
+   "path": ".scratch/tender-db/551-lot-sum/b6/u9/20261023/build_changes_2026-10-23T184801Z.tar.xz",
+   "cursor_range": "(959004090, 959180852]",
+   "kinds": "all",
+   "rows": 176762,
+   "complete_no_gap": true,
+   "counts": {
+    "bid/added": 33233,
+    "bid/removed": 20,
+    "contract/added": 21084,
+    "contract/removed": 18,
+    "lot/added": 11573,
+    "lot/changed": 72719,
+    "lot/removed": 81,
+    "lot_result/added": 17680,
+    "lot_result/removed": 23,
+    "organization/added": 2115,
+    "tender/added": 5182,
+    "tender/changed": 13010,
+    "tender/removed": 24
+   },
+   "counts_by_version": {
+    "bid/added/versioned": 33233,
+    "bid/removed/versioned": 3,
+    "bid/removed/vnull": 17,
+    "contract/added/versioned": 21084,
+    "contract/removed/versioned": 3,
+    "contract/removed/vnull": 15,
+    "lot/added/versioned": 11573,
+    "lot/changed/versioned": 25982,
+    "lot/changed/vnull": 46737,
+    "lot/removed/vnull": 81,
+    "lot_result/added/versioned": 17680,
+    "lot_result/removed/versioned": 5,
+    "lot_result/removed/vnull": 18,
+    "organization/added/vnull": 2115,
+    "tender/added/versioned": 5182,
+    "tender/changed/versioned": 6213,
+    "tender/changed/vnull": 6797,
+    "tender/removed/vnull": 24
+   },
+   "tender_removed": 24,
+   "tender_added": 5182,
+   "minted_new_ids": 4599,
+   "removed_alongside_retirement": {
+    "lot": 81,
+    "lot_result": 18,
+    "bid": 17,
+    "contract": 15
+   },
+   "jobs": [
+    {
+     "job_id": 2692,
+     "job_kind": "project",
+     "class": "campaign",
+     "trigger": "refold-lot-sum 2691",
+     "what": "551 U7 stage1",
+     "tenders_refolded_or_written": 426,
+     "tenders_count_source": "2691 stamped",
+     "changed_at": [
+      "2026-10-21T10:27:35Z",
+      "2026-10-21T10:27:35Z"
+     ],
+     "cursor": [
+      959004091,
+      959006520
+     ],
+     "rows": 2430,
+     "tender_changed": 367,
+     "tender_removed": 0,
+     "removed_alongside_retirement": {},
+     "tender_added": 0,
+     "minted_new_ids": 0,
+     "minted_id_range": [
+      null,
+      null
+     ],
+     "added_on_existing_id_seq1": 0,
+     "other_removed_rows": {},
+     "retired_ids": []
+    },
+    {
+     "job_id": 2695,
+     "job_kind": "project",
+     "class": "campaign",
+     "trigger": "refold-lot-sum 2694",
+     "what": "551 U7 stage2",
+     "tenders_refolded_or_written": 3100,
+     "tenders_count_source": "2694 stamped",
+     "changed_at": [
+      "2026-10-21T10:34:19Z",
+      "2026-10-21T10:34:19Z"
+     ],
+     "cursor": [
+      959006521,
+      959026601
+     ],
+     "rows": 20081,
+     "tender_changed": 3100,
+     "tender_removed": 0,
+     "removed_alongside_retirement": {},
+     "tender_added": 0,
+     "minted_new_ids": 0,
+     "minted_id_range": [
+      null,
+      null
+     ],
+     "added_on_existing_id_seq1": 0,
+     "other_removed_rows": {},
+     "retired_ids": []
+    },
+    {
+     "job_id": 2698,
+     "job_kind": "project",
+     "class": "campaign",
+     "trigger": "refold-lot-sum 2697",
+     "what": "551 U7 lc01",
+     "tenders_refolded_or_written": 489,
+     "tenders_count_source": "2697 stamped",
+     "changed_at": [
+      "2026-10-21T10:40:18Z",
+      "2026-10-21T10:40:18Z"
+     ],
+     "cursor": [
+      959026602,
+      959026677
+     ],
+     "rows": 76,
+     "tender_changed": 8,
+     "tender_removed": 0,
+     "removed_alongside_retirement": {},
+     "tender_added": 0,
+     "minted_new_ids": 0,
+     "minted_id_range": [
+      null,
+      null
+     ],
+     "added_on_existing_id_seq1": 0,
+     "other_removed_rows": {},
+     "retired_ids": []
+    },
+    {
+     "job_id": 2704,
+     "job_kind": "project",
+     "class": "campaign",
+     "trigger": "refold-lot-sum 2703",
+     "what": "551 U7 lc03",
+     "tenders_refolded_or_written": 33,
+     "tenders_count_source": "2703 stamped",
+     "changed_at": [
+      "2026-10-21T10:51:59Z",
+      "2026-10-21T10:51:59Z"
+     ],
+     "cursor": [
+      959026678,
+      959026689
+     ],
+     "rows": 12,
+     "tender_changed": 3,
+     "tender_removed": 0,
+     "removed_alongside_retirement": {},
+     "tender_added": 0,
+     "minted_new_ids": 0,
+     "minted_id_range": [
+      null,
+      null
+     ],
+     "added_on_existing_id_seq1": 0,
+     "other_removed_rows": {},
+     "retired_ids": []
+    },
+    {
+     "job_id": 2715,
+     "job_kind": "rederive-eur-recent",
+     "class": "daily-rederive",
+     "trigger": "chain 2708-2717",
+     "what": "rederive-eur-recent 2026-10-22",
+     "tenders_refolded_or_written": null,
+     "tenders_count_source": null,
+     "changed_at": [
+      "2026-10-22T07:40:26Z",
+      "2026-10-22T07:40:35Z"
+     ],
+     "cursor": [
+      959026690,
+      959031937
+     ],
+     "rows": 5248,
+     "tender_changed": 568,
+     "tender_removed": 0,
+     "removed_alongside_retirement": {},
+     "tender_added": 0,
+     "minted_new_ids": 0,
+     "minted_id_range": [
+      null,
+      null
+     ],
+     "added_on_existing_id_seq1": 0,
+     "other_removed_rows": {},
+     "retired_ids": []
+    },
+    {
+     "job_id": 2716,
+     "job_kind": "project",
+     "class": "daily",
+     "trigger": "chain 2708-2717 (fetch-rates 2714; rederive 2715; project 2716)",
+     "what": "daily chain 2026-10-22",
+     "tenders_refolded_or_written": 5785,
+     "tenders_count_source": "2716 tenders written",
+     "changed_at": [
+      "2026-10-22T07:40:36Z",
+      "2026-10-22T07:40:36Z"
+     ],
+     "cursor": [
+      959031938,
+      959108856
+     ],
+     "rows": 76919,
+     "tender_changed": 4207,
+     "tender_removed": 13,
+     "removed_alongside_retirement": {
+      "lot": 70,
+      "lot_result": 12,
+      "bid": 12,
+      "contract": 11
+     },
+     "tender_added": 2591,
+     "minted_new_ids": 2314,
+     "minted_id_range": [
+      8856350,
+      8858663
+     ],
+     "added_on_existing_id_seq1": 277,
+     "other_removed_rows": {
+      "lot_result/versioned": 5,
+      "bid/versioned": 3,
+      "contract/versioned": 3
+     },
+     "retired_ids": [
+      1208633,
+      1217098,
+      1218159,
+      1742402,
+      7954556,
+      7974452,
+      8570074,
+      8590731,
+      8618358,
+      8640452,
+      8649858,
+      8657396,
+      8715610
+     ]
+    },
+    {
+     "job_id": 2725,
+     "job_kind": "rederive-eur-recent",
+     "class": "daily-rederive",
+     "trigger": "chain 2718-2727",
+     "what": "rederive-eur-recent 2026-10-23",
+     "tenders_refolded_or_written": null,
+     "tenders_count_source": null,
+     "changed_at": [
+      "2026-10-23T07:39:27Z",
+      "2026-10-23T07:39:38Z"
+     ],
+     "cursor": [
+      959108857,
+      959118085
+     ],
+     "rows": 9229,
+     "tender_changed": 829,
+     "tender_removed": 0,
+     "removed_alongside_retirement": {},
+     "tender_added": 0,
+     "minted_new_ids": 0,
+     "minted_id_range": [
+      null,
+      null
+     ],
+     "added_on_existing_id_seq1": 0,
+     "other_removed_rows": {},
+     "retired_ids": []
+    },
+    {
+     "job_id": 2726,
+     "job_kind": "project",
+     "class": "daily",
+     "trigger": "chain 2718-2727 (fetch-rates 2724; rederive 2725; project 2726)",
+     "what": "daily chain 2026-10-23",
+     "tenders_refolded_or_written": 5739,
+     "tenders_count_source": "2726 tenders written",
+     "changed_at": [
+      "2026-10-23T07:39:39Z",
+      "2026-10-23T07:39:39Z"
+     ],
+     "cursor": [
+      959118086,
+      959180852
+     ],
+     "rows": 62767,
+     "tender_changed": 3928,
+     "tender_removed": 11,
+     "removed_alongside_retirement": {
+      "lot": 11,
+      "lot_result": 6,
+      "bid": 5,
+      "contract": 4
+     },
+     "tender_added": 2591,
+     "minted_new_ids": 2285,
+     "minted_id_range": [
+      8858664,
+      8860948
+     ],
+     "added_on_existing_id_seq1": 306,
+     "other_removed_rows": {},
+     "retired_ids": [
+      300875,
+      1203991,
+      1208747,
+      1211374,
+      1217230,
+      7967030,
+      8628848,
+      8662088,
+      8662304,
+      8759747,
+      8846381
+     ]
+    }
+   ]
+  },
+  {
+   "name": "u9-seg-p0",
+   "path": ".scratch/tender-db/551-lot-sum/b6/u9/segments/p0/read/changes/all/",
+   "cursor_range": "(959180852, 959192253]",
+   "kinds": "all",
+   "rows": 11401,
+   "complete_no_gap": true,
+   "counts": {
+    "lot/changed": 9522,
+    "tender/changed": 1879
+   },
+   "counts_by_version": {
+    "lot/changed/vnull": 9522,
+    "tender/changed/vnull": 1879
+   },
+   "tender_removed": 0,
+   "tender_added": 0,
+   "minted_new_ids": 0,
+   "removed_alongside_retirement": {
+    "lot": 0,
+    "lot_result": 0,
+    "bid": 0,
+    "contract": 0
+   },
+   "jobs": [
+    {
+     "job_id": 2730,
+     "job_kind": "project",
+     "class": "campaign",
+     "trigger": "refold-lot-sum 2729",
+     "what": "551 U9 p0 (546 U3 probe)",
+     "tenders_refolded_or_written": 3537,
+     "tenders_count_source": "2729 stamped",
+     "changed_at": [
+      "2026-10-23T23:46:47Z",
+      "2026-10-23T23:46:47Z"
+     ],
+     "cursor": [
+      959180853,
+      959192253
+     ],
+     "rows": 11401,
+     "tender_changed": 1879,
+     "tender_removed": 0,
+     "removed_alongside_retirement": {},
+     "tender_added": 0,
+     "minted_new_ids": 0,
+     "minted_id_range": [
+      null,
+      null
+     ],
+     "added_on_existing_id_seq1": 0,
+     "other_removed_rows": {},
+     "retired_ids": []
+    }
+   ]
+  },
+  {
+   "name": "u9-seg-w539-a",
+   "path": ".scratch/tender-db/551-lot-sum/b6/u9/segments/w539-a/read/changes/all/",
+   "cursor_range": "(959192253, 959211183]",
+   "kinds": "all",
+   "rows": 18930,
+   "complete_no_gap": true,
+   "counts": {
+    "bid/added": 14,
+    "contract/added": 10,
+    "lot/added": 11,
+    "lot/changed": 9219,
+    "lot_result/added": 82,
+    "tender/changed": 9594
+   },
+   "counts_by_version": {
+    "bid/added/versioned": 14,
+    "contract/added/versioned": 10,
+    "lot/added/versioned": 11,
+    "lot/changed/versioned": 265,
+    "lot/changed/vnull": 8954,
+    "lot_result/added/versioned": 82,
+    "tender/changed/versioned": 477,
+    "tender/changed/vnull": 9117
+   },
+   "tender_removed": 0,
+   "tender_added": 0,
+   "minted_new_ids": 0,
+   "removed_alongside_retirement": {
+    "lot": 0,
+    "lot_result": 0,
+    "bid": 0,
+    "contract": 0
+   },
+   "jobs": [
+    {
+     "job_id": 2734,
+     "job_kind": "project",
+     "class": "campaign",
+     "trigger": "refold 2733 eforms:eforms-sdk-0.1",
+     "what": "539 run a",
+     "tenders_refolded_or_written": 676936,
+     "tenders_count_source": "2733 stamped",
+     "changed_at": [
+      "2026-10-24T00:06:54Z",
+      "2026-10-24T00:06:54Z"
+     ],
+     "cursor": [
+      959192254,
+      959211183
+     ],
+     "rows": 18930,
+     "tender_changed": 9594,
+     "tender_removed": 0,
+     "removed_alongside_retirement": {},
+     "tender_added": 0,
+     "minted_new_ids": 0,
+     "minted_id_range": [
+      null,
+      null
+     ],
+     "added_on_existing_id_seq1": 0,
+     "other_removed_rows": {},
+     "retired_ids": []
+    }
+   ]
+  },
+  {
+   "name": "u9-seg-w539-b",
+   "path": ".scratch/tender-db/551-lot-sum/b6/u9/segments/w539-b/read/changes/all/",
+   "cursor_range": "(959211183, 959215522]",
+   "kinds": "all",
+   "rows": 4339,
+   "complete_no_gap": true,
+   "counts": {
+    "bid/added": 254,
+    "contract/added": 256,
+    "lot/added": 65,
+    "lot/changed": 711,
+    "lot_result/added": 294,
+    "tender/added": 54,
+    "tender/changed": 2705
+   },
+   "counts_by_version": {
+    "bid/added/versioned": 254,
+    "contract/added/versioned": 256,
+    "lot/added/versioned": 65,
+    "lot/changed/versioned": 550,
+    "lot/changed/vnull": 161,
+    "lot_result/added/versioned": 294,
+    "tender/added/versioned": 54,
+    "tender/changed/versioned": 494,
+    "tender/changed/vnull": 2211
+   },
+   "tender_removed": 0,
+   "tender_added": 54,
+   "minted_new_ids": 0,
+   "removed_alongside_retirement": {
+    "lot": 0,
+    "lot_result": 0,
+    "bid": 0,
+    "contract": 0
+   },
+   "jobs": [
+    {
+     "job_id": 2738,
+     "job_kind": "project",
+     "class": "campaign",
+     "trigger": "refold 2737 eforms:eforms-de-1.0/1.1/1.2",
+     "what": "539 run b",
+     "tenders_refolded_or_written": 126812,
+     "tenders_count_source": "2737 stamped",
+     "changed_at": [
+      "2026-10-24T00:43:20Z",
+      "2026-10-24T00:43:20Z"
+     ],
+     "cursor": [
+      959211184,
+      959215522
+     ],
+     "rows": 4339,
+     "tender_changed": 2705,
+     "tender_removed": 0,
+     "removed_alongside_retirement": {},
+     "tender_added": 54,
+     "minted_new_ids": 0,
+     "minted_id_range": [
+      null,
+      null
+     ],
+     "added_on_existing_id_seq1": 54,
+     "other_removed_rows": {},
+     "retired_ids": []
+    }
+   ]
+  },
+  {
+   "name": "u9-seg-w539-c",
+   "path": ".scratch/tender-db/551-lot-sum/b6/u9/segments/w539-c/read/changes/all/",
+   "cursor_range": "(959215522, 959223268]",
+   "kinds": "all",
+   "rows": 7746,
+   "complete_no_gap": true,
+   "counts": {
+    "bid/added": 439,
+    "bid/removed": 222,
+    "contract/added": 438,
+    "contract/removed": 222,
+    "lot/added": 203,
+    "lot/changed": 1700,
+    "lot/removed": 99,
+    "lot_result/added": 462,
+    "lot_result/removed": 232,
+    "tender/added": 188,
+    "tender/changed": 3448,
+    "tender/removed": 93
+   },
+   "counts_by_version": {
+    "bid/added/versioned": 439,
+    "bid/removed/vnull": 222,
+    "contract/added/versioned": 438,
+    "contract/removed/vnull": 222,
+    "lot/added/versioned": 203,
+    "lot/changed/versioned": 1331,
+    "lot/changed/vnull": 369,
+    "lot/removed/vnull": 99,
+    "lot_result/added/versioned": 462,
+    "lot_result/removed/vnull": 232,
+    "tender/added/versioned": 188,
+    "tender/changed/versioned": 1252,
+    "tender/changed/vnull": 2196,
+    "tender/removed/vnull": 93
+   },
+   "tender_removed": 93,
+   "tender_added": 188,
+   "minted_new_ids": 93,
+   "removed_alongside_retirement": {
+    "lot": 99,
+    "lot_result": 232,
+    "bid": 222,
+    "contract": 222
+   },
+   "jobs": [
+    {
+     "job_id": 2741,
+     "job_kind": "project",
+     "class": "campaign",
+     "trigger": "refold 2740 eforms:eforms-de-2.0/2.1",
+     "what": "539 run c",
+     "tenders_refolded_or_written": 147825,
+     "tenders_count_source": "2740 stamped",
+     "changed_at": [
+      "2026-10-24T01:38:48Z",
+      "2026-10-24T01:38:48Z"
+     ],
+     "cursor": [
+      959215523,
+      959223268
+     ],
+     "rows": 7746,
+     "tender_changed": 3448,
+     "tender_removed": 93,
+     "removed_alongside_retirement": {
+      "lot": 99,
+      "lot_result": 232,
+      "bid": 222,
+      "contract": 222
+     },
+     "tender_added": 188,
+     "minted_new_ids": 93,
+     "minted_id_range": [
+      8860949,
+      8861041
+     ],
+     "added_on_existing_id_seq1": 95,
+     "other_removed_rows": {},
+     "retired_ids": [
+      8680277,
+      8811451,
+      8818210,
+      8818329,
+      8818341,
+      8818475,
+      8818614,
+      8818617,
+      8818673,
+      8818796,
+      8818861,
+      8818880,
+      8818911,
+      8819154,
+      8819199,
+      8819290,
+      8819309,
+      8819394,
+      8819395,
+      8819533,
+      8819539,
+      8819557,
+      8819567,
+      8819845,
+      8819923,
+      8820014,
+      8820026,
+      8820092,
+      8820111,
+      8820139,
+      8820196,
+      8820231,
+      8820280,
+      8820301,
+      8820311,
+      8820323,
+      8820371,
+      8820373,
+      8820411,
+      8820468,
+      8820483,
+      8820543,
+      8820547,
+      8820577,
+      8820627,
+      8820688,
+      8820856,
+      8820971,
+      8821016,
+      8821056,
+      8821070,
+      8821107,
+      8821115,
+      8821131,
+      8821134,
+      8821206,
+      8821208,
+      8821293,
+      8821327,
+      8821329,
+      8821342,
+      8821345,
+      8821446,
+      8821463,
+      8821474,
+      8821533,
+      8821550,
+      8821565,
+      8821575,
+      8821703,
+      8821734,
+      8821747,
+      8821751,
+      8821779,
+      8821860,
+      8821865,
+      8821948,
+      8821987,
+      8822077,
+      8822222,
+      8822265,
+      8822272,
+      8822279,
+      8822283,
+      8822368,
+      8822421,
+      8822424,
+      8822430,
+      8838874,
+      8842540,
+      8843210,
+      8846074,
+      8848708
+     ]
+    }
+   ]
+  }
+ ],
+ "summary_only_archives": [
+  {
+   "name": "568-u8-fresh568 (summary only, raw pages not retained)",
+   "path": ".scratch/tender-db/568-r208-lots/readback-u8/fresh568/changes_summary.json + readback-u8/readback_result.json items (e),(g)",
+   "cursor_range": "(957854566, 958764334]",
+   "kinds": "tender feed + lot feed (counted, not archived)",
+   "jobs": [
+    {
+     "job_id": 2617,
+     "trigger": "refold-fields 2616 (568 unit 8 + 570)",
+     "class": "campaign",
+     "tenders_refolded_or_written": 1250447,
+     "tenders_count_source": "issue 570:4 (1,250,447 written)",
+     "tender_changed": 46879,
+     "tender_removed": 0,
+     "tender_added": 0,
+     "lot_events": 862889,
+     "lot_removed": 0,
+     "lot_added": 0
+    }
+   ]
+  }
+ ],
+ "silent_folds_in_covered_windows": [
+  {
+   "job_id": 2649,
+   "trigger": "refold-lot-sum 2648",
+   "what": "551 re-run W=false",
+   "tenders": 3502,
+   "window": "u6-lchanged"
+  },
+  {
+   "job_id": 2658,
+   "trigger": "refold-lot-sum 2657",
+   "what": "551 re-run",
+   "tenders": 3502,
+   "window": "u6-lchanged"
+  },
+  {
+   "job_id": 2679,
+   "trigger": "refold-lot-sum 2678",
+   "what": "551 re-run",
+   "tenders": 3502,
+   "window": "u6-lchanged"
+  },
+  {
+   "job_id": 2674,
+   "trigger": "dissolve-guid-twins 2673",
+   "what": "530 project, 0 notices",
+   "tenders": 0,
+   "window": "u6-lchanged"
+  },
+  {
+   "job_id": 2701,
+   "trigger": "refold-lot-sum 2700",
+   "what": "551 U7 lc02",
+   "tenders": 206,
+   "window": "u9-days12"
+  },
+  {
+   "job_id": 2707,
+   "trigger": "refold-lot-sum 2706",
+   "what": "551 U7 lc04",
+   "tenders": 1,
+   "window": "u9-days12"
+  },
+  {
+   "job_id": 2731,
+   "trigger": "repair-notice-instants 2731 (dry)",
+   "what": "z539-1",
+   "tenders": 0,
+   "window": "u9-seg-z539-1 (K == CA, empty)"
+  },
+  {
+   "job_id": 2732,
+   "trigger": "repair-notice-instants 2732 (wet, 16,343 notices; no versions)",
+   "what": "z539-1",
+   "tenders": 0,
+   "window": "u9-seg-z539-1 (K == CA, empty)"
+  }
+ ],
+ "crosschecks": {
+  "u2_api_tender_feed (958787061, 958848784]": {
+   "path": ".scratch/tender-db/551-lot-sum/b6/u2/api/changes/000-008.json",
+   "tender_removed": 11,
+   "equals_job_2645_retired_ids": true
+  },
+  "u9_replay_e1 tender pages (959004090, 959180852]": {
+   "path": ".scratch/tender-db/551-lot-sum/b6/u9/replay/e1/",
+   "rows": 18216,
+   "removed": 24,
+   "added": 5182,
+   "changed": 13010,
+   "removed_ids_equal_days12": true
+  },
+  "u7_d5 stage1/stage2/lc01/lc03 (959004090, 959026689]": {
+   "path": ".scratch/tender-db/551-lot-sum/b6/u7/d5/*/changes/",
+   "tender_removed": 0,
+   "matches_days12_jobs_2692_2695_2698_2704": true
+  },
+  "u9 switchoff.json retired": {
+   "path": ".scratch/tender-db/551-lot-sum/b6/u9/20261023/switchoff.json",
+   "n": 24,
+   "equals_days12_retired_ids": true
+  },
+  "u9 registry R.json retired": {
+   "path": ".scratch/tender-db/551-lot-sum/b6/u9/registry/R.json",
+   "n": 117,
+   "equals_days12_plus_w539c_retired_ids": true
+  },
+  "u6 box/raw + evidence-u6-pre.tar.xz": {
+   "path": ".scratch/tender-db/551-lot-sum/b6/u6/box/raw/, .scratch/tender-db/551-lot-sum/b6/u6/evidence-u6-pre.tar.xz",
+   "note": "raw responses of the same chunks as u6/lchanged and u9-days12 (not re-counted separately)"
+  }
+ },
+ "reappearance": {
+  "retired_ids_checked": 154,
+  "covered_through_cursor": 959223268,
+  "with_any_later_row": 0,
+  "retired_more_than_once": 0,
+  "retired_ids_minted_inside_the_window": {
+   "8852015": "u6-lchanged"
+  },
+  "schema": "tenders.id INTEGER PRIMARY KEY AUTOINCREMENT (crates/store/src/canonical.rs:110): a deleted id is never re-issued"
+ },
+ "estimates": {
+  "daily_chain": {
+   "chains": [
+    [
+     "daily chain 2026-10-19",
+     2645,
+     11,
+     2021,
+     4070
+    ],
+    [
+     "daily chain 2026-10-20",
+     2669,
+     14,
+     1882,
+     4974
+    ],
+    [
+     "daily chain 2026-10-21",
+     2688,
+     12,
+     2442,
+     5887
+    ],
+    [
+     "daily chain 2026-10-22",
+     2716,
+     13,
+     2314,
+     5785
+    ],
+    [
+     "daily chain 2026-10-23",
+     2726,
+     11,
+     2285,
+     5739
+    ]
+   ],
+   "retired_total": 61,
+   "mean_per_chain": 12.2,
+   "min": 11,
+   "max": 14,
+   "per_100k_tenders_written": 230.5802305802306,
+   "retired_per_minted": 0.005573830409356725
+  },
+  "campaign": {
+   "539_run_c_2741": {
+    "retired": 93,
+    "tenders": 147825,
+    "per_100k": 62.91222729578894,
+    "minted": 93
+   },
+   "539_runs_abc": {
+    "retired": 93,
+    "tenders": 951573,
+    "per_100k": 9.773291171565397
+   },
+   "all_campaign_folds_in_window": {
+    "retired": 93,
+    "tenders": 2476214,
+    "per_100k": 3.7557335513004935
+   },
+   "grouping_neutral_folds": {
+    "retired": 0,
+    "tenders": 2328389,
+    "rule_of_three_95pct_upper_per_100k": 0.1288444499608957
+   }
+  }
+ }
+}

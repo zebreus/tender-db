@@ -1,0 +1,9 @@
+[
+ {"name":"b5-corpus","path":"/home/user/tender-db/.scratch/tender-db/551-lot-sum/b5/investigate/corpus_changes.json","glob":"/home/user/tender-db/.scratch/tender-db/551-lot-sum/b5/investigate/corpus_changes.json","lo":958764958,"hi":958787061,"kinds":"tender"},
+ {"name":"u6-lchanged","path":"/home/user/tender-db/.scratch/tender-db/551-lot-sum/b6/u6/lchanged/changes/","glob":"/home/user/tender-db/.scratch/tender-db/551-lot-sum/b6/u6/lchanged/changes/chunk_*.json","lo":958787061,"hi":959004090},
+ {"name":"u9-days12","path":"/home/user/tender-db/.scratch/tender-db/551-lot-sum/b6/u9/20261023/build_changes_2026-10-23T184801Z.tar.xz","glob":"/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/x1023/build_changes_2026-10-23T184801Z/chunk_*.json","lo":959004090,"hi":959180852},
+ {"name":"u9-seg-p0","path":"/home/user/tender-db/.scratch/tender-db/551-lot-sum/b6/u9/segments/p0/read/changes/all/","glob":"/home/user/tender-db/.scratch/tender-db/551-lot-sum/b6/u9/segments/p0/read/changes/all/chunk_*.json","lo":959180852,"hi":959192253},
+ {"name":"u9-seg-w539-a","path":"/home/user/tender-db/.scratch/tender-db/551-lot-sum/b6/u9/segments/w539-a/read/changes/all/","glob":"/home/user/tender-db/.scratch/tender-db/551-lot-sum/b6/u9/segments/w539-a/read/changes/all/chunk_*.json","lo":959192253,"hi":959211183},
+ {"name":"u9-seg-w539-b","path":"/home/user/tender-db/.scratch/tender-db/551-lot-sum/b6/u9/segments/w539-b/read/changes/all/","glob":"/home/user/tender-db/.scratch/tender-db/551-lot-sum/b6/u9/segments/w539-b/read/changes/all/chunk_*.json","lo":959211183,"hi":959215522},
+ {"name":"u9-seg-w539-c","path":"/home/user/tender-db/.scratch/tender-db/551-lot-sum/b6/u9/segments/w539-c/read/changes/all/","glob":"/home/user/tender-db/.scratch/tender-db/551-lot-sum/b6/u9/segments/w539-c/read/changes/all/chunk_*.json","lo":959215522,"hi":959223268}
+]
