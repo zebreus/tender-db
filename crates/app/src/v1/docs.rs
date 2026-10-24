@@ -477,22 +477,42 @@ served.</strong> A touchpoint is a contact point printed inside an organization'
 <code>Lot-ReviewInfo</code>, <code>Lot-Mediator</code>, <code>Lot-AddInfo</code>,
 <code>Lot-TenderReceipt</code>, &hellip;) may name one instead of an organization, and publishers
 mostly use it to print another body, usually the review tribunal (issue 576). A touchpoint that
-prints its organization's own name (up to case, whitespace and a trailing <code>.</code>,
-<code>,</code> or <code>;</code>, in any language) serves that organization's own party: its
-<code>organization_id</code>, anchored at the organization's block, so <code>mention_name</code>
-is the name the organization printed. One that prints another name serves a party named after the
+prints its organization's own name, in any language either prints, serves that organization's own
+party: its <code>organization_id</code>, anchored at the organization's block, so
+<code>mention_name</code> is the name the organization printed. Its own name is that name up to
+case, accents, punctuation, honorifics, articles and other small words, a legal form, a contact
+label (in brackets or leading the name), a province in brackets (unless the organization names
+another) or one of the organization's own brackets (<code>Sociedad Aragonesa de Gestión
+Agroambiental S.L.U</code> under <code>…, S.L.U. (SARGA)</code>; <code>Excmo. Ayuntamiento de
+Lucena (Córdoba)</code> under <code>Ayuntamiento de Lucena</code>); or the same organ spelled
+another way; or the organization's body under its own governing organ or town hall: the body, its
+town hall under another municipal word, the bare town under its town hall (with or without an organ
+in front), the town hall of an organization printed as a bare place, or the organ's or town hall's
+bare word (<code>Ayuntamiento de Ezcaray</code> or <code>Ezcaray</code> under <code>Junta de
+Gobierno Local del Ayuntamiento de Ezcaray</code>; <code>Marugán</code> under <code>Ayuntamiento de
+Marugán</code>; <code>Pleno</code> under <code>Pleno de la Diputación Provincial de Huelva</code>)
+(issue 586). A department, a branch, another organ or a review body printed under the organization
+keeps its own name, and so does a one-word place under an organ with no town hall printed
+(<code>Madrid</code> under <code>Asamblea de Madrid</code>). One that prints another name serves a
+party named after the
 touchpoint, with no identifier, resolved by name and country like any party published without one
 (the touchpoint's country, or its organization's where it prints none): it joins the
 <em>provisional</em> organization of that name and country, or a new one. Some touchpoint names
 name no party and are dropped, so the role is not served: a name shaped like a section id
 (<code>ORG-0001</code>), one carrying a URL, <code>www.</code> or <code>@</code>, one naming a
 procurement portal or platform, as prose (<code>Vragen kunt u stellen via TenderNed</code>) or as
-the platform's own name (<code>Mercell Norge AS</code>), and a placeholder, a blank or a void-lot
-phrase. A touchpoint is never a buyer, a bidder or a winner: the roles behind
-<code>Procedure-Buyer</code>, <code>Tenderer</code> and the award decisions reference
-organizations only. Stored Tenders gain these parties once refolded: until the issue-576 refold
-reaches it, a Tender folded before the change can lack them, and the new party arrives on the
-<a href="#changes">change feed</a> as a change.</p>
+the platform's own name (<code>Mercell Norge AS</code>), a placeholder, a blank or a void-lot
+phrase, and, since issue 586, a contact or address label (<code>Dirección Principal</code>), a
+bare organ, town-hall or registry word that is not the organization's own (<code>Registro
+General</code>), a person addressed by title (<code>Monsieur …</code>), filing prose or a legal
+reference (<code>Procede recurso especial…</code>, <code>… y art. 16 Ley 39/2015</code>) and an
+e-procurement platform's name (<code>TUTTOGARE</code>). A touchpoint is never a buyer, a bidder or
+a winner: the roles behind <code>Procedure-Buyer</code>, <code>Tenderer</code> and the award
+decisions reference organizations only. Stored Tenders gain these parties once refolded: until the
+issue-576 refold reaches it, a Tender folded before the change can lack them, and the new party
+arrives on the <a href="#changes">change feed</a> as a change. Until the issue-586 refold reaches
+it, a Tender can still serve such a touchpoint (one printing its organization's own name in another
+spelling or under its organ, or a name now dropped) under its own provisional organization.</p>
 <pre><code>curl -s https://tenders.zebreus.click/v1/tenders/14327</code></pre>
 
 <h2 id="notice-content">Notice content</h2>
@@ -2046,6 +2066,18 @@ mod tests {
     /// sentence. The pre-refold sentence carries `issue-576 refold`: once unit 3's `refold-sections`
     /// drain and unit 4's Verify (8851944 serves a `Lot-ReviewOrg` party for LOT-0000) are done,
     /// retire it through RETIRED.
+    ///
+    /// Issue 586 unit 2: "its own name" is no longer spelling only (D586-1: another spelling, or the
+    /// organization's body under its own organ; a department, branch, other organ or review body keeps
+    /// its name), and the dropped names gain D586-2's labels, bare organ words, people, prose, legal
+    /// references and platforms. Its pre-refold sentence carries `issue-586 refold`: retire it through
+    /// RETIRED after unit 3's drain and unit 4's Verify (540072 serves `[22198704]`), as 576's is.
+    /// The own-name sentence is wider than the text D586-1 dictated, on purpose (unit 2's review): that
+    /// text was narrower than D586-1's own rule, which the code follows — honorifics and small words, a
+    /// leading contact label, a province or the organization's own bracket (tier A), the same organ
+    /// spelled another way (C0), the town hall and the bare town with no organ in the parent (C2, C3),
+    /// the town hall of a bare place (C3r) and the bare town-hall word (C4) — and F2 keeps a one-word
+    /// place under an organ alone out of "the bare town".
     #[test]
     fn the_docs_say_a_role_naming_a_touchpoint_is_served() {
         let start = PAGE.find("<p id=\"tender-detail-touchpoint\">").expect("/docs has the touchpoint paragraph");
@@ -2064,9 +2096,24 @@ mod tests {
                     "a role whose eforms reference names a touchpoint is served",
                     "may name one instead of an organization, and publishers mostly use it to print another body, \
                      usually the review tribunal",
-                    "a touchpoint that prints its organization's own name (up to case, whitespace and a trailing \
-                     ., , or ;, in any language) serves that organization's own party: its organization_id, \
-                     anchored at the organization's block, so mention_name is the name the organization printed",
+                    "a touchpoint that prints its organization's own name, in any language either prints, serves \
+                     that organization's own party: its organization_id, anchored at the organization's block, so \
+                     mention_name is the name the organization printed",
+                    "its own name is that name up to case, accents, punctuation, honorifics, articles and other \
+                     small words, a legal form, a contact label (in brackets or leading the name), a province in \
+                     brackets (unless the organization names another) or one of the organization's own brackets \
+                     (sociedad aragonesa de gestión agroambiental s.l.u under …, s.l.u. (sarga); excmo. \
+                     ayuntamiento de lucena (córdoba) under ayuntamiento de lucena)",
+                    "or the same organ spelled another way",
+                    "or the organization's body under its own governing organ or town hall: the body, its town \
+                     hall under another municipal word, the bare town under its town hall (with or without an \
+                     organ in front), the town hall of an organization printed as a bare place, or the organ's or \
+                     town hall's bare word (ayuntamiento de ezcaray or ezcaray under junta de gobierno local del \
+                     ayuntamiento de ezcaray; marugán under ayuntamiento de marugán; pleno under pleno de la \
+                     diputación provincial de huelva) (issue 586)",
+                    "a department, a branch, another organ or a review body printed under the organization keeps \
+                     its own name, and so does a one-word place under an organ with no town hall printed (madrid \
+                     under asamblea de madrid)",
                     "one that prints another name serves a party named after the touchpoint, with no identifier, \
                      resolved by name and country like any party published without one (the touchpoint's country, \
                      or its organization's where it prints none)",
@@ -2074,9 +2121,16 @@ mod tests {
                      like a section id (org-0001), one carrying a url, www. or @, one naming a procurement portal \
                      or platform, as prose (vragen kunt u stellen via tenderned) or as the platform's own name \
                      (mercell norge as)",
+                    "and, since issue 586, a contact or address label (dirección principal), a bare organ, \
+                     town-hall or registry word that is not the organization's own (registro general), a person \
+                     addressed by title (monsieur …), filing prose or a legal reference (procede recurso \
+                     especial…, … y art. 16 ley 39/2015) and an e-procurement platform's name (tuttogare)",
                     "a touchpoint is never a buyer, a bidder or a winner",
                     "stored tenders gain these parties once refolded: until the issue-576 refold reaches it, a \
                      tender folded before the change can lack them",
+                    "until the issue-586 refold reaches it, a tender can still serve such a touchpoint (one \
+                     printing its organization's own name in another spelling or under its organ, or a name now \
+                     dropped) under its own provisional organization",
                 ],
             );
         }

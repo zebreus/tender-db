@@ -4,6 +4,50 @@ Behavior changes a client could observe, newest first. Additive fields and new
 endpoints land without an entry unless they change how an existing request
 answers; this file exists for the rare case where one does.
 
+## Unreleased (issue 586) — a touchpoint that names its own organization in another spelling, or as the body under its organ, serves that organization; contact labels, people, filing prose and platform names are no longer served as organizations
+
+Issue 576 served a touchpoint as its organization's own party only when it printed that organization's name up to
+case, whitespace and a trailing `.`, `,` or `;`. A touchpoint printing its organization in another spelling became a
+second, provisional organization of the same body: tender 540072 served its buyer `Sociedad Aragonesa de Gestión
+Agroambiental, S.L.U. (SARGA)` (22198704) and, as its `Lot-ReviewOrg`, `Sociedad Aragonesa de Gestión Agroambiental
+S.L.U` (31975096). And a touchpoint printing a contact label, a person or a sentence became an organization of that
+name, some shared by unrelated buyers: `Dirección Principal` (31974991), `Principal` (31975008) and `Palacio
+Provincial` (31975059) each hold the touchpoints of several bodies.
+- From the deploy on, a touchpoint's own name, compared only with its own organization's names in the same notice and
+  in any language either prints, is also that name up to case, accents, punctuation, honorifics, articles and other
+  small words, a legal form, a contact label (in brackets or leading the name), a province in brackets (unless the
+  organization names another) or one of the organization's own brackets (`(Punto de contacto)`, `(SARGA)`, `Excmo.
+  Ayuntamiento de Lucena (Córdoba)` under `Ayuntamiento de Lucena`); or the same organ spelled another way (`Junta de
+  Gobierno Local del Ayuntamiento de Altea` under `Junta de Gobierno del Ayuntamiento de Altea`); or the
+  organization's body under its own governing organ or town hall: the body (`Ayuntamiento de Ezcaray` under `Junta de
+  Gobierno Local del Ayuntamiento de Ezcaray`), its town hall under another municipal word, the bare town under its
+  town hall, with or without an organ in front (`Ezcaray`; `Marugán` under `Ayuntamiento de Marugán`), the town hall
+  of an organization printed as a bare place (`COMUNE DI LAURINO` under `LAURINO`), or the organ's or town hall's bare
+  word (`Pleno` under `Pleno de la Diputación Provincial de Huelva`). Such a touchpoint serves its organization's own
+  party, as issue 576's same name does. A department, a branch, another organ or a review body printed under the
+  organization keeps its own name (`Stadt Fürth - Zentrale Vergabestelle`, `TARCAS. AYUNTAMIENTO DE SEVILLA`,
+  `Alcaldía del Ayuntamiento de Segorbe` under `Pleno del Ayuntamiento de Segorbe`), and so does a town under a rural
+  gmina of the same name or a one-word place under anything but its town hall (`Madrid` under `Asamblea de Madrid`).
+- Once refolded, 540072's four `Lot-ReviewOrg` roles serve 22198704, the buyer itself: the publisher named its own
+  contracting body as the review body.
+- The served `mention_name` of such a party is the organization's printed name, not the touchpoint's: a review role
+  whose touchpoint printed `Marugán` under `Pleno del Ayuntamiento de Marugán` names `Pleno del Ayuntamiento de
+  Marugán` (the party is anchored at the organization's block, as issue 576's same-name parties are).
+- More touchpoint names name no party, so the role is not served: a contact or address label (`Dirección Principal`,
+  `Sede Tibidabo`, `Info Adicional`), a bare organ, town-hall or registry word that is not the organization's own
+  (`Registro General`, `Secretaría General`, `Pleno` under another body), a person addressed by title (`Monsieur
+  Anthony LINTILHAC`, `DOTT. ANGELO GAMBARDELLA`), filing prose or a legal reference (`Procede recurso especial…`,
+  `TACRC y art. 16 Ley 39/2015`) and an e-procurement platform's name (`TUTTOGARE RACCONIGI`). A body whose name holds
+  such a word is still served (`Principal Financial Group`, `Fundación Artículo 1`, `M. I. Ayuntamiento de Elche`),
+  except a name that opens with a personal title and holds no legal form or public-body word, which reads as a person
+  addressed by title even when it is a brand (`Monsieur Bricolage`; `Mr. Bricolage SA` is served).
+- The organizations those touchpoints alone made lose every mention once refolded, and the orphan sweep removes them
+  (`organization removed` on the change feed): among them the three shared ones above.
+- Stored tenders change once refolded (issue 586 unit 3, the same `refold-sections` run over the notices that carry a
+  touchpoint as issue 576's). Until then a tender can still serve such a touchpoint under its own provisional
+  organization. Each refolded tender whose parties change is announced as a `version: null` `changed` row (ADR-0017
+  D3). Where: /docs (Tender detail, the touchpoint paragraph) and OpenAPI (`TenderDetail.parties`).
+
 ## Unreleased (issue 581) — a retired Tender id answers `308` to the one Tender that holds any of its notices, or `410` naming them; it answered `404`
 
 `GET /v1/tenders/{id}` on a Tender id a fold or a repair retired (issue 580) answered
@@ -87,6 +131,7 @@ roles mostly a tribunal. Nothing wrong was served; the roles were missing.
 - From the deploy on, a touchpoint that prints its organization's own name (up to case, whitespace and a trailing
   `.`, `,` or `;`, in any language either prints) serves that organization's own party in the role: its
   `organization_id`, anchored at the organization's block, so `mention_name` is the name the organization printed.
+  Issue 586 widens "its own name" to other spellings and to the body under its organ (see its entry).
   Once refolded, tender 8851996 (notice 47413157) serves its four `Lot-AddInfo` roles as its buyer's organization
   this way.
 - A touchpoint that prints another name serves a party named after the touchpoint: no identifier, resolved by name and
@@ -102,7 +147,8 @@ roles mostly a tribunal. Nothing wrong was served; the roles were missing.
   www.tenderned.nl`), one naming a procurement portal or platform, as prose (`Vragen kunt u stellen via TenderNed`)
   or as the platform's own name (`Mercell Norge AS`, though the same body printed as an organization is served), and
   a placeholder, a blank or a void-lot phrase, as for any party (issues 510, 511, 520, 525). On the window's 60
-  largest other-name groups this drops 25 references (21 of TenderNed prose, 4 `ORG-0001`) and no tribunal.
+  largest other-name groups this drops 25 references (21 of TenderNed prose, 4 `ORG-0001`) and no tribunal. Issue 586
+  adds contact labels, bare organ and registry words, people, filing prose, legal references and platform names.
 - A touchpoint no role names is not a party. A touchpoint is never a buyer, a bidder or a winner: the roles behind
   `Procedure-Buyer`, `Tenderer`, `bids[]` and `lot_results[].winners` reference organizations only, so they,
   `is_buyer`, `?winner=` and `?bidder=` are unchanged.

@@ -229,8 +229,17 @@ impl ExtractedWinners {
 /// unit 3's drain reads the exact size here.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct TouchpointRoles {
-    /// (i) The touchpoint prints its Organization's own name: the role binds that Organization.
+    /// (i) The touchpoint prints its Organization's own name: the role binds that Organization. Since
+    /// issue 586 (D586-1) "its own name" is the same name under [`store::org_name_norm`] (the rest of
+    /// this count, 576's spelling rule) or one of 586's tiers ([`Self::aliased_a`], [`Self::aliased_c`]).
     pub aliased: u64,
+    /// Issue 586: of `aliased`, the references whose touchpoint names its Organization under another
+    /// spelling (tier A: the fold keys are equal — accents, punctuation, a contact label or acronym in
+    /// brackets, legal forms, articles).
+    pub aliased_a: u64,
+    /// Issue 586: of `aliased`, the references whose touchpoint names its Organization as the body under
+    /// its own governing organ (tier C: the entity, its town hall, the bare town, or the organ itself).
+    pub aliased_c: u64,
     /// (ii) It prints another name: the role binds the mention minted from the touchpoint.
     pub minted: u64,
     /// (iv) That name is no party (a dropping non-name, a section id, a URL or address, a portal
@@ -250,6 +259,8 @@ impl TouchpointRoles {
     /// Another tally into this one.
     pub fn add(&mut self, other: &TouchpointRoles) {
         self.aliased += other.aliased;
+        self.aliased_a += other.aliased_a;
+        self.aliased_c += other.aliased_c;
         self.minted += other.minted;
         self.dropped += other.dropped;
         self.country_fallback += other.country_fallback;
@@ -971,6 +982,10 @@ mod lot_guards_568;
 /// Issue 568 unit 8: the NFKD fold G5's title key reads ([`title_key`]), generated from Python's
 /// `unicodedata` so it is the reference's exactly.
 mod title_key_nfkd;
+
+/// Issue 586 unit 2: the touchpoint alias tiers (D586-1, [`touchpoint_decision`]) and the touchpoint-only
+/// gate tests (D586-2, [`touchpoint_gate`]), ported from the decision's oracle.
+mod touchpoint_names_586;
 
 /// The value a canonical text fact serves. Issue 538: a `title` or `description` (lot ones
 /// included, every era) is decoded of the publisher's extra escapes
@@ -6298,7 +6313,14 @@ impl NoticeState {
         for (tpo, verdict) in verdicts {
             let n = refs.get(&tpo).copied().unwrap_or(0);
             match verdict {
-                TouchpointVerdict::Alias(_) => tally.aliased += n,
+                TouchpointVerdict::Alias(_, tier) => {
+                    tally.aliased += n;
+                    match tier {
+                        AliasTier::Norm => {}
+                        AliasTier::A => tally.aliased_a += n,
+                        AliasTier::C => tally.aliased_c += n,
+                    }
+                }
                 TouchpointVerdict::Mint(mention) => {
                     tally.minted += n;
                     if country_fallback.contains(&tpo) {
@@ -7285,26 +7307,63 @@ fn touchpoint_role(role: &str) -> bool {
 ///
 /// Unit 1's bar on R3's top 60 different-name groups: it drops their 25 such references (21 TenderNed
 /// prose, 4 `ORG-0001`) and no tribunal.
+///
+/// Issue 586 (D586-2) adds six touchpoint-only tests ([`touchpoint_names_586::gated`]), which nothing but
+/// this gate reads (not `role_census::NAME_PATTERNS`, whose kinds the buyer censuses read):
+///
+/// - WHOLE: the folded name is a contact or role label (`Dirección Principal`, `Principal`, `Palacio
+///   Provincial`, `Sede Tibidabo`, `Ayuntamiento`, `Procurement Department`, `Beschaffende Stelle`);
+/// - HONORIFIC: a person addressed by title (`Monsieur Anthony LINTILHAC`, `DOTT. ANGELO GAMBARDELLA`),
+///   not with a commercial form or a public-law stem (`M. I. Ayuntamiento de Elche`), not an office
+///   (`Ing. Büro Schneider`);
+/// - PROSE: filing prose (`Procede recurso especial…`, `Ver apartado 17…`, `En los lugares establecidos…`);
+/// - LEGALREF: an article number outside brackets (`TACRC y art. 16 Ley 39/2015`), only beside a statute
+///   cue and never in a name citing an EU act or holding a public-law stem or a commercial form (the Stadt
+///   Dortmund mandate name, `Fundación Artículo 1`);
+/// - PLATFORM: an e-procurement platform's name (`TUTTOGARE RACCONIGI`, `Platforma Zakupowa Logintrade`);
+/// - BARE: a bare organ, officer, town-hall or registry word that is not the touchpoint's own
+///   Organization's (`Pleno`, `Rectorado`, `Registro General`, `Secretaría General`): the alias runs first,
+///   so the parent's own organ aliases (tier C4), and minting another body's would bind one cross-buyer row.
 fn touchpoint_gate(name: &str) -> bool {
-    let name = name.trim();
-    let section_id = name.split_once('-').is_some_and(|(prefix, number)| {
+    let trimmed = name.trim();
+    let section_id = trimmed.split_once('-').is_some_and(|(prefix, number)| {
         ["ORG", "TPO", "UBO"].iter().any(|p| prefix.eq_ignore_ascii_case(p))
             && !number.is_empty()
             && number.bytes().all(|b| b.is_ascii_digit())
     });
-    let lower = name.to_lowercase();
-    section_id || lower.contains("://") || lower.contains("www.") || name.contains('@') || role_census::portal_name(name)
+    let lower = trimmed.to_lowercase();
+    section_id
+        || lower.contains("://")
+        || lower.contains("www.")
+        || trimmed.contains('@')
+        || role_census::portal_name(trimmed)
+        || touchpoint_names_586::gated(name)
+}
+
+/// Issue 586: which test made a touchpoint its Organization's alias ([`TouchpointVerdict::Alias`]),
+/// strongest first; [`TouchpointRoles`] counts A and C apart.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
+enum AliasTier {
+    /// D576-1 (i): the same name under [`store::org_name_norm`].
+    Norm,
+    /// D586-1 tier A: the same fold key ([`touchpoint_names_586::alias_tier`]).
+    A,
+    /// D586-1 tier C: the Organization's body under its own governing organ (C0-C4).
+    C,
 }
 
 /// Issue 576 (D576-1): the fold's verdict on one touchpoint a [`touchpoint_role`] names.
 #[derive(Clone, Debug, PartialEq, Eq)]
 enum TouchpointVerdict {
-    /// (i) It prints its Organization's own name (one of its names, under the resolver's
-    /// [`store::org_name_norm`], equals one of the Organization's, any language): the role binds that
+    /// (i) It prints its Organization's own name, in any language either publishes: one of its names
+    /// equals one of the Organization's under the resolver's [`store::org_name_norm`], or (issue 586,
+    /// D586-1) under another spelling or as the Organization's body under its own organ
+    /// ([`touchpoint_names_586::alias_tier`]), the tier the strongest pair reached. The role binds that
     /// Organization — issue 259's alias shape — and its party row is anchored at the Organization's
     /// section, because the row's mention key must name a recorded mention and none stands at the
-    /// touchpoint.
-    Alias(String),
+    /// touchpoint; so the served `mention_name` is the Organization's printed name (`Pleno del
+    /// Ayuntamiento de Marugán` where a tier-C touchpoint printed `Marugán`).
+    Alias(String, AliasTier),
     /// (ii) It prints another name: the role binds this mention, minted from the touchpoint's own name
     /// and country with no identifier, resolved by name and country like any identifier-less party.
     Mint(Mention),
@@ -7341,7 +7400,7 @@ impl Touchpoints {
                 return true;
             }
             match self.verdicts.get(target.as_str()) {
-                Some(TouchpointVerdict::Alias(organization)) if touchpoint_role(role) => {
+                Some(TouchpointVerdict::Alias(organization, _)) if touchpoint_role(role) => {
                     target.clone_from(organization);
                     true
                 }
@@ -7354,9 +7413,14 @@ impl Touchpoints {
 
 /// Issue 576 (D576-1): the verdict on each touchpoint of one notice that a [`touchpoint_role`] names.
 ///
-/// - (i) Same name: one of the touchpoint's `BT-500-Organization-TouchPoint` names and one of its
-///   Organization's names agree under [`store::org_name_norm`], the resolver's own name key, over every
-///   language either publishes: [`TouchpointVerdict::Alias`] to the Organization's section.
+/// - (i) Its own Organization's name: one of the touchpoint's `BT-500-Organization-TouchPoint` names and
+///   one of its Organization's names (the enclosing Organization section of the same notice, never
+///   another) agree, over every language either publishes: [`TouchpointVerdict::Alias`] to the
+///   Organization's section. The strongest pair decides: equal under [`store::org_name_norm`], the
+///   resolver's own name key ([`AliasTier::Norm`]), else (issue 586, D586-1) equal fold keys
+///   ([`AliasTier::A`]), else the Organization's body under its own organ ([`AliasTier::C`]).
+///   `org_name_norm` itself stays at spelling: its cross-notice reuse has no wall, while this compares
+///   one nested pair inside one notice.
 /// - Otherwise the touchpoint's names meet the Organizations' drop classes (510/511/520/525:
 ///   [`drop_decision_of`] over [`PartyShape::Touchpoint`]) and (iv)'s gate ([`touchpoint_gate`]); a
 ///   touchpoint with no name, every name of which is a dropping non-name or gated, or that the classes
@@ -7443,9 +7507,17 @@ fn touchpoint_decision(
     for tpo in out.refs.keys() {
         let own = &touchpoint[tpo.as_str()];
         let org = parent.get(tpo.as_str()).map(|org| (*org, &organization[org]));
-        let same = org.filter(|(_, read)| {
+        let alias = org.and_then(|(org, read)| {
             let keys: BTreeSet<String> = read.names.iter().map(|(name, _)| store::org_name_norm(name)).collect();
-            own.names.iter().any(|(name, _)| keys.contains(&store::org_name_norm(name)))
+            if own.names.iter().any(|(name, _)| keys.contains(&store::org_name_norm(name))) {
+                return Some((org, AliasTier::Norm));
+            }
+            own.names
+                .iter()
+                .flat_map(|(tp, _)| read.names.iter().filter_map(|(name, _)| touchpoint_names_586::alias_tier(tp, name)))
+                .map(touchpoint_names_586::Tier::counted)
+                .min()
+                .map(|tier| (org, tier))
         });
         let dropping = |name: &str| {
             touchpoint_gate(name)
@@ -7454,8 +7526,8 @@ fn touchpoint_decision(
                     Some(NotAName::VoidLot | NotAName::Placeholder | NotAName::Blank)
                 )
         };
-        let verdict = if let Some((org, _)) = same {
-            TouchpointVerdict::Alias(org.to_owned())
+        let verdict = if let Some((org, tier)) = alias {
+            TouchpointVerdict::Alias(org.to_owned(), tier)
         } else if own.names.iter().all(|(name, _)| dropping(name)) || classes.contains_key(tpo) {
             // `all` over no name at all is true: a touchpoint that names nothing mints nothing.
             TouchpointVerdict::Drop
@@ -24883,6 +24955,10 @@ mod tests {
         const TACRC: &str = "Tribunal Administrativo Central de Recursos Contractuales (TACRC) o Tribunal Superior de Justicia (TSJ).";
         const MADRID_TRIBUNAL: &str = "Tribunal Administrativo de Contratación Pública de la Comunidad de Madrid";
         const IAM: &str = "Organismo Autónomo Informática del Ayuntamiento de Madrid";
+        /// The t2 parent of 31977017 (check.md): a German PSO buyer printing its mandate under an EU act.
+        const DORTMUND: &str = "Stadt Dortmund, vertreten durch den Zweckverband Verkehrsverbund Rhein-Ruhr, dieser wiederum \
+                                vertreten durch die Verkehrsverbund Rhein-Ruhr AöR, handelnd als Gruppe von Behörden nach \
+                                Art. 2 b) Verordnung (EG) Nr. 1370/2007";
 
         /// A touchpoint reference as the parser emits it (scheme `touchpoint`).
         fn tp_ref(lot: &str, field: &str, target: &str) -> store::ValueRow {
@@ -25091,7 +25167,10 @@ mod tests {
                 mentions.iter().map(|m| (m.section_id.as_str(), m.name.as_str(), m.country.as_deref())).collect();
             assert_eq!(named, vec![("TPO-0001", MADRID_TRIBUNAL, Some("ES"))]);
             assert_eq!(retired, vec!["TPO-0002"]);
-            assert_eq!(roles, TouchpointRoles { aliased: 4, minted: 4, dropped: 0, country_fallback: 0 });
+            assert_eq!(
+                roles,
+                TouchpointRoles { aliased: 4, aliased_a: 0, aliased_c: 0, minted: 4, dropped: 0, country_fallback: 0 }
+            );
             let state = bound(47_413_157, &p, &[("ORG-0001", 11), ("TPO-0001", 22)]);
             let mut want = BTreeSet::from([party("-", "Procedure-Buyer", 11, "ORG-0001")]);
             for lot in ["LOT-0001", "LOT-0002", "LOT-0003", "LOT-0004"] {
@@ -25134,6 +25213,12 @@ mod tests {
         /// an address, or no name at all (blank, punctuation) mints nothing and binds nothing — even with
         /// a mention recorded at its key, which the fold retires — and is counted. The bar: no review body
         /// R3 lists, and neither of its non-tribunal names, is dropped.
+        ///
+        /// Issue 586 (D586-2) adds the touchpoint-only tests: a contact label, a bare organ or registry
+        /// word that is not the buyer's own (`Pleno` under `Gemeente Utrecht`), a person addressed by
+        /// title, filing prose, a legal reference and a platform's name drop; a body whose name holds such
+        /// a word (`Principal Financial Group`, `Fundación Artículo 1`, an engineering office, a mandate
+        /// citing an EU regulation) is still minted.
         #[test]
         fn the_touchpoint_gate_drops_prose_section_ids_and_void_names_and_no_tribunal() {
             let dropped = [
@@ -25149,12 +25234,27 @@ mod tests {
                 "aanbesteding@utrecht.nl",
                 "",
                 "-",
+                // Issue 586 (D586-2).
+                "Dirección Principal",
+                "Principal",
+                "Palacio Provincial",
+                "Registro General",
+                "Secretaría General",
+                "Pleno",
+                "Rectorado",
+                "Monsieur Anthony LINTILHAC",
+                "DOTT. ANGELO GAMBARDELLA",
+                "TACRC y art. 16 Ley 39/2015",
+                "Ver apartado 17 de la HRC. Rector de la Universidad de Vigo",
+                "TUTTOGARE RACCONIGI",
+                "Platforma Zakupowa Logintrade",
             ];
-            let one = |name: &str| {
-                notice("Gemeente Utrecht", &[("TPO-0001", &[("NLD", name)], Some("NLD"))], &[("LOT-0001", &[("OPT-301-Lot-AddInfo", "TPO-0001")])])
+            let under = |buyer: &str, name: &str| {
+                notice(buyer, &[("TPO-0001", &[("NLD", name)], Some("NLD"))], &[("LOT-0001", &[("OPT-301-Lot-AddInfo", "TPO-0001")])])
             };
-            for name in dropped {
-                let p = one(name);
+            let one = |name: &str| under("Gemeente Utrecht", name);
+            let benalmadena = under("Concejalía de Hacienda del Ayuntamiento de Benalmádena", "Ayuntamiento");
+            for (name, p) in dropped.iter().map(|&name| (name, one(name))).chain([("Ayuntamiento", benalmadena)]) {
                 let (mentions, retired, roles) = NoticeState::touchpoint_mentions(false, 9, &p);
                 assert!(mentions.is_empty(), "{name:?}: no mention");
                 assert_eq!(retired, vec!["TPO-0001"], "{name:?}: a recorded row is retired");
@@ -25172,11 +25272,30 @@ mod tests {
                 "Tribunal Català de Contractes del Sector Públic",
                 "Stadt Fürth - Zentrale Vergabestelle",
                 "Agentur Wieseke",
+                // Issue 586: each holds a gated word or shape, and is a body.
+                "Ing. Büro SoFah GmbH & Co. KG",
+                "Ing. Büro Schneider",
+                "M. I. Ayuntamiento de Elche",
+                "Principal Financial Group",
+                "Palacio de Congresos de Valencia",
+                "Tribunal Administrativo Central de Recursos Contractuales (Según artículo 50.1.a) y b) de la LCSP)",
+                "Art 21 Gallery",
+                "Fundación Artículo 1",
+                "Gemeente Epe",
+                // Towns named like an article: the town key keeps the last token (586 U2 review).
+                "Gemeinde Au",
+                "Commune de Y",
+                "Město Aš",
+                "Ajuntament de Les",
+                DORTMUND,
             ] {
                 let (mentions, _, roles) = NoticeState::touchpoint_mentions(false, 9, &one(name));
                 assert_eq!((mentions.len(), roles.minted), (1, 1), "{name:?} is minted");
                 assert_eq!(mentions[0].name, name);
             }
+            // A bare municipal word under a municipal buyer is that buyer's own (D586-1 C4), not another's.
+            let roles = NoticeState::touchpoint_mentions(false, 9, &one("Ayuntamiento")).2;
+            assert_eq!(roles, TouchpointRoles { aliased: 1, aliased_c: 1, ..Default::default() }, "C4 under Gemeente Utrecht");
         }
 
         /// D576-1 (iii): a touchpoint no Lot/Part role names mints nothing — nor one only an ORG-only role
@@ -25247,6 +25366,202 @@ mod tests {
             .map(|(s, r)| (s.to_owned(), r.into_iter().map(str::to_owned).collect()))
             .collect();
             assert_eq!(roles, want);
+        }
+
+        /// Issue 586 (D586-1): a touchpoint naming its own Organization under another spelling (tier A) or as
+        /// that Organization's body under its own organ (tier C) binds the Organization, counted by tier;
+        /// a department, a branch, another organ, a review body or a bare place under another body still
+        /// mints, and another body's bare organ or registry word is dropped (D586-2).
+        mod issue_586 {
+            use super::*;
+            use crate::project::touchpoint_names_586::{Tier, alias_tier};
+
+            const MINTED: TouchpointRoles =
+                TouchpointRoles { aliased: 0, aliased_a: 0, aliased_c: 0, minted: 1, dropped: 0, country_fallback: 0 };
+
+            /// One `Lot-AddInfo` reference to one touchpoint `name` under `buyer`: the fold's tally.
+            fn roles_of(buyer: &str, name: &str) -> TouchpointRoles {
+                let p = notice(buyer, &[("TPO-0001", &[("SPA", name)], Some("ESP"))], &[("LOT-0001", &[("OPT-301-Lot-AddInfo", "TPO-0001")])]);
+                NoticeState::touchpoint_mentions(false, 9, &p).2
+            }
+
+            /// Tender 540072's exhibit in miniature: the buyer SARGA's own touchpoint, printed without the
+            /// legal form's dots and the acronym, is each lot's review body. The four references alias at
+            /// tier A; no mention stands at TPO-0001 (its key is retired); the buyer and its review role are
+            /// one organization, anchored at ORG-0001 — the issue's Verify, `[22198704]`.
+            #[test]
+            fn sarga_540072_review_roles_bind_the_buyer_by_spelling() {
+                let refs: &[(&str, &str)] = &[("OPT-301-Lot-ReviewOrg", "TPO-0001")];
+                let p = notice(
+                    "Sociedad Aragonesa de Gestión Agroambiental, S.L.U. (SARGA)",
+                    &[("TPO-0001", &[("SPA", "Sociedad Aragonesa de Gestión Agroambiental S.L.U")], Some("ESP"))],
+                    &[("LOT-0001", refs), ("LOT-0002", refs), ("LOT-0003", refs), ("LOT-0004", refs)],
+                );
+                let (mentions, retired, roles) = NoticeState::touchpoint_mentions(false, 540_072, &p);
+                assert!(mentions.is_empty(), "no mention at the touchpoint");
+                assert_eq!(retired, vec!["TPO-0001"]);
+                assert_eq!(roles, TouchpointRoles { aliased: 4, aliased_a: 4, ..Default::default() });
+                let state = bound(540_072, &p, &[("ORG-0001", 11)]);
+                let mut want = BTreeSet::from([party("-", "Procedure-Buyer", 11, "ORG-0001")]);
+                for lot in ["LOT-0001", "LOT-0002", "LOT-0003", "LOT-0004"] {
+                    want.insert(party(lot, "Lot-ReviewOrg", 11, "ORG-0001"));
+                }
+                assert_eq!(parties(&state), want);
+            }
+
+            /// AVRA's six spellings of itself (a contact label or `(PC)` in brackets, accents dropped, `Y`
+            /// printed `DE`) alias at tier A — six, not the issue's five (fold.md, check.md); its provincial
+            /// branch is another body and mints.
+            #[test]
+            fn avra_six_touchpoints_alias_and_its_provincial_branch_mints() {
+                let names = [
+                    "AGENCIA DE VIVIENDA Y REHABILITACIÓN DE ANDALUCÍA (Punto de contacto)",
+                    "AGENCIA DE VIVIENDA Y REHABILITACIÓN DE ANDALUCÍA (PUNTO DE CONTACTO)",
+                    "AGENCIA DE VIVIENDA Y REHABILITACION DE ANDALUCIA (PC)",
+                    "AGENCIA DE VIVIENDA Y REHABILITACIÓN DE ANDALUCÍA (otro punto de contacto)",
+                    "AGENCIA DE VIVIENDA DE REHABILITACION DE ANDALUCIA (punto de contacto)",
+                    "AGENCIA DE VIVIENDA Y REHABILITACIÓN DE ANDALUCIA",
+                    "DIRECCIÓN PROVINCIAL DE AVRA EN SEVILLA (punto de contacto)",
+                ];
+                let ids = ["TPO-0001", "TPO-0002", "TPO-0003", "TPO-0004", "TPO-0005", "TPO-0006", "TPO-0007"];
+                let lots = ["LOT-0001", "LOT-0002", "LOT-0003", "LOT-0004", "LOT-0005", "LOT-0006", "LOT-0007"];
+                let printed: Vec<[(&str, &str); 1]> = names.iter().map(|name| [("SPA", *name)]).collect();
+                let touchpoints: Vec<(&str, &[(&str, &str)], Option<&str>)> =
+                    ids.iter().zip(&printed).map(|(id, names)| (*id, names.as_slice(), Some("ESP"))).collect();
+                let refs: Vec<[(&str, &str); 1]> = ids.iter().map(|id| [("OPT-301-Lot-AddInfo", *id)]).collect();
+                let lots: Vec<(&str, &[(&str, &str)])> = lots.iter().zip(&refs).map(|(lot, r)| (*lot, r.as_slice())).collect();
+                let p = notice("AGENCIA DE VIVIENDA Y REHABILITACIÓN DE ANDALUCÍA (AVRA)", &touchpoints, &lots);
+                let (mentions, retired, roles) = NoticeState::touchpoint_mentions(false, 9, &p);
+                assert_eq!(roles, TouchpointRoles { aliased: 6, aliased_a: 6, minted: 1, ..Default::default() });
+                let minted: Vec<(&str, &str)> = mentions.iter().map(|m| (m.section_id.as_str(), m.name.as_str())).collect();
+                assert_eq!(minted, vec![("TPO-0007", names[6])], "the branch keeps its own name");
+                assert_eq!(retired, ids[..6].to_vec());
+            }
+
+            /// Gmina Panki's two rows differ by U+037E (the Greek question mark) against `;`: tier A folds it
+            /// to `;`, a space. The live rows print the touchpoint under the bare `Gmina Panki` — the parent
+            /// plus an address, tier B — and still mint (two orgs, check.md).
+            #[test]
+            fn gmina_panki_u037e_aliases_and_the_live_address_row_still_mints() {
+                let printed = "Gmina Panki ul. Tysiąclecia 5\u{37e} 42-140 Panki";
+                assert_eq!(
+                    roles_of("Gmina Panki ul. Tysiąclecia 5; 42-140 Panki", printed),
+                    TouchpointRoles { aliased: 1, aliased_a: 1, ..Default::default() }
+                );
+                assert_eq!(roles_of("Gmina Panki", printed), MINTED);
+            }
+
+            /// No review organ aliases into its buyer: the Sevilla tribunal's four spellings under the town
+            /// hall's governing board mint; a parent bracket naming the review organ or a department stays in
+            /// the parent's key (F3), so the bare town hall printed under it mints; a provincial tribunal
+            /// under a municipal company mints. A bracket that only describes the parent is cut (premise).
+            #[test]
+            fn tarcas_and_the_review_organs_still_mint() {
+                for name in [
+                    "TARCAS. AYUNTAMIENTO DE SEVILLA",
+                    "Ayuntamiento de Sevilla - TARCAS",
+                    "Ayuntamiento de Sevilla (TARCAS)",
+                    "Registro del Tribunal Administrativo de Recursos Contractuales (TARCAS)",
+                ] {
+                    assert_eq!(roles_of("Junta de Gobierno del Ayuntamiento de Sevilla", name), MINTED, "{name:?}");
+                }
+                assert_eq!(roles_of("Ayuntamiento de Sevilla (TARCAS)", "Ayuntamiento de Sevilla"), MINTED, "F3");
+                assert_eq!(roles_of("Ayuntamiento de Alcobendas (Contratación y Compras)", "Ayuntamiento de Alcobendas"), MINTED, "F3");
+                assert_eq!(
+                    roles_of(
+                        "Gerencia del Consejo de Administración de la Empresa Municipal de Aguas de Cádiz",
+                        "Tribunal Administrativo de Recursos Contractuales de la Excma. Diputación de Cádiz"
+                    ),
+                    MINTED
+                );
+                assert_eq!(roles_of("Ayuntamiento de Sevilla (Sevilla)", "Ayuntamiento de Sevilla").aliased_a, 1, "premise");
+            }
+
+            /// Tier B and the check's must-not-alias pairs mint: a department, another organ of the same town
+            /// hall, a bare place under anything but a town hall, a town hall under its department, a Polish
+            /// town under the rural gmina of its name (F1), a bare region under its parliament (F2), a whole
+            /// government under its vice-presidency or its parliament (F4).
+            #[test]
+            fn a_department_branch_other_organ_or_place_still_mints() {
+                for (buyer, name) in [
+                    ("Stadt Fürth", "Stadt Fürth - Zentrale Vergabestelle"),
+                    ("Pleno del Ayuntamiento de Segorbe", "Alcaldía del Ayuntamiento de Segorbe"),
+                    ("Presidencia de la Autoridad Portuaria de Bilbao", "Bilbao"),
+                    ("Concejalía de Hacienda del Ayuntamiento de Benalmádena", "Ayuntamiento Benalmádena"),
+                    ("Gmina Kłodzko", "Miasto Kłodzko"),
+                    ("Gmina Kłodzko", "Kłodzko"),
+                    ("Asamblea de Madrid", "Madrid"),
+                    ("Vicepresidencia del Gobierno de Canarias", "Gobierno de Canarias"),
+                    ("Junta General del Principado de Asturias", "Principado de Asturias"),
+                ] {
+                    assert_eq!(alias_tier(name, buyer), None, "{name:?} under {buyer:?}");
+                    assert_eq!(roles_of(buyer, name), MINTED, "{name:?} under {buyer:?}");
+                }
+            }
+
+            /// Tier C, each shape once, counted in `aliased_c`: the entity under its organ (C1, a one-token
+            /// company under its legal form), the town hall under another municipal word (C2), the bare town
+            /// (C3), the town hall of a bare-named parent (C3r), the organ's other spelling (C0) and the
+            /// parent's own organ or town-hall word (C4). The role is anchored at ORG-0001, so the served
+            /// `mention_name` is the parent's printed name (`Pleno del Ayuntamiento de Marugán`, issue 456).
+            #[test]
+            fn the_entity_under_its_organ_aliases_and_serves_the_parents_printed_name() {
+                for (buyer, name, tier) in [
+                    ("Junta de Gobierno Local del Ayuntamiento de Ezcaray", "Ayuntamiento de Ezcaray", Tier::C1),
+                    ("Pleno del Ayuntamiento de Marugán", "Marugán", Tier::C3),
+                    ("Junta de Gobierno del Ayuntamiento de Biar", "Ajuntament de Biar", Tier::C2),
+                    ("LAURINO", "COMUNE DI LAURINO", Tier::C3r),
+                    ("Junta de Gobierno del Ayuntamiento de Altea", "Junta de Gobierno Local del Ayuntamiento de Altea", Tier::C0),
+                    ("Gerencia de GESPESA, S.A.U.", "GESPESA SAU", Tier::C1),
+                    ("Pleno de la Diputación Provincial de Huelva", "Pleno", Tier::C4),
+                    ("Alcaldía del Ayuntamiento de Valverde de Leganés", "Ayuntamiento", Tier::C4),
+                ] {
+                    assert_eq!(alias_tier(name, buyer), Some(tier), "{name:?} under {buyer:?}");
+                    assert_eq!(roles_of(buyer, name), TouchpointRoles { aliased: 1, aliased_c: 1, ..Default::default() }, "{name:?}");
+                }
+                let p = notice(
+                    "Pleno del Ayuntamiento de Marugán",
+                    &[("TPO-0001", &[("SPA", "Marugán")], Some("ESP"))],
+                    &[("LOT-0001", &[("OPT-301-Lot-ReviewOrg", "TPO-0001")])],
+                );
+                assert_eq!(
+                    parties(&bound(9, &p, &[("ORG-0001", 11)])),
+                    BTreeSet::from([party("-", "Procedure-Buyer", 11, "ORG-0001"), party("LOT-0001", "Lot-ReviewOrg", 11, "ORG-0001")])
+                );
+            }
+
+            /// Over several languages the strongest pair decides: the same name under `org_name_norm` counts
+            /// in neither split, tier A before tier C.
+            #[test]
+            fn the_strongest_pair_decides_the_tier() {
+                let two = |eng: &str| {
+                    let mut p = notice(
+                        "Pleno del Ayuntamiento de Marugán",
+                        &[("TPO-0001", &[("SPA", "Marugán"), ("ENG", eng)], Some("ESP"))],
+                        &[("LOT-0001", &[("OPT-301-Lot-AddInfo", "TPO-0001")])],
+                    );
+                    p.values.push(text_value("ORG-0001", ORG_NAME_FIELD, 1, Some("ENG"), "Plenary of Marugán Town Council"));
+                    NoticeState::touchpoint_mentions(false, 9, &p).2
+                };
+                assert_eq!(two("PLENARY OF MARUGÁN TOWN COUNCIL ."), TouchpointRoles { aliased: 1, ..Default::default() });
+                assert_eq!(two("Plenary of Marugan Town-Council"), TouchpointRoles { aliased: 1, aliased_a: 1, ..Default::default() });
+                assert_eq!(two("Marugan Plenary"), TouchpointRoles { aliased: 1, aliased_c: 1, ..Default::default() });
+                let mut sum = two("Plenary of Marugan Town-Council");
+                sum.add(&two("Marugan Plenary"));
+                assert_eq!(sum, TouchpointRoles { aliased: 2, aliased_a: 1, aliased_c: 1, ..Default::default() }, "add sums the split");
+            }
+
+            /// D586-2's BARE test after the alias: another organ's or body's bare label is dropped, the
+            /// parent's own aliases (above), and a label with its own bracket is no bare word and mints.
+            #[test]
+            fn another_bodys_bare_organ_or_registry_word_is_dropped() {
+                let dropped = TouchpointRoles { dropped: 1, ..Default::default() };
+                assert_eq!(roles_of("Pleno del Ayuntamiento de Biar", "Alcaldía"), dropped);
+                assert_eq!(roles_of("Alcaldía del Ayuntamiento de Biar", "Pleno"), dropped);
+                assert_eq!(roles_of("Junta de Gobierno del Ayuntamiento de Sevilla", "Registro General"), dropped);
+                assert_eq!(roles_of("Rectorado de la Universidad de Salamanca", "Secretaría General"), dropped);
+                assert_eq!(roles_of("Junta de Gobierno del Ayuntamiento de Sevilla", "Registro General (Registro del TARCAS)"), MINTED);
+            }
         }
     }
 }

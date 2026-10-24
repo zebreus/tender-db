@@ -7310,7 +7310,7 @@ async fn a_touchpoint_role_is_served_through_the_touchpoints_own_identity() {
     project::project(&before, false).await.expect("project the notices without their references");
     assert_eq!(
         *report.touchpoint_roles,
-        project::TouchpointRoles { aliased: 2, minted: 3, dropped: 0, country_fallback: 0 },
+        project::TouchpointRoles { aliased: 2, aliased_a: 0, aliased_c: 0, minted: 3, dropped: 0, country_fallback: 0 },
         "two AddInfo references aliased, three ReviewOrg references minted"
     );
 
@@ -7431,4 +7431,112 @@ async fn a_touchpoint_role_is_served_through_the_touchpoints_own_identity() {
 
     let _ = std::fs::remove_file(&path);
     let _ = std::fs::remove_file(&before_path);
+}
+
+/// Issue 586 unit 3's drain in miniature, through the incremental fold's Phase 1: a notice whose two
+/// touchpoints minted under 576's rules is refolded after 586's rules change what they print as. A
+/// `refold-sections` over the Touchpoint carriers must retire both minted mentions and the party rows keyed to
+/// them — the review touchpoint now prints its buyer's own name in another spelling (tier A) and binds the
+/// buyer at ORG-0001, the information touchpoint a contact label (D586-2) and binds nothing — leaving the two
+/// minted organizations with no mention, for the auto-queued orphan sweep (`retire_mentions` never deletes an
+/// organization). The notice's printed names are rewritten in place to stand in for the rule change.
+#[tokio::test]
+async fn a_touchpoint_minted_before_586_is_retired_and_rebound_by_the_refold() {
+    const SARGA: &str = "Sociedad Aragonesa de Gestión Agroambiental, S.L.U. (SARGA)";
+    let (db, fetch_id, path) = scratch("touchpoint-586").await;
+    let mut cn =
+        Parsed { sections: vec![sec("PROCEDURE", "Notice", None)], values: vec![ted_text("PROCEDURE", "BT-21-Procedure", "Servicios")] };
+    cn.sections.push(sec("ND-ContractingParty#0", "ContractingParty", Some("PROCEDURE")));
+    cn.sections.push(sec("ORG-0001", "Organization", Some("PROCEDURE")));
+    cn.values.push(ted_ref("ND-ContractingParty#0", "OPT-300-Procedure-Buyer", "ORG-0001"));
+    cn.values.push(eforms_text("ORG-0001", "BT-500-Organization-Company", "SPA", SARGA));
+    cn.values.push(eforms_code("ORG-0001", "BT-514-Organization-Company", "ESP"));
+    for (id, name) in [("TPO-0001", "SARGA - Registro"), ("TPO-0002", "Sede Tibidabo Norte")] {
+        cn.sections.push(sec(id, "Touchpoint", Some("ORG-0001")));
+        cn.values.push(eforms_text(id, "BT-500-Organization-TouchPoint", "SPA", name));
+        cn.values.push(eforms_code(id, "BT-514-Organization-TouchPoint", "ESP"));
+    }
+    cn.sections.push(sec("LOT-0001", "Lot", Some("PROCEDURE")));
+    cn.values.push(ted_text("LOT-0001", "BT-21-Lot", "Lote 1"));
+    for (field, target) in [("OPT-301-Lot-ReviewOrg", "TPO-0001"), ("OPT-301-Lot-AddInfo", "TPO-0002")] {
+        cn.values.push(ValueRow {
+            section_id: "LOT-0001".into(),
+            field_id: field.into(),
+            ordinal: 0,
+            value: NoticeValue::Id { scheme: Some("touchpoint".into()), value: target.into(), is_ref: true },
+        });
+    }
+    let (notice, parse) = legacy_record(fetch_id, "00586001-2026", EFORMS, cn);
+    db.record_notice(&notice, &parse).await.expect("record");
+    let report = project::project(&db, false).await.expect("project");
+    assert_eq!(*report.touchpoint_roles, project::TouchpointRoles { minted: 2, ..Default::default() }, "both mint under 576");
+    let tpo_orgs = "SELECT group_concat(organization_id, ',') FROM (SELECT organization_id FROM organization_mentions
+                      WHERE section_id LIKE 'TPO-%' ORDER BY section_id)";
+    let minted = cell(&db, tpo_orgs).await;
+    assert_eq!(minted.split(',').count(), 2, "two touchpoint mentions: {minted}");
+    let buyer = scalar(&db, "SELECT organization_id FROM organization_mentions WHERE section_id = 'ORG-0001'").await;
+
+    // The rule change, stood in for by the printed names: TPO-0001 now prints the buyer without its dots and
+    // acronym, TPO-0002 a contact label.
+    let raw = turso::Builder::new_local(&path).build().await.expect("open the scratch db");
+    let conn = raw.connect().expect("connect");
+    for (section, value) in
+        [("TPO-0001", "Sociedad Aragonesa de Gestión Agroambiental S.L.U"), ("TPO-0002", "Dirección Principal")]
+    {
+        let sql = format!(
+            "UPDATE notice_texts SET value = '{value}' WHERE section_id = '{section}' \
+              AND field_id = 'BT-500-Organization-TouchPoint'"
+        );
+        assert_eq!(conn.execute(&sql, ()).await.expect("rewrite the printed name"), 1, "{section}");
+    }
+    drop(conn);
+
+    let carriers = db.notice_ids_with_section_kind(&["Touchpoint"]).await.expect("cohort");
+    assert_eq!(carriers.len(), 1);
+    assert_eq!(db.unmark_projected_by_ids(&carriers).await.expect("requeue"), 1);
+    db.stamp_stale_for_notices(&carriers).await.expect("stamp");
+    let refold = project::project_incremental(&db).await.expect("refold the touchpoint carrier");
+    assert_eq!(
+        *refold.touchpoint_roles,
+        project::TouchpointRoles { aliased: 1, aliased_a: 1, dropped: 1, ..Default::default() },
+        "the review role aliases by spelling, the contact label is dropped"
+    );
+    assert_eq!(
+        refold.mentions_retired, 2,
+        "both touchpoint mentions retired: the M of the supervisor's auto-queued `sweep-orphan-orgs` (the drain's trigger)"
+    );
+    assert_eq!(scalar(&db, "SELECT COUNT(*) FROM organization_mentions WHERE section_id LIKE 'TPO-%'").await, 0, "both retired");
+    assert_eq!(
+        cell(
+            &db,
+            "SELECT group_concat(r, ';') FROM (SELECT role || '=' || organization_id || '@' || mention_section_id AS r
+               FROM tender_version_parties WHERE role LIKE 'Lot-%' ORDER BY 1)"
+        )
+        .await,
+        format!("Lot-ReviewOrg={buyer}@ORG-0001"),
+        "the review role binds the buyer at its own block; the AddInfo role is gone"
+    );
+    assert_eq!(
+        scalar(&db, &format!("SELECT COUNT(*) FROM organization_mentions WHERE organization_id IN ({minted})")).await,
+        0,
+        "the two organizations the touchpoints minted hold no mention"
+    );
+    let (sweep, _) = db.sweep_orphan_orgs_batch(1_000, 0, true, None).await.expect("dry sweep");
+    assert_eq!(sweep.swept, 2, "a dry sweep counts both: {sweep:?}");
+    for table in ["tender_version_parties", "tender_version_bid_parties"] {
+        assert_eq!(
+            scalar(
+                &db,
+                &format!(
+                    "SELECT COUNT(*) FROM {table} p LEFT JOIN organization_mentions m
+                       ON m.notice_id = p.mention_notice_id AND m.section_id = p.mention_section_id
+                      WHERE m.notice_id IS NULL"
+                ),
+            )
+            .await,
+            0,
+            "{table}: every row's mention key names a recorded mention"
+        );
+    }
+    let _ = std::fs::remove_file(&path);
 }

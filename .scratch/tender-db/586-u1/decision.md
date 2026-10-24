@@ -583,3 +583,37 @@ read a salted 20 of the moved references (salt `586-u3-`), and fix.
    `aliased_norm`. That keeps the job-row word `aliased` and the drain's comparison like with like.
 6. **AVRA is six, not five.** Gmina Panki is tested on the synthetic U+037E pair. The fold.md doc nit about
    `direccion` is recorded above.
+
+## Unit 2 review amendments (2026-10-24)
+
+The unit-2 review (586 U2, three lenses) confirmed four minor findings and five nits; the fixes ride unit 2. The
+port still agrees with `final.py` on all 3,751 saved pairs and the 80 named cases
+(`the_port_matches_the_reference_on_all_3751_saved_pairs`, run with `--ignored`).
+- **Port deviations from `final.py`, now four** (the module doc of `touchpoint_names_586.rs` lists them; each mints
+  where the oracle aliased or dropped another body, and each moves 0 saved pairs):
+  1. the C4 guard (Epe), as before;
+  2. the town key (G2's BARE key and the C4 guard) keeps a last token that is an article, so `Gemeinde Au`, `Commune
+     de Y`, `Město Aš` and `Ajuntament de Les` neither alias at C4 under another town hall nor meet BARE (586-correctness-1).
+     A residue remains: two article-only towns under one notice share a tier-A key (`Gemeinde Au` / `Gemeinde Y`);
+  3. a touchpoint's province bracket is cut only when the parent names that place (any listed spelling, or an entry
+     holding it or held by it) or none of the list: `Tribunal Superior de Justicia (Madrid)` under `… (Andalucía)` mints
+     (586-correctness-3);
+  4. HONORIFIC: `M.` before a Spanish body's style (`M. Ilustre Colegio de Abogados de Madrid`) is no title
+     (586-correctness-5).
+- **Characters (586-correctness-4).** HONORIFIC's title and the raw LEGALREF scan read `İ`/`ı` as `i` and `ſ` as `s`, as
+  `re`'s `(?i)` does. Accepted differences: `partyname::fold` keeps Other_Alphabetic symbols (`Ⓐ`) that `pop.fold`
+  drops, and post-Unicode-14 letters fold by Rust's tables.
+- **Served text against D586-1 (586-contract-1/2/3).** The `/docs` paragraph, `TenderDetail.parties` and the CHANGELOG
+  widen the own-name sentence beyond the text dictated above, on purpose: that text was narrower than D586-1's own rule
+  (honorifics and small words, a leading contact label, a province or the organization's own bracket, C0, C2/C3 with
+  no organ in the parent, C3r, the bare town-hall word). "The bare town" is tied to its town hall, and a one-word place
+  under an organ alone keeps its own name (F2). The CHANGELOG's "a body whose name holds such a word is still served"
+  names HONORIFIC's accepted residue (`Monsieur Bricolage`).
+- **Open for D586-1, not unit 2 (586-contract-2).** F2 guards only a one-token entity, so a place of two or more tokens
+  under an organ aliases at C1 (`Castilla-La Mancha` under `Asamblea de Castilla-La Mancha`, `Valverde de Leganés` under
+  `Alcaldía de Valverde de Leganés`), against "never a bare place under anything but a town hall". 0 saved pairs.
+  Decide whether F2 extends to an entity made only of place tokens (change `final.py` and the port together) or C1
+  stays (a town under its own Alcaldía is the body under its organ).
+- **Drain read (586-integration-3/4).** The drain test pins `mentions_retired` (the auto sweep's M), and the fold's job
+  row now reads `N mention(s) retired: non-name parties (issues 510/511) and touchpoints no longer minted (issues
+  576/586)`.

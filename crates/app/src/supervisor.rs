@@ -6141,9 +6141,15 @@ fn fold_summary(report: &ingest::project::Report, sweep: &str) -> String {
     } else {
         String::new()
     };
-    // Issue 510: void-lot mentions retired, silent at zero (every dropped class since 511).
+    // Issue 510: void-lot mentions retired, silent at zero (every dropped class since 511). Since issues 576/586
+    // also a touchpoint's recorded mention once it no longer mints (it aliases its organization, is dropped or is
+    // no longer referenced) — most of the 586 drain's — so the label names both.
     let retired = if report.mentions_retired > 0 {
-        format!("; {} non-name mention(s) retired (issues 510/511)", report.mentions_retired)
+        format!(
+            "; {} mention(s) retired: non-name parties (issues 510/511) and touchpoints no longer minted \
+             (issues 576/586)",
+            report.mentions_retired
+        )
     } else {
         String::new()
     };
@@ -6192,13 +6198,20 @@ fn regrouped_suffix(absorbed: u64) -> String {
 /// Issue 576: a fold's touchpoint role references ([`ingest::project::TouchpointRoles`]) for its durable
 /// log row — how many bound the touchpoint's own Organization, how many its minted mention (and of those
 /// how many published no country and took the Organization's) and how many were dropped: unit 3's drain reads the exact size
-/// here. Empty when the fold read none.
+/// here. Empty when the fold read none. Issue 586: of the aliased, how many by another spelling (tier A)
+/// and how many as the body under its organ (tier C), printed only when either is non-zero (the rest are
+/// 576's same name).
 fn touchpoint_suffix(roles: &ingest::project::TouchpointRoles) -> String {
     if roles.total() == 0 {
         return String::new();
     }
+    let split = if roles.aliased_a + roles.aliased_c > 0 {
+        format!(" (issue 586: {} by spelling, {} by organ)", roles.aliased_a, roles.aliased_c)
+    } else {
+        String::new()
+    };
     format!(
-        "; touchpoint roles (issue 576): {} aliased, {} minted ({} without a country of their own took the organization's), {} dropped",
+        "; touchpoint roles (issue 576): {} aliased{split}, {} minted ({} without a country of their own took the organization's), {} dropped",
         roles.aliased, roles.minted, roles.country_fallback, roles.dropped
     )
 }
@@ -23358,17 +23371,33 @@ mod tests {
     }
 
     /// Issue 576: the fold's job row carries `Report.touchpoint_roles` — unit 3's drain reads its size
-    /// there. Silent at zero; otherwise every class, per role reference.
+    /// there. Silent at zero; otherwise every class, per role reference. Issue 586: the aliased split by
+    /// tier, only when a tier aliased anything (576's line is otherwise unchanged).
     #[test]
     fn the_touchpoint_suffix_names_every_class() {
         assert_eq!(touchpoint_suffix(&ingest::project::TouchpointRoles::default()), "", "no touchpoint role: silent");
-        let roles = ingest::project::TouchpointRoles { aliased: 4, minted: 5, dropped: 2, country_fallback: 1 };
+        let roles = ingest::project::TouchpointRoles {
+            aliased: 4,
+            aliased_a: 0,
+            aliased_c: 0,
+            minted: 5,
+            dropped: 2,
+            country_fallback: 1,
+        };
         assert_eq!(
             touchpoint_suffix(&roles),
             "; touchpoint roles (issue 576): 4 aliased, 5 minted (1 without a country of their own took the organization's), 2 dropped"
         );
         let dropped_only = ingest::project::TouchpointRoles { dropped: 1, ..Default::default() };
         assert!(!touchpoint_suffix(&dropped_only).is_empty(), "a dropped reference alone is printed");
+        let split = ingest::project::TouchpointRoles { aliased: 108_123, aliased_a: 3_012, aliased_c: 37_677, ..roles };
+        assert_eq!(
+            touchpoint_suffix(&split),
+            "; touchpoint roles (issue 576): 108123 aliased (issue 586: 3012 by spelling, 37677 by organ), 5 minted \
+             (1 without a country of their own took the organization's), 2 dropped"
+        );
+        let c_only = ingest::project::TouchpointRoles { aliased: 1, aliased_c: 1, ..Default::default() };
+        assert!(touchpoint_suffix(&c_only).contains("1 aliased (issue 586: 0 by spelling, 1 by organ), 0 minted"), "one tier alone");
     }
 
     /// Issue 483 unit 2: `refold-buyer-roles` enqueues dry unless asked, runs through

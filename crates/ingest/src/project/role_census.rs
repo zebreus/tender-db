@@ -398,6 +398,13 @@ pub fn has_commercial_form(name: &str) -> bool {
     commercial(&fold(name))
 }
 
+/// Whether a published name has a word starting with a public-law stem ([`PUBLIC_STEMS`]) — issue
+/// 586's touchpoint gate reads it as a guard (`touchpoint_names_586`: a title before `M. I.
+/// Ayuntamiento de …` addresses no person, and an article number in a body's name is no reference).
+pub(super) fn has_public_stem(name: &str) -> bool {
+    public(&fold(name))
+}
+
 /// Whether the folded name holds a commercial legal form ([`COMMERCIAL_FORMS`]).
 fn commercial(folded: &str) -> bool {
     let padded = format!(" {folded} ");

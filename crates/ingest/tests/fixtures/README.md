@@ -339,6 +339,19 @@ TED publication identity plus the DÖE national codes.
 
 ---
 
+## `touchpoint_586/` — reference vectors, not notices, 2 files, 135 KB
+
+Like `golden/`, derived test data rather than published notices: the answers of
+issue 586's oracle (`.scratch/tender-db/586-u1/final.py`) that
+`project::touchpoint_names_586`'s port check embeds.
+
+| File | Rows | What |
+|---|---|---|
+| `vectors.jsonl` | 1,159 | `[touchpoint, parent, tier or null, gated]`: every saved pair the oracle aliases (867) or gates (92), plus 200 salted minted ones (`port_subset.py`, salt `586-u2-port`) of `586-u1/fixtures/vectors.jsonl`'s 3,751 |
+| `selftest.jsonl` | 80 | the oracle's named cases, copied from `586-u1/fixtures/selftest.jsonl` |
+
+---
+
 ## TODO / gaps
 
 Things a fixture is wanted for but which do not exist in the sampled data:
