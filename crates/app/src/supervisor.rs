@@ -517,6 +517,8 @@ enum Spec {
     /// span, with the within-notice twin and cross-notice signals unit 2 weighs and the stable-platform
     /// rows as their own population. Read-only.
     GuidCensus { stable_mentions: u64, samples: usize },
+    /// Issue 575 unit 1: the raw 8-4-4-16 BT-501 shape over every 32-hex organization, with U2's bars. Read-only.
+    HexCensus { stable_mentions: u64, samples: usize },
     /// Issue 530 unit 3: the DRY `dissolve-guid-twins` plan — rule 530-T (`ingest::project::guid_twin`)
     /// over every ORG mention of each notice with a mention on a v4-GUID row, planned per mention; since
     /// Build 2 with the COMPILED KEEP and unsafe names the gate reads (A3 iii; the walk's KEEP candidates
@@ -1363,13 +1365,15 @@ pub struct JobRequest {
     /// [`ORG_HEAD_DRIFT_SAMPLES_MAX`]. Also `refresh-org-names` (issue 524 unit 2a): the uniform samples
     /// listed per rule and per reason, the same default and clamp; `min_mentions` reads as there too.
     /// `revert-org-name-refresh` refuses it (it restores the whole job). Also `guid-census` (issue 530
-    /// unit 1): the samples per list, the same default and clamp.
+    /// unit 1): the samples per list, the same default and clamp. Also `hex-census` (issue 575 unit 1),
+    /// the same default and clamp.
     pub samples: Option<u64>,
     /// `guid-census` only (issue 530 unit 1): a GUID row with at least this many mentions joins the
     /// stable-platform population beside [`GUID_CENSUS_STABLE_IDS`]. Omitted,
     /// [`GUID_CENSUS_STABLE_MENTIONS`]; at or under [`store::GUID_CENSUS_FEW_MENTIONS`] is refused (a
     /// single-use TED+DÖE pair would count as stable). Also `dissolve-guid-twins` (issue 530 unit 3):
-    /// the stable bar of its KEEP, the same default and floor; `samples` reads as there too.
+    /// the stable bar of its KEEP, the same default and floor; `samples` reads as there too. Also
+    /// `hex-census` (issue 575 unit 1), the same default and floor.
     pub stable_mentions: Option<u64>,
     /// `dissolve-guid-twins` only (issue 530 unit 3): names the run also treats as unsafe twin keys (an
     /// R2 finding, re-run without a deploy), folded as rule 530-T folds a name. 1 to
@@ -1472,6 +1476,16 @@ const GUID_CENSUS_CANARIES: &[i64] = &[
 ];
 /// Issue 530 unit 1: the report `guid-census` stores.
 const GUID_CENSUS_REPORT: &str = "guid-census";
+/// Issue 575 unit 1: the report `hex-census` stores.
+const HEX_CENSUS_REPORT: &str = "hex-census";
+/// Issue 575 unit 1: the exhibits `hex-census` always reports — notice 277's Avenue-Web row 859 and its TA Paris
+/// pair 861/862 (one value v4, one not), the CCIRA per-section rows 22763203, 22778244 and 22780012 (575
+/// triage read 4), and the consecutive per-section mints of notices 27863637 (24606517-19) and 44493442
+/// (30934846-48).
+const HEX_CENSUS_CANARIES: &[i64] = &[
+    859, 861, 862, 22_763_203, 22_778_244, 22_780_012, 24_606_517, 24_606_518, 24_606_519, 30_934_846, 30_934_847,
+    30_934_848,
+];
 /// Issue 530 unit 3: the report `dissolve-guid-twins` stores.
 const GUID_TWIN_REPORT: &str = "guid-twin-plan";
 /// Issue 530 unit 3, R1: the controls the plan must NOT plan — the stable keys (254, 255, 8378,
@@ -2756,6 +2770,146 @@ fn guid_census_summary(r: &store::GuidCensusReport) -> String {
         top(&r.by_country, 6),
         r.role_mixed,
         top(&r.by_platform, 6),
+    )
+}
+
+/// Issue 575 unit 1: issue 300's `hex_hash` class, as `idgate::census` flags it (16+ chars, 0-9/A-F, a letter).
+fn hex_hash_class(value: &str) -> bool {
+    ingest::idgate::census(None, None, value).hex_hash
+}
+
+/// Issue 575 unit 1: `hex-census` as stored — the report as serialised, with what it was read with: the class
+/// definition, the population, the role and target bases and the canary ids (not `class`: that is the report's
+/// own field). A sync free fn, so its temporaries stay off the boxed arm's poll frame (issue 467's lesson).
+fn hex_census_json(r: &store::HexCensusReport) -> Result<String, String> {
+    let mut body = serde_json::to_value(r).map_err(|e| e.to_string())?;
+    if let Some(all) = body.as_object_mut() {
+        all.insert(
+            "class_definition".to_owned(),
+            "a row with at least one mention whose raw BT-501, trimmed and case-blind, is 8-4-4-16 hex (35 \
+             characters, dashes at 8, 13 and 18: `store::is_cf35`), among the organizations whose stored \
+             identifier is 32 hex digits"
+                .into(),
+        );
+        all.insert(
+            "population".to_owned(),
+            "organizations by rowid windows, identifier 16+ long: `hex_hash_rows` re-takes issue 300's class \
+             (idgate::census), `hex32_rows` is the walked population"
+                .into(),
+        );
+        all.insert(
+            "role_basis".to_owned(),
+            "every ORG mention of each notice holding a cf35 mention, roles from tender_version_parties and \
+             tender_version_bid_parties (`bid-`) by mention key; stratum precedence buyer, add_info, sprovider, \
+             mediator, review, tenderer, other, no_role (store::hex_stratum, guid_role_class for buyer and \
+             tenderer)"
+                .into(),
+        );
+        all.insert(
+            "target_basis".to_owned(),
+            "the resolver's fallback key (org_name_norm(name), register_jurisdiction(country)), its \
+             identifier-NULL row by lowest id, its mention count, and the BT-513 cities of its newest 50 mentions \
+             (530 A6)"
+                .into(),
+        );
+        all.insert("canary_ids".to_owned(), serde_json::json!(HEX_CENSUS_CANARIES));
+    }
+    Ok(body.to_string())
+}
+
+/// Issue 575 unit 1: `hex-census`'s job summary — the population, the class and its spans, unit 2's bars, the
+/// strata, the targets with 530's A6 screen, unit 5's tenderer keys and the canaries, in one line.
+fn hex_census_summary(r: &store::HexCensusReport) -> String {
+    let c = &r.class;
+    let nm = &r.notice_mentions;
+    let t = &r.targets;
+    let tk = &nm.tenderer_key;
+    let strata = ["sprovider", "review", "mediator", "add_info", "buyer", "tenderer", "other", "no_role"]
+        .iter()
+        .map(|stratum| format!("{stratum} {}", c.by_stratum.get(*stratum).map_or(0, |x| x.rows)))
+        .collect::<Vec<_>>()
+        .join(", ");
+    let countries = {
+        let mut keys: Vec<(&String, &store::HexTally)> = c.by_country.iter().collect();
+        keys.sort_by(|a, b| b.1.rows.cmp(&a.1.rows).then(a.0.cmp(b.0)));
+        let listed: Vec<String> = keys.iter().take(6).map(|(key, x)| format!("{key} {}", x.rows)).collect();
+        if listed.is_empty() { "none".to_owned() } else { listed.join(", ") }
+    };
+    let years = {
+        let listed: Vec<String> = c.by_first_year.iter().map(|(year, x)| format!("{year} {}", x.rows)).collect();
+        if listed.is_empty() { "none".to_owned() } else { listed.join(", ") }
+    };
+    let canaries = HEX_CENSUS_CANARIES
+        .iter()
+        .map(|id| match r.canaries.iter().find(|s| s.org_id == *id) {
+            Some(s) => format!(
+                "{id} {} {} mention(s) {} tender(s){}{}",
+                s.stratum,
+                s.mentions,
+                s.tenders,
+                if s.twin { " twin" } else { "" },
+                match (&s.target_name_norm, s.target_id) {
+                    (_, Some(target)) => format!(" target {target}"),
+                    (Some(_), None) => " target missing".to_owned(),
+                    (None, None) => " unkeyed".to_owned(),
+                }
+            ),
+            None => format!("{id} absent"),
+        })
+        .collect::<Vec<_>>()
+        .join("; ");
+    format!(
+        "hex-census (issue 575 unit 1): {} 32-hex row(s) of {} identifier row(s) 16+ long ({} hex_hash, issue \
+         300's class) in {} window(s) up to org id {}, {} mention(s). CF35 (8-4-4-16 raw BT-501): {} row(s), {} \
+         cf35 mention(s) in {} notice(s) of {} tender(s); ONE tender {}, several {}, more than one notice {}; \
+         uuid_v4 passes {}; mixed shapes {}. U2 BARS: multi-tender values {} (0, or a frozen keep-list); stable \
+         (>= {} mentions) {} (0); KEEP_530 overlap {} (0); buyer-role cf35 mention(s) {} (0, or 369's churn \
+         recorded); blank-name cf35 mention(s) {}; within-notice twins {} group(s) in {} notice(s), {} row(s), {} \
+         eSender row(s). Rows by stratum: {strata}. By country: {countries}. By first year: {years}. Targets: {} \
+         key(s), {} found ({} mention(s)), {} missing ({}), {} unkeyed mention(s); A6: {} city-absent mention(s) \
+         at {} target(s), {} multi-city target(s), {} planned multi-city key(s); {} CCIRA key(s). Tenderer keys \
+         (U5): {} mention(s) on {} row(s), {} procedure(s), {} dash-strip collision(s). Canaries: {canaries}. \
+         NOTHING IS WRITTEN.",
+        r.hex32_rows,
+        r.id_rows_16plus,
+        r.hex_hash_rows,
+        r.windows,
+        r.max_id,
+        r.hex32_mentions,
+        c.all.rows,
+        c.cf35_mentions,
+        c.notices,
+        c.tenders,
+        c.all.one_tender,
+        c.all.multi_tender,
+        c.all.multi_notice,
+        c.v4_rows,
+        c.mixed_shape_rows,
+        c.values_multi_tender,
+        r.stable_mentions,
+        c.all.stable,
+        c.keep_530_overlap,
+        nm.cf35_buyer_mentions,
+        nm.cf35_blank_name_mentions,
+        nm.twin.groups,
+        nm.twin.notices,
+        nm.twin.rows,
+        nm.twin.sprovider_rows,
+        t.keys,
+        t.found,
+        t.mentions_to_found,
+        t.missing,
+        t.mentions_to_missing,
+        nm.cf35_unkeyed_mentions,
+        t.city.city_absent_mentions,
+        t.city.city_absent_targets,
+        t.city.multi_city_targets,
+        t.city.planned_multi_city_keys,
+        t.ccira.len(),
+        tk.mentions,
+        tk.rows,
+        tk.procedures,
+        tk.collisions,
     )
 }
 
@@ -4783,6 +4937,30 @@ impl Supervisor {
                         "guid-census",
                         format!("guid-census dry stable_mentions={stable_mentions} samples={samples}"),
                         Spec::GuidCensus { stable_mentions, samples },
+                    )
+                    .await,
+                ])
+            }
+            "hex-census" => {
+                // Issue 575 unit 1: read-only, so `dry_run: false` names a job that does not exist and is
+                // refused.
+                if req.dry_run == Some(false) {
+                    return Err("hex-census is read-only: `dry_run: false` is refused".to_owned());
+                }
+                let few = store::GUID_CENSUS_FEW_MENTIONS;
+                let stable_mentions = req.stable_mentions.unwrap_or(GUID_CENSUS_STABLE_MENTIONS);
+                if stable_mentions <= few {
+                    return Err(format!(
+                        "hex-census needs `stable_mentions` above {few}, got {stable_mentions}: a single-use row \
+                         (a notice's TED+DÖE pair) would count as a stable key"
+                    ));
+                }
+                let samples = req.samples.unwrap_or(ORG_HEAD_DRIFT_SAMPLES).clamp(1, ORG_HEAD_DRIFT_SAMPLES_MAX) as usize;
+                Ok(vec![
+                    self.push(
+                        "hex-census",
+                        format!("hex-census dry stable_mentions={stable_mentions} samples={samples}"),
+                        Spec::HexCensus { stable_mentions, samples },
                     )
                     .await,
                 ])
@@ -7447,6 +7625,9 @@ const STOPPABLE_KINDS: &[&str] = &[
     // Issue 530 unit 1: read before every window of the walk and every batch of its reads; a stopped
     // run stores no report.
     "guid-census",
+    // Issue 575 unit 1: read before every window, batch and IN chunk, and every 64 target seeks; a stopped
+    // run stores no report.
+    "hex-census",
     // Issue 530 unit 3: read before every window, batch and IN chunk of the plan's reads, and every 64
     // target seeks; a stopped run stores no report. Build 2: the wet run reads it during its re-plan and
     // before every window (the committed windows stand, the report is stored), the recurrence arm before
@@ -9921,6 +10102,7 @@ impl Supervisor {
             | Spec::NamePhraseCensus { .. }
             | Spec::OrgHeadDrift { .. }
             | Spec::GuidCensus { .. }
+            | Spec::HexCensus { .. }
             | Spec::DissolveGuidTwins { .. }
             | Spec::GuidTwinRecurrence { .. }
             | Spec::RefreshOrgNames { .. }
@@ -17144,6 +17326,37 @@ impl Supervisor {
                 self.db.put_report(GUID_CENSUS_REPORT, &body, store::now_unix()).await.map_err(|e| e.to_string())?;
                 Ok(guid_census_summary(&r))
             }).await,
+            Spec::HexCensus { stable_mentions, samples } => Box::pin(async move {
+                // BOXED, as every census arm here, and the store future boxed inside it; the body and the summary
+                // are sync free fns, off this frame.
+                let job_id = job.id;
+                let stop = || self.cancelled(job_id);
+                self.set_phase("walking", None, None, "issue 575: reading 32-hex organizations".to_owned());
+                let progress = |done: u64, detail: &str| {
+                    self.set_phase("walking", Some(done), None, detail.to_owned());
+                };
+                let r = Box::pin(self.db.hex_census(store::HexCensusArgs {
+                    hex_hash: hex_hash_class,
+                    is_v4: ingest::idgate::uuid_v4,
+                    role_class: guid_role_class,
+                    keep: ingest::project::guid_twin::keep_530(),
+                    stable_mentions: *stable_mentions,
+                    samples: *samples,
+                    window: store::HEX_CENSUS_WINDOW,
+                    batch: store::HEX_CENSUS_BATCH,
+                    canaries: HEX_CENSUS_CANARIES,
+                    stop: &stop,
+                    progress: &progress,
+                }))
+                .await
+                .map_err(|e| e.to_string())?;
+                if r.stopped {
+                    return Ok("hex-census STOPPED by cancel — no report stored".to_owned());
+                }
+                let body = hex_census_json(&r)?;
+                self.db.put_report(HEX_CENSUS_REPORT, &body, store::now_unix()).await.map_err(|e| e.to_string())?;
+                Ok(hex_census_summary(&r))
+            }).await,
             Spec::DissolveGuidTwins { dry_run, stable_mentions, samples, extra_unsafe_names } => Box::pin(async move {
                 // BOXED, as every census arm here (CLAUDE.md: `run_spec`'s arms share one future), and the
                 // store future boxed inside it. The stored body and the summary are sync free fns.
@@ -20247,6 +20460,7 @@ const LIGHT_KINDS: &[(&str, &str)] = &[
     ("generic-wall-census", "report only: `generic_wall_inflation_census` reads on the pool"),
     ("ghost-census", "report only: `ghost_census` reads notice-id slices on the pool"),
     ("guid-census", "report only: `guid_census` reads org-id windows and IN chunks on the pool"),
+    ("hex-census", "report only: `hex_census` reads org-id windows, IN chunks and target seeks on the pool"),
     ("member-twin-census", "report only: `member_twin_census` reads index batches on the pool"),
     ("name-attribution-probe", "report only: `name_attribution_probe` reads on the pool"),
     ("name-phrase-census", "report only: `name_phrase_census` reads on the pool"),
@@ -21142,6 +21356,7 @@ mod tests {
                 "name-phrase-census",
                 "org-head-drift",
                 "guid-census",
+                "hex-census",
                 "dissolve-guid-twins",
                 // Issue 524 unit 2b: `apply_org_name_refresh` and `revert_org_name_refresh` read the
                 // flag before every window; the committed windows stand.
@@ -25302,6 +25517,189 @@ mod tests {
         let msg = sup.run_spec(&job(3)).await.expect("stopped census");
         assert!(msg.contains("STOPPED by cancel") && msg.contains("no report stored"), "{msg}");
         let (body, _) = db.latest_report(GUID_CENSUS_REPORT).await.unwrap().expect("report");
+        assert_eq!(body, "{\"marker\":1}", "a stopped census stores nothing");
+        drop(conn);
+        for suffix in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{suffix}"));
+        }
+    }
+
+    /// Issue 575 unit 1: `hex-census` enqueues dry (its params say so), refuses `dry_run: false` (it writes
+    /// nothing, so a wet run names no job), a `stable_mentions` a single-use pair would meet and the twin
+    /// plan's fields, clamps `samples` like the GUID census, and is light and stoppable.
+    #[tokio::test]
+    async fn hex_census_enqueues_dry_and_refuses_a_wet_run() {
+        let sup = Supervisor::new(scratch().await, "archive".into(), reqwest::Client::new());
+        let ask = |dry_run: Option<bool>, stable_mentions: Option<u64>, samples: Option<u64>| JobRequest {
+            kind: "hex-census".into(),
+            dry_run,
+            stable_mentions,
+            samples,
+            ..Default::default()
+        };
+        let err = sup.enqueue_request(&ask(Some(false), None, None)).await.expect_err("read-only");
+        assert!(err.contains("read-only") && err.contains("dry_run: false"), "{err}");
+        for low in [0, 1, 2] {
+            let err = sup.enqueue_request(&ask(None, Some(low), None)).await.expect_err("a pair is not stable");
+            assert!(err.contains("stable_mentions") && err.contains("above 2"), "{err}");
+        }
+        let err = sup
+            .enqueue_request(&JobRequest { kind: "hex-census".into(), max_windows: Some(1), ..Default::default() })
+            .await
+            .expect_err("the twin plan's field");
+        assert!(err.contains("hex-census refuses `max_windows`"), "{err}");
+        sup.enqueue_request(&ask(None, None, None)).await.expect("the defaults");
+        sup.enqueue_request(&ask(Some(true), Some(3), Some(0))).await.expect("dry asked, samples clamp up");
+        sup.enqueue_request(&ask(None, Some(500), Some(10_000))).await.expect("samples clamp down");
+        let queued = sup.queued();
+        assert_eq!(queued.len(), 3, "the refused asks queued nothing");
+        assert_eq!(queued[0].kind, "hex-census");
+        assert_eq!(queued[0].params, "hex-census dry stable_mentions=100 samples=30");
+        assert_eq!(queued[1].params, "hex-census dry stable_mentions=3 samples=1");
+        assert_eq!(queued[2].params, "hex-census dry stable_mentions=500 samples=200");
+        assert!(matches!(
+            sup.queue.lock().expect("queue lock")[0].spec,
+            Spec::HexCensus { stable_mentions: 100, samples: 30 }
+        ));
+        assert!(!heavy_write_kind("hex-census"), "read-only: coverage keeps refreshing");
+        assert!(stoppable("hex-census", &queued[0].params), "a cancel reaches the walk between windows");
+    }
+
+    /// Issue 575 unit 1: the job wired to the REAL `idgate` predicates, `guid_role_class` and KEEP_530, on
+    /// notice 277 as 575's reads 1 and 2 list it (the eSender 859, the buyer 860, the TA Paris pair 861/862,
+    /// the tenderer key 863) and TA Paris's identifier-NULL row 1163000. Without the mention-key indexes it
+    /// refuses and stores nothing; with them it stores `hex-census` and answers a one-line summary; a
+    /// cancelled run stores none.
+    #[tokio::test]
+    async fn the_hex_census_job_stores_its_report_and_a_stopped_run_stores_none() {
+        use store::turso::Value;
+        let path = format!("/tmp/tender-db-sup-575-{}-{}.db", std::process::id(), store::now_unix());
+        let _ = std::fs::remove_file(&path);
+        let db = Arc::new(store::Db::open(&path).await.unwrap());
+        let raw = store::turso::Builder::new_local(&path).build().await.unwrap();
+        let conn = raw.connect().unwrap();
+        conn.execute("PRAGMA foreign_keys = OFF", ()).await.unwrap();
+        conn.execute(
+            "INSERT INTO notices (id, source, publication_id, content_hash, profile, fetch_id, member_path, ingested_at,
+                                  published_at, parse_state)
+             VALUES (277, 'ted', '277-2024', 'h', 'eforms:eforms-sdk-1.7', 1, 'm', 0, 1717200000, 'parsed')",
+            (),
+        )
+        .await
+        .unwrap();
+        conn.execute(
+            "INSERT INTO tender_versions (tender_id, seq, caused_by_notice_id, published_at, publication_id)
+             VALUES (900001, 1, 277, 1717200000, '277-2024')",
+            (),
+        )
+        .await
+        .unwrap();
+        for (org, section, name, identifier, published, role) in [
+            (859i64, "ORG-0001", "Avenue-Web Systèmes", "FD29FBDB9AE296A7C8EFDA456F9EE7FE", "FD29FBDB-9AE2-96A7-C8EFDA456F9EE7FE", "Procedure-SProvider"),
+            (860, "ORG-0002", "CNFPT - Direction de l'achat public", "67034", "67034", "Procedure-Buyer"),
+            (861, "ORG-0003", "Tribunal administratif de Paris", "FD29FC0104FA2E6D2EB3FB1D8FFA4F7F", "FD29FC01-04FA-2E6D-2EB3FB1D8FFA4F7F", "Lot-ReviewOrg"),
+            (862, "ORG-0004", "Tribunal administratif de Paris", "FD29FC2FA2BF49A19B234B870B531C27", "FD29FC2F-A2BF-49A1-9B234B870B531C27", "Lot-ReviewInfo"),
+            (863, "ORG-0005", "OPEN", "1748141101", "1748141-1-0-1", "Tenderer"),
+        ] {
+            conn.execute(
+                "INSERT INTO organizations (id, country, identifier_kind, identifier, name, name_norm, provisional, created_at)
+                 VALUES (?, 'FR', 'national', ?, ?, ?, 0, 0)",
+                (Value::Integer(org), Value::Text(identifier.into()), Value::Text(name.into()), Value::Text(name.to_lowercase())),
+            )
+            .await
+            .unwrap();
+            conn.execute(
+                "INSERT INTO organization_mentions (notice_id, section_id, organization_id, name, country, raw_identifier, scheme)
+                 VALUES (277, ?, ?, ?, 'FR', ?, 'eu')",
+                (Value::Text(section.into()), Value::Integer(org), Value::Text(name.into()), Value::Text(published.into())),
+            )
+            .await
+            .unwrap();
+            conn.execute(
+                "INSERT INTO tender_version_parties (tender_id, seq, lot_id, role, organization_id, mention_notice_id,
+                                                     mention_section_id)
+                 VALUES (900001, 1, NULL, ?, ?, 277, ?)",
+                (Value::Text(role.into()), Value::Integer(org), Value::Text(section.into())),
+            )
+            .await
+            .unwrap();
+        }
+        // TA Paris's identifier-NULL row (the pair's fallback target), mentioned once at notice 900.
+        conn.execute(
+            "INSERT INTO organizations (id, country, identifier_kind, identifier, name, name_norm, provisional, created_at)
+             VALUES (1163000, 'FR', NULL, NULL, 'Tribunal administratif de Paris', 'tribunal administratif de paris', 1, 0)",
+            (),
+        )
+        .await
+        .unwrap();
+        conn.execute(
+            "INSERT INTO organization_mentions (notice_id, section_id, organization_id, name, country, raw_identifier, scheme)
+             VALUES (900, 'ORG-0002', 1163000, 'Tribunal administratif de Paris', 'FR', NULL, NULL)",
+            (),
+        )
+        .await
+        .unwrap();
+        for (notice, section) in [(277i64, "ORG-0003"), (277, "ORG-0004"), (900, "ORG-0002")] {
+            conn.execute(
+                "INSERT INTO notice_texts (notice_id, section_id, field_id, ordinal, lang, value)
+                 VALUES (?, ?, 'BT-513-Organization-Company', 0, NULL, 'Paris')",
+                (Value::Integer(notice), Value::Text(section.into())),
+            )
+            .await
+            .unwrap();
+        }
+        let sup = Supervisor::new(db.clone(), "archive".into(), reqwest::Client::new());
+        let job = |id: u64| Job {
+            id,
+            kind: "hex-census".into(),
+            params: String::new(),
+            spec: Spec::HexCensus { stable_mentions: GUID_CENSUS_STABLE_MENTIONS, samples: 30 },
+            resume_after: None,
+        };
+        let err = sup.run_spec(&job(1)).await.expect_err("the mention-key indexes are deferred");
+        assert!(err.contains("hex-census refused") && err.contains("tender_version_parties_mention_key"), "{err}");
+        assert!(db.latest_report(HEX_CENSUS_REPORT).await.unwrap().is_none(), "a refusal stores nothing");
+
+        db.build_organization_indexes().await.unwrap();
+        db.build_tender_indexes().await.unwrap();
+        let msg = sup.run_spec(&job(2)).await.expect("census");
+        assert!(
+            msg.starts_with(
+                "hex-census (issue 575 unit 1): 3 32-hex row(s) of 3 identifier row(s) 16+ long (3 hex_hash, issue \
+                 300's class)"
+            ),
+            "{msg}"
+        );
+        for needle in [
+            "CF35 (8-4-4-16 raw BT-501): 3 row(s), 3 cf35 mention(s) in 1 notice(s) of 1 tender(s); ONE tender 3, several 0",
+            "uuid_v4 passes 1",
+            "KEEP_530 overlap 0 (0); buyer-role cf35 mention(s) 0",
+            "within-notice twins 1 group(s) in 1 notice(s), 2 row(s), 0 eSender row(s)",
+            "Rows by stratum: sprovider 1, review 2, mediator 0, add_info 0, buyer 0",
+            "Targets: 2 key(s), 1 found (2 mention(s)), 1 missing (1), 0 unkeyed mention(s)",
+            "Tenderer keys (U5): 1 mention(s) on 1 row(s), 1 procedure(s), 0 dash-strip collision(s)",
+            "859 sprovider 1 mention(s) 1 tender(s) target missing",
+            "862 review 1 mention(s) 1 tender(s) twin target 1163000",
+            "22763203 absent",
+        ] {
+            assert!(msg.contains(needle), "missing `{needle}`: {msg}");
+        }
+        assert!(msg.ends_with("NOTHING IS WRITTEN."), "{msg}");
+        let (body, _) = db.latest_report(HEX_CENSUS_REPORT).await.unwrap().expect("report");
+        let report: serde_json::Value = serde_json::from_str(&body).unwrap();
+        assert_eq!(report["class"]["all"]["rows"], 3, "{body}");
+        assert_eq!(report["notice_mentions"]["by_shape"]["digits"], 1, "{body}");
+        assert_eq!(report["notice_mentions"]["by_shape"]["tenderer_key"], 1, "{body}");
+        assert_eq!(report["targets"]["found"], 1, "{body}");
+        assert!(report["class_definition"].as_str().unwrap().contains("8-4-4-16"), "{body}");
+        assert_eq!(report["canary_ids"][0], 859, "{body}");
+
+        // A cancelled run stores nothing over the report.
+        db.put_report(HEX_CENSUS_REPORT, "{\"marker\":1}", store::now_unix()).await.unwrap();
+        sup.cancel_running.store(3, Ordering::Relaxed);
+        let msg = sup.run_spec(&job(3)).await.expect("stopped census");
+        assert!(msg.contains("STOPPED by cancel") && msg.contains("no report stored"), "{msg}");
+        let (body, _) = db.latest_report(HEX_CENSUS_REPORT).await.unwrap().expect("report");
         assert_eq!(body, "{\"marker\":1}", "a stopped census stores nothing");
         drop(conn);
         for suffix in ["", "-wal", "-shm"] {

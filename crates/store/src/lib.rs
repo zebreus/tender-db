@@ -12,6 +12,7 @@ pub mod canonical;
 pub mod checkpoint;
 pub mod guid_census;
 pub mod guid_twins;
+pub mod hex_census;
 pub mod head_election;
 mod inplace;
 pub mod jobs;
@@ -126,6 +127,12 @@ pub use guid_twins::{
     GuidTwinDriftValue, GuidTwinGatedV4, GuidTwinRestoreArgs, GuidTwinRestoreDone,
     // Review round 3: the re-read budget (F1), per-value Tenders (F4).
     GUID_TWIN_WET_WINDOW_REREAD, GuidTwinMultiRowValue, guid_twin_rebound_estimate, guid_twin_windows_within,
+};
+pub use hex_census::{
+    HEX_CENSUS_BATCH, HEX_CENSUS_CCIRA_PREFIX, HEX_CENSUS_INDEXES, HEX_CENSUS_R2_STRATA, HEX_CENSUS_SALT,
+    HEX_CENSUS_SHAPES, HEX_CENSUS_STRATA, HEX_CENSUS_TOP_TARGETS, HEX_CENSUS_WINDOW, HexCensusArgs, HexCensusReport,
+    HexCityScreen, HexClass, HexKeyCollision, HexNoticeMentions, HexRowSample, HexSamples, HexTally, HexTarget,
+    HexTargets, HexTendererKeys, HexTwin, HexTwinSample, hex_raw_shape, hex_stratum, is_cf35,
 };
 pub use jobs::QueuedJobRow;
 pub use publication_audit::PublicationAudit;
