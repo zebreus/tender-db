@@ -4,6 +4,44 @@ Behavior changes a client could observe, newest first. Additive fields and new
 endpoints land without an entry unless they change how an existing request
 answers; this file exists for the rare case where one does.
 
+## Unreleased (issue 580) — a Tender id can be retired within a generation: the docs now say so, and how to follow its notices
+
+Nothing changed in how a request answers; the docs now say what was already happening. A Tender is the group its
+notices fold into, and when a fold regroups them so that none stays in the group (a link between two procedures found
+or refused, a re-dated chain re-linking, a key found to join unrelated procedures), the Tender is retired: its notices
+merge into another Tender, new or existing, split across several, or re-link into a new one. A repair that deletes a
+duplicate notice (the same notice imported twice; its twin is kept) retires a Tender it leaves with no notice. The
+`generation` does not move for either. /docs said entity ids are reissued by a rebuild and the generation moves only
+on one, and OpenAPI's `generation` said the same, so a careful client concluded that a Tender id is stable within a
+generation. It is not. Tender 8811451, retired on 2026-10-24 by issue 539's refold run c (which retired 93 Tenders and
+minted 93 new ones, 8,860,949–8,861,041), answers `404 {"error":{"message":"no such tender","status":404}}`.
+- How often: about 12 Tender ids per daily fold (11, 14, 12, 13 and 11 from 2026-10-19 to 10-23, about 0.56% of the
+  ids those folds minted), so hundreds in a normal month. A refold that moves no grouping input retires none (2.33M
+  Tenders re-folded in the same window, none retired). A regrouping campaign retires more: 93 in 539's run c, and
+  216,450 in issue 93's refold of 2026-08-02.
+- What a client observes, unchanged: a retired Tender id answers `404` (`no such tender`) from then on within that
+  generation, on `GET /v1/tenders/{id}` and on `/v1/notices?tender=`. It is never issued again within a generation.
+  The change feed sends the retired Tender's `tender` `removed` (`version: null`) and a `removed` for each of its lots
+  (its lot results, bids and contracts go with it), and a Tender that takes its notices can send `added` or `changed`,
+  in either order: an incremental fold retires before it folds the notices again, a full fold (a daily run's full
+  fallback included) after, and a repair retires on its own, the kept twin's Tender changing on the next fold. An
+  `added` there does not mean a new Tender: an existing one whose versions are rewritten from its first sends it too,
+  so apply either as an upsert. A retired Tender's notices can also land in no Tender: a held notice has none.
+- How to follow one, now documented: keep each version's `publication_id` (a list row carries the current one) or
+  `caused_by_notice_id`. `/v1/tenders?publication_id=…` answers the Tenders that hold a notice of that number now, and,
+  when a fold retired it, the one whose `versions[]` name your `caused_by_notice_id` holds yours. Leave `source=` off
+  for this: it reads the Tender's own source, and a DÖE notice can move into its TED twin's Tender. On `/v1/sql`,
+  `SELECT tender_id FROM tender_versions WHERE caused_by_notice_id = 23555356`, with your notice id written in (the
+  endpoint takes no bind parameters), answers it directly, and returns no row while the notice is in no Tender. After
+  a repair the deleted duplicate's notice id is gone for good (`/v1/notices/{id}` answers `404`, and no Tender's
+  `versions[]` and no `/v1/sql` row names it again); its kept twin, another notice id holding the same bytes, carries
+  the newest copy's `publication_id` from the next fold (in a pair, the deleted one's), so follow a repair by
+  `publication_id`.
+- Where: /docs (the `/v1/tenders/{id}` row; Tender detail, "A Tender id can be retired within a generation"; the
+  Notice content id note; the change feed's `generation` paragraph; the `version: null` list, whose closing line now
+  says to apply a `removed` as a delete) and OpenAPI (`generation`, `getTender` and its `404`, `ChangeEvent.version`).
+  Nothing links a retired id to the Tender that took its notices; a successor pointer is issue 581.
+
 ## Unreleased (issue 576) — a role whose eForms reference names a touchpoint is served: as its organization, or under the touchpoint's own name
 
 An eForms `Lot-` or `Part-` role (`Lot-ReviewOrg`, `Lot-ReviewInfo`, `Lot-Mediator`, `Lot-AddInfo`,

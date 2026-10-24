@@ -5966,6 +5966,9 @@ fn fold_summary(report: &ingest::project::Report, sweep: &str) -> String {
     let extracted = extracted_suffix(&report.extracted);
     // Issue 576: the role references naming a touchpoint, by what the fold did with each; silent at zero.
     let touchpoints = touchpoint_suffix(&report.touchpoint_roles);
+    // Issue 580: the Tenders the fold retired because their notices regrouped (their ids now answer 404);
+    // silent at zero.
+    let regrouped = regrouped_suffix(report.absorbed);
     let citations = format!(
         "{}{}{}{}{}{}",
         citation_suffix(&report.citations),
@@ -5978,7 +5981,7 @@ fn fold_summary(report: &ingest::project::Report, sweep: &str) -> String {
     // Issue 495 unit 3: the shadow compare's tally, when a stale Tender was compared.
     let compare = report.applied.compare_line().map(|line| format!("; {line}")).unwrap_or_default();
     format!(
-        "{cancelled}{} notices → {} tenders ({} islands), {} versions; {} tenders written, {} verified unchanged, {} relabelled (issue 562){compare}{wall}{alias}{refreshed}{retired}{dropped}{extracted}{touchpoints}{sweep}{citations}",
+        "{cancelled}{} notices → {} tenders ({} islands), {} versions; {} tenders written, {} verified unchanged, {} relabelled (issue 562){compare}{wall}{alias}{refreshed}{retired}{dropped}{extracted}{touchpoints}{regrouped}{sweep}{citations}",
         report.notices,
         report.tenders,
         report.islands,
@@ -5987,6 +5990,15 @@ fn fold_summary(report: &ingest::project::Report, sweep: &str) -> String {
         report.applied.tenders_unchanged,
         report.applied.label_corrections
     )
+}
+
+/// Issue 580: how many Tenders a fold retired because their notices regrouped (`Report.absorbed`), for its
+/// durable log row — the count 580's sizing had to rebuild from `tender removed` change rows. Empty at zero.
+fn regrouped_suffix(absorbed: u64) -> String {
+    if absorbed == 0 {
+        return String::new();
+    }
+    format!("; {absorbed} tender(s) retired (notices regrouped, issue 580)")
 }
 
 /// Issue 576: a fold's touchpoint role references ([`ingest::project::TouchpointRoles`]) for its durable
@@ -23104,6 +23116,13 @@ mod tests {
         let long = "x".repeat(80);
         extracted.sample = vec![(7, "ORG-1".into(), long.clone(), long)];
         assert!(extracted_suffix(&extracted).contains(&format!("7/ORG-1 '{0}' → '{0}'", "x".repeat(60))), "clipped");
+    }
+
+    /// Issue 580: the fold's job row says how many Tenders it retired; silent at zero.
+    #[test]
+    fn the_regrouped_suffix_counts_retired_tenders() {
+        assert_eq!(regrouped_suffix(0), "", "no retirement: silent");
+        assert_eq!(regrouped_suffix(12), "; 12 tender(s) retired (notices regrouped, issue 580)");
     }
 
     /// Issue 576: the fold's job row carries `Report.touchpoint_roles` — unit 3's drain reads its size

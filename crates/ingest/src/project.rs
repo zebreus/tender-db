@@ -54,8 +54,9 @@ pub struct Report {
     pub tenders: u64,
     pub islands: u64,
     pub mentions: u64,
-    /// Legacy Tenders retired because a late edge merged their members into
-    /// another component (ADR-0003-style merge — their rows got removed events).
+    /// Tenders retired because their notices regrouped: a late edge merged a legacy component into another
+    /// (ADR-0003-style), or a fold left a non-legacy Tender with no notice of its group (issue 93). Their rows
+    /// got `removed` events; the fold summary prints the count (issue 580).
     pub absorbed: u64,
     pub applied: store::Applied,
     /// The run was asked to stop and ended at a checkpoint instead of finishing
